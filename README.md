@@ -28,18 +28,31 @@ Cette application propose une solution complète pour la digitalisation et la fa
 
 #### Frontend
 
-- **Framework**: Vue.js 3 (Composition API)
+- **Framework**: Nuxt.js 3 (Vue.js 3 avec SSR)
 - **Langage**: TypeScript
-- **Build Tool**: Vite
-- **State Management**: Pinia
-- **Router**: Vue Router
-- **UI Framework**: Vuetify 3 (Material Design)
+- **Mode de rendu**: Universal (SSR + CSR)
+- **State Management**: Pinia (intégré Nuxt)
+- **Router**: Auto-routing (file-based routing)
+- **Auto-import**: Composants, composables, utils
+- **UI Framework**: Vuetify 3 / Nuxt UI / Tailwind CSS
 - **Maps**: Leaflet.js / Google Maps API
 - **Calendar**: FullCalendar
 - **Charts**: Chart.js / ApexCharts
-- **HTTP Client**: Axios
-- **Form Validation**: Vuelidate / VeeValidate
+- **HTTP Client**: $fetch / useFetch (natif Nuxt)
+- **Form Validation**: VeeValidate / Zod
 - **Date Management**: Day.js
+- **Icons**: Nuxt Icon / Iconify
+- **SEO**: Nuxt SEO Kit (meta tags, sitemap)
+
+#### Modules Nuxt
+
+- `@pinia/nuxt` - State management
+- `@nuxtjs/tailwindcss` - Styling utility-first
+- `@nuxt/image` - Optimisation d'images
+- `@vueuse/nuxt` - Composables utilitaires
+- `nuxt-icon` - Système d'icônes
+- `@nuxtjs/color-mode` - Dark/Light mode
+- `nuxt-socket-io` - WebSockets temps réel
 
 #### DevOps & Infrastructure
 
@@ -334,7 +347,7 @@ CREATE TABLE activity_logs (
 
 ## Fonctionnalités Principales
 
-### Pour les Avocats ⚖️
+### Pour les Avocats
 
 #### Gestion des Rendez-vous
 
@@ -369,7 +382,7 @@ CREATE TABLE activity_logs (
 - Notifications email pour nouveaux messages
 - Notifications in-app (nouveaux dossiers, messages, rendez-vous)
 
-### Pour les Clients 👥
+### Pour les Clients
 
 #### Recherche & Sélection
 
@@ -459,21 +472,227 @@ Application-de-gestion-juridique/
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── frontend/                    # Application Vue.js
-│   ├── src/
-│   │   ├── assets/             # Images, fonts, styles
-│   │   ├── components/         # Composants réutilisables
-│   │   ├── views/              # Pages/Vues
-│   │   ├── router/             # Configuration du routeur
-│   │   ├── stores/             # Stores Pinia (state management)
-│   │   ├── services/           # Services API
-│   │   ├── types/              # Types TypeScript
-│   │   ├── utils/              # Utilitaires
-│   │   ├── App.vue
-│   │   └── main.ts
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.ts
+├── frontend/
+├── app/
+│   └── app.vue                          # Point d'entrée principal
+│
+├── types/
+│   ├── index.ts                         # Types globaux
+│   ├── user.ts                          # Types User, UserRole
+│   ├── lawyer.ts                        # Types Lawyer
+│   ├── case.ts                          # Types Case, CaseStatus, CasePriority
+│   ├── appointment.ts                   # Types Appointment, AppointmentStatus
+│   ├── document.ts                      # Types Document
+│   ├── message.ts                       # Types Message, Conversation
+│   ├── notification.ts                  # Types Notification
+│   ├── review.ts                        # Types Review
+│   └── api.ts                           # Types ApiResponse, PaginatedResponse
+│
+├── composables/
+│   ├── useApi.ts                        # Composable pour les appels API
+│   ├── useAuth.ts                       # Composable authentification
+│   ├── useCases.ts                      # Composable gestion dossiers
+│   ├── useAppointments.ts               # Composable rendez-vous
+│   ├── useDocuments.ts                  # Composable documents
+│   ├── useMessages.ts                   # Composable messagerie
+│   ├── useLawyers.ts                    # Composable avocats
+│   ├── useNotifications.ts              # Composable notifications
+│   └── useStats.ts                      # Composable statistiques
+│
+├── stores/
+│   ├── auth.ts                          # Store authentification (Pinia)
+│   ├── cases.ts                         # Store dossiers
+│   ├── appointments.ts                  # Store rendez-vous
+│   ├── documents.ts                     # Store documents
+│   ├── messages.ts                      # Store messagerie
+│   ├── notifications.ts                 # Store notifications
+│   └── ui.ts                            # Store UI (sidebar, modals, etc.)
+│
+├── middleware/
+│   ├── auth.ts                          # Middleware authentification
+│   ├── role.ts                          # Middleware contrôle rôles
+│   └── guest.ts                         # Middleware pages publiques
+│
+├── layouts/
+│   ├── default.vue                      # Layout par défaut
+│   ├── auth.vue                         # Layout pages authentification
+│   ├── dashboard.vue                    # Layout dashboard (sidebar)
+│   └── admin.vue                        # Layout admin
+│
+├── pages/
+│   ├── index.vue                        # Page d'accueil
+│   │
+│   ├── auth/
+│   │   ├── login.vue                    # Page connexion
+│   │   ├── register.vue                 # Page inscription
+│   │   ├── forgot-password.vue          # Mot de passe oublié
+│   │   └── reset-password.vue           # Réinitialiser mot de passe
+│   │
+│   ├── dashboard/
+│   │   ├── index.vue                    # Dashboard principal
+│   │   ├── avocat.vue                   # Dashboard avocat
+│   │   ├── client.vue                   # Dashboard client
+│   │   └── admin.vue                    # Dashboard admin
+│   │
+│   ├── cases/
+│   │   ├── index.vue                    # Liste dossiers
+│   │   ├── create.vue                   # Créer dossier
+│   │   └── [id].vue                     # Détails dossier
+│   │       ├── index.vue                # Vue générale
+│   │       ├── documents.vue            # Documents du dossier
+│   │       ├── appointments.vue         # Rendez-vous du dossier
+│   │       ├── collaborators.vue        # Collaborateurs
+│   │       └── timeline.vue             # Historique
+│   │
+│   ├── appointments/
+│   │   ├── index.vue                    # Liste rendez-vous
+│   │   ├── calendar.vue                 # Vue calendrier
+│   │   ├── map.vue                      # Vue carte
+│   │   ├── create.vue                   # Créer rendez-vous
+│   │   └── [id].vue                     # Détails rendez-vous
+│   │
+│   ├── documents/
+│   │   ├── index.vue                    # Liste documents
+│   │   ├── upload.vue                   # Upload documents
+│   │   └── [id].vue                     # Détails/Prévisualisation
+│   │
+│   ├── messages/
+│   │   ├── index.vue                    # Liste conversations
+│   │   └── [id].vue                     # Conversation
+│   │
+│   ├── lawyers/
+│   │   ├── index.vue                    # Recherche avocats
+│   │   ├── map.vue                      # Carte avocats
+│   │   └── [id].vue                     # Profil avocat
+│   │
+│   ├── clients/
+│   │   ├── index.vue                    # Liste clients (avocat)
+│   │   └── [id].vue                     # Profil client
+│   │
+│   ├── profile/
+│   │   ├── index.vue                    # Mon profil
+│   │   ├── edit.vue                     # Modifier profil
+│   │   └── settings.vue                 # Paramètres
+│   │
+│   ├── notifications/
+│   │   └── index.vue                    # Liste notifications
+│   │
+│   ├── reviews/
+│   │   ├── index.vue                    # Mes avis
+│   │   └── create.vue                   # Créer avis
+│   │
+│   └── admin/
+│       ├── index.vue                    # Dashboard admin
+│       ├── users/
+│       │   ├── index.vue                # Liste utilisateurs
+│       │   └── [id].vue                 # Détails utilisateur
+│       ├── lawyers/
+│       │   ├── index.vue                # Gestion avocats
+│       │   └── requests.vue             # Demandes avocats
+│       ├── cases/
+│       │   └── index.vue                # Tous les dossiers
+│       ├── stats/
+│       │   └── index.vue                # Statistiques globales
+│       └── logs/
+│           └── index.vue                # Logs d'activité
+│
+├── components/
+│   ├── ui/
+│   │   ├── Button.vue                   # Bouton réutilisable
+│   │   ├── Card.vue                     # Carte
+│   │   ├── Modal.vue                    # Modal
+│   │   ├── Input.vue                    # Input
+│   │   ├── Select.vue                   # Select
+│   │   ├── Badge.vue                    # Badge
+│   │   ├── Table.vue                    # Tableau
+│   │   └── Pagination.vue               # Pagination
+│   │
+│   ├── common/
+│   │   ├── Navbar.vue                   # Barre navigation
+│   │   ├── Sidebar.vue                  # Barre latérale
+│   │   ├── Footer.vue                   # Pied de page
+│   │   ├── Breadcrumb.vue               # Fil d'Ariane
+│   │   ├── LoadingSpinner.vue           # Spinner chargement
+│   │   └── EmptyState.vue               # État vide
+│   │
+│   ├── cases/
+│   │   ├── CaseCard.vue                 # Carte dossier
+│   │   ├── CaseList.vue                 # Liste dossiers
+│   │   ├── CaseForm.vue                 # Formulaire dossier
+│   │   ├── CaseFilters.vue              # Filtres dossiers
+│   │   ├── CaseStatusBadge.vue          # Badge statut
+│   │   └── CaseTimeline.vue             # Timeline dossier
+│   │
+│   ├── appointments/
+│   │   ├── AppointmentCard.vue          # Carte rendez-vous
+│   │   ├── AppointmentList.vue          # Liste rendez-vous
+│   │   ├── AppointmentForm.vue          # Formulaire rendez-vous
+│   │   ├── AppointmentCalendar.vue      # Calendrier (FullCalendar)
+│   │   └── AppointmentMap.vue           # Carte rendez-vous
+│   │
+│   ├── documents/
+│   │   ├── DocumentCard.vue             # Carte document
+│   │   ├── DocumentList.vue             # Liste documents
+│   │   ├── DocumentUpload.vue           # Upload document
+│   │   ├── DocumentPreview.vue          # Prévisualisation
+│   │   └── DocumentFilters.vue          # Filtres documents
+│   │
+│   ├── messages/
+│   │   ├── ConversationList.vue         # Liste conversations
+│   │   ├── MessageList.vue              # Liste messages
+│   │   ├── MessageInput.vue             # Input message
+│   │   └── MessageBubble.vue            # Bulle message
+│   │
+│   ├── lawyers/
+│   │   ├── LawyerCard.vue               # Carte avocat
+│   │   ├── LawyerList.vue               # Liste avocats
+│   │   ├── LawyerFilters.vue            # Filtres avocats
+│   │   ├── LawyerMap.vue                # Carte avocats
+│   │   └── LawyerProfile.vue            # Profil avocat
+│   │
+│   ├── notifications/
+│   │   ├── NotificationBell.vue         # Icône notifications
+│   │   ├── NotificationDropdown.vue     # Dropdown notifications
+│   │   └── NotificationItem.vue         # Item notification
+│   │
+│   ├── stats/
+│   │   ├── StatCard.vue                 # Carte statistique
+│   │   ├── LineChart.vue                # Graphique ligne
+│   │   ├── PieChart.vue                 # Graphique camembert
+│   │   └── BarChart.vue                 # Graphique barre
+│   │
+│   └── forms/
+│       ├── LoginForm.vue                # Formulaire connexion
+│       ├── RegisterForm.vue             # Formulaire inscription
+│       ├── CaseForm.vue                 # Formulaire dossier
+│       ├── AppointmentForm.vue          # Formulaire rendez-vous
+│       └── ReviewForm.vue               # Formulaire avis
+│
+├── assets/
+│   ├── css/
+│   │   └── main.css                     # Styles Tailwind
+│   ├── images/
+│   └── icons/
+│
+├── utils/
+│   ├── formatters.ts                    # Formatage dates, nombres
+│   ├── validators.ts                    # Validations
+│   ├── constants.ts                     # Constantes
+│   └── helpers.ts                       # Fonctions utilitaires
+│
+├── plugins/
+│   ├── api.ts                           # Plugin API
+│   └── socket.ts                        # Plugin WebSocket
+│
+├── public/
+│   ├── favicon.ico
+│   └── images/
+│
+├── .env                                 # Variables environnement
+├── nuxt.config.ts                       # Configuration Nuxt
+├── tailwind.config.ts                   # Configuration Tailwind
+├── tsconfig.json                        # Configuration TypeScript
+└── package.json                         # Dépendances
 │
 ├── docs/                        # Documentation
 ├── .gitignore
@@ -646,7 +865,7 @@ npm run seed
 npm run dev
 ```
 
-#### 3. Frontend Setup
+#### 3. Frontend Setup (Nuxt.js)
 
 ```bash
 cd ../frontend
@@ -658,6 +877,7 @@ cp .env.example .env
 
 # Démarrer le serveur de développement
 npm run dev
+# L'application sera accessible sur http://localhost:3000
 ```
 
 ### Démarrage avec Docker (Recommandé)
@@ -720,9 +940,16 @@ SOCKET_PORT=5001
 ### Frontend (.env)
 
 ```env
-VITE_API_URL=http://localhost:5000/api
-VITE_SOCKET_URL=http://localhost:5001
-VITE_GOOGLE_MAPS_API_KEY=your_google_maps_key
+# API Configuration
+NUXT_PUBLIC_API_URL=http://localhost:5000/api
+NUXT_PUBLIC_SOCKET_URL=http://localhost:5001
+
+# Google Maps
+NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_key
+
+# App Configuration
+NUXT_PUBLIC_APP_NAME=Legal Management App
+NUXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ---
@@ -966,15 +1193,18 @@ Pour toute question ou suggestion :
 - [ ] Système de notifications (email + in-app)
 - [ ] Cron jobs pour rappels automatiques
 
-### Semaine 3 - Frontend
+### Semaine 3 - Frontend (Nuxt.js)
 
-- [ ] Setup Vue.js 3 + Vuetify + Pinia
+- [ ] Setup Nuxt 3 + Tailwind/Vuetify + Pinia
+- [ ] Configuration nuxt.config.ts (modules, runtimeConfig)
+- [ ] Layouts (default, auth, dashboard)
 - [ ] Pages d'authentification (login, register)
+- [ ] Middleware d'authentification et rôles
 - [ ] Dashboard par rôle (avocat, client, admin)
-- [ ] Module Dossiers (liste, détails, création, filtres)
-- [ ] Module Rendez-vous (calendrier FullCalendar, carte)
-- [ ] Module Documents (upload multiple, preview, download)
-- [ ] Module Messagerie (chat temps réel Socket.io)
+- [ ] Pages Dossiers (/cases/\*) avec filtres
+- [ ] Pages Rendez-vous (/appointments/\*) avec calendrier
+- [ ] Pages Documents avec upload multiple
+- [ ] Messagerie temps réel (Socket.io)
 - [ ] Système de notifications
 
 ### Semaine 4 - Polish & Features Bonus
