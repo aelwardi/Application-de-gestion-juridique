@@ -34,12 +34,12 @@ async function runSeeds() {
       }
     }
 
-    console.log('✨ All seeds completed successfully!');
+    console.log('All seeds completed successfully!');
   } catch (error: any) {
     if (error.code === '23505') {
-      console.log('⚠️  Seeds already exist (duplicate key)');
+      console.log('Seeds already exist (duplicate key)');
     } else {
-      console.error('❌ Seed failed:', error);
+      console.error('Seed failed:', error);
       process.exit(1);
     }
   } finally {
@@ -48,4 +48,3 @@ async function runSeeds() {
 }
 
 runSeeds();
-

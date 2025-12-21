@@ -7,6 +7,8 @@ import { testEmailConfiguration } from "./utils/email.util";
 import userRoutes from "./routes/user.routes";
 import authRoutes from "./routes/auth.routes";
 import emailRoutes from "./routes/email.routes";
+import adminRoutes from "./routes/admin.routes";
+import supportRoutes from "./routes/support.routes";
 
 dotenv.config();
 
@@ -36,6 +38,8 @@ app.get("/db-test", async (_req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/email", emailRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/support", supportRoutes);
 
 const startServer = async () => {
   try {

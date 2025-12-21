@@ -1,0 +1,189 @@
+.admin-card {
+  @apply transition-all duration-200;
+}
+
+.admin-card:hover {
+  @apply transform -translate-y-1 shadow-lg;
+}
+
+.badge-active {
+  @apply px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800;
+}
+
+.badge-inactive {
+  @apply px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800;
+}
+
+.badge-pending {
+  @apply px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800;
+}
+
+.admin-table-row {
+  @apply transition-colors duration-150;
+}
+
+.admin-table-row:hover {
+  @apply bg-gray-50;
+}
+
+.action-btn {
+  @apply p-2 rounded-md transition-colors duration-150;
+}
+
+.action-btn-view {
+  @apply text-blue-600 hover:bg-blue-50;
+}
+
+.action-btn-edit {
+  @apply text-green-600 hover:bg-green-50;
+}
+
+.action-btn-delete {
+  @apply text-red-600 hover:bg-red-50;
+}
+
+.stat-card {
+  @apply bg-white overflow-hidden shadow rounded-lg transition-all duration-200;
+}
+
+.stat-card:hover {
+  @apply shadow-md;
+}
+
+.stat-icon {
+  @apply h-12 w-12 rounded-full flex items-center justify-center;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full border-b-2 border-blue-600;
+}
+
+.empty-state {
+  @apply text-center py-12;
+}
+
+.empty-state-icon {
+  @apply mx-auto h-12 w-12 text-gray-400;
+}
+
+.empty-state-title {
+  @apply mt-2 text-sm font-medium text-gray-900;
+}
+
+.empty-state-description {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-40;
+}
+
+.modal-container {
+  @apply fixed inset-0 z-50 overflow-y-auto;
+}
+
+.modal-content {
+  @apply inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full;
+}
+
+.pagination-btn {
+  @apply relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors;
+}
+
+.pagination-btn-active {
+  @apply z-10 bg-blue-50 border-blue-500 text-blue-600;
+}
+
+.pagination-btn-inactive {
+  @apply bg-white border-gray-300 text-gray-500 hover:bg-gray-50;
+}
+
+.chart-container {
+  @apply w-full h-64 md:h-96;
+}
+
+.filter-container {
+  @apply bg-white shadow rounded-lg p-6 mb-6;
+}
+
+.filter-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.export-btn {
+  @apply inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors;
+}
+
+.alert-success {
+  @apply rounded-md bg-green-50 p-4;
+}
+
+.alert-error {
+  @apply rounded-md bg-red-50 p-4;
+}
+
+.alert-warning {
+  @apply rounded-md bg-yellow-50 p-4;
+}
+
+.alert-info {
+  @apply rounded-md bg-blue-50 p-4;
+}
+
+@media (max-width: 640px) {
+  .admin-table {
+    @apply text-sm;
+  }
+
+  .stat-card {
+    @apply text-sm;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .dark\:bg-gray-800 {
+    background-color: #1f2937;
+  }
+
+  .dark\:text-white {
+    color: #ffffff;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-full-width {
+    width: 100% !important;
+  }
+}

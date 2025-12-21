@@ -11,11 +11,17 @@
     "clean": "rm -rf .nuxt node_modules/.cache"
   },
   "dependencies": {
+    "@nuxtjs/tailwindcss": "^6.12.0",
     "@pinia/nuxt": "^0.5.1",
     "pinia": "^2.1.7",
     "nuxt": "^4.2.1",
     "vue": "^3.5.24",
     "vue-router": "^4.6.3",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33"
   }
 }
