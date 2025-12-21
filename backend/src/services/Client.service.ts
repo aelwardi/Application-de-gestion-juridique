@@ -1,24 +1,31 @@
 import { PrismaClient } from '@prisma/client';
 import { Client, CreateClientInput } from '../models/Client.interface';
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
+const SALT_ROUNDS = 10;
 
 export class ClientService {
   static async create(input: CreateClientInput): Promise<Client> {
     const { user, ...clientData } = input;
 
+    const hashedPassword = await bcrypt.hash(user.password_hash, SALT_ROUNDS);
+
     const result = await prisma.$transaction(async (tx) => {
-      // Créer l'utilisateur avec le role 'client'
       const createdUser = await tx.users.create({
         data: {
-          ...user,
+          email: user.email,
+          password_hash: hashedPassword,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          phone: user.phone,
+          profile_picture_url: user.profile_picture_url,
           role: 'client',
           is_active: true,
           is_verified: false,
         },
       });
 
-      // Créer le client lié à cet utilisateur
       const createdClient = await tx.client.create({
         data: {
           address: clientData.address,

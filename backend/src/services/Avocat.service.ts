@@ -1,16 +1,21 @@
 import { PrismaClient } from '@prisma/client';
 import { Avocat, CreateAvocatInput } from '../models/Avocat.interface';
+import bcrypt from "bcrypt";
+
 
 const prisma = new PrismaClient();
+const SALT_ROUNDS = 10;
 
 export class AvocatService {
   static async create(input: CreateAvocatInput): Promise<Avocat> {
     const { user, ...avocatData } = input;
+    const hashedPassword = await bcrypt.hash(user.password_hash, SALT_ROUNDS);
 
     const result = await prisma.$transaction(async (tx) => {
       const createdUser = await tx.users.create({
         data: {
           ...user,
+          password_hash: hashedPassword,
           role: 'avocat',
           is_active: true,
           is_verified: false,
