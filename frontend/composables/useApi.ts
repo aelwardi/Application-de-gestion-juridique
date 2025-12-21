@@ -1,11 +1,12 @@
 export const useApi = () => {
   const config = useRuntimeConfig();
-  const authStore = useAuthStore();
 
-  const apiFetch = async <T>(url: string, options: RequestInit = {}) => {
-    const headers: HeadersInit = {
+  const apiFetch = async <T>(url: string, options: any = {}) => {
+    const authStore = useAuthStore();
+
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers || {}),
     };
 
     if (authStore.accessToken) {
@@ -39,4 +40,3 @@ export const useApi = () => {
 
   return { apiFetch };
 };
-

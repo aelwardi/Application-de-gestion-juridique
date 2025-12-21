@@ -13,7 +13,11 @@
     "dev": "npm run build && npm run start",
     "migrate": "ts-node scripts/migrate.ts",
     "seed": "ts-node scripts/seed.ts",
-    "test-email": "ts-node test-email.ts"
+    "reset-users": "ts-node scripts/reset-users.ts",
+    "sync-lawyers": "ts-node scripts/sync-lawyers.ts",
+    "check-lawyers": "ts-node scripts/check-lawyers.ts",
+    "test-email": "ts-node test-email.ts",
+    "reset-users": "ts-node scripts/reset-users.ts"
   },
   "keywords": [],
   "author": "",

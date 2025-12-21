@@ -12,26 +12,27 @@ definePageMeta({
   layout: false,
 });
 
-const authStore = useAuthStore();
-
-onMounted(async () => {
+onMounted(() => {
   try {
+    const authStore = useAuthStore();
     authStore.loadTokensFromStorage();
 
     if (authStore.accessToken) {
-      const result = await authStore.getProfile();
-      if (result.success) {
-        await navigateTo('/dashboard');
-      } else {
-        await navigateTo('/auth/login');
-      }
+      authStore.getProfile().then((result) => {
+        if (result.success) {
+          navigateTo('/dashboard');
+        } else {
+          navigateTo('/auth/login');
+        }
+      }).catch(() => {
+        navigateTo('/auth/login');
+      });
     } else {
-      await navigateTo('/auth/login');
+      navigateTo('/auth/login');
     }
   } catch (error) {
     console.error('Error during initialization:', error);
-    await navigateTo('/auth/login');
+    navigateTo('/auth/login');
   }
 });
 </script>
-

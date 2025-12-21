@@ -95,19 +95,20 @@ definePageMeta({
 
 const authStore = useAuthStore();
 
+onMounted(() => {
+  if (authStore.isAdmin) {
+    navigateTo('/admin/stats');
+  }
+});
+
 const roleLabel = computed(() => {
+  if (!authStore.user) return '';
   const roles: Record<string, string> = {
     admin: 'Administrateur',
     avocat: 'Avocat',
     client: 'Client',
     collaborateur: 'Collaborateur',
   };
-  return authStore.user ? roles[authStore.user.role] || authStore.user.role : '';
-});
-
-onMounted(async () => {
-  if (!authStore.user) {
-    await authStore.getProfile();
-  }
+  return roles[authStore.user.role] || authStore.user.role;
 });
 </script>

@@ -22,6 +22,12 @@ const transporter = nodemailer.createTransport({
  * Envoyer un email
  */
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
+  if (!process.env.GMAIL_APP_USERNAME || !process.env.GMAIL_APP_PASSWORD) {
+    console.warn('Email non configuré. Passez cette étape.');
+    console.warn('   Pour activer les emails, configurez GMAIL_APP_USERNAME et GMAIL_APP_PASSWORD dans .env');
+    return false;
+  }
+
   try {
     const mailOptions = {
       from: `"Gestion Juridique" <${process.env.GMAIL_APP_USERNAME}>`,
@@ -32,10 +38,14 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email envoyé:', info.messageId);
+    console.log('Email envoyé:', info.messageId, 'à', options.to);
     return true;
-  } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email:', error);
+  } catch (error: any) {
+    console.error('Erreur lors de l\'envoi de l\'email à', options.to);
+    console.error('   Message:', error.message);
+    if (error.code) {
+      console.error('   Code:', error.code);
+    }
     return false;
   }
 };
@@ -277,4 +287,3 @@ export const testEmailConfiguration = async (): Promise<boolean> => {
     return false;
   }
 };
-
