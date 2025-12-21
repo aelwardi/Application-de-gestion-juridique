@@ -11,23 +11,27 @@
     "build": "tsc",
     "start": "node ./dist/index.js",
     "dev": "npm run build && npm run start",
-    "seed": "node scripts/seed.js",
+    "seed": "ts-node ./prisma/seed.ts",
     "migrate": "ts-node scripts/migrate.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^5.13.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.5",
-    "@types/node": "^24.10.1",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.10.4",
     "@types/pg": "^8.15.6",
+    "prisma": "^5.13.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
