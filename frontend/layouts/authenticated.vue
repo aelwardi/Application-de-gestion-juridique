@@ -104,10 +104,18 @@
           </div>
           <ClientOnly>
             <div class="flex items-center space-x-4">
-              <span v-if="authStore.user" class="text-sm text-gray-700">{{ authStore.fullName }}</span>
-              <span v-if="roleLabel" class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                {{ roleLabel }}
-              </span>
+              <NotificationDropdown />
+
+              <NuxtLink
+                to="/profile"
+                class="flex items-center gap-2 text-gray-700 hover:text-blue-600"
+              >
+                <span v-if="authStore.user" class="text-sm">{{ authStore.fullName }}</span>
+                <span v-if="roleLabel" class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                  {{ roleLabel }}
+                </span>
+              </NuxtLink>
+
               <button
                 @click="handleLogout"
                 class="px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
@@ -144,4 +152,3 @@ const handleLogout = async () => {
   await authStore.logout();
 };
 </script>
-

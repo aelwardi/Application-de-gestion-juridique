@@ -10,6 +10,7 @@ import emailRoutes from "./routes/email.routes";
 import adminRoutes from "./routes/admin.routes";
 import supportRoutes from "./routes/support.routes";
 import clientRoutes from "./routes/client.routes";
+import clientExtendedRoutes from "./routes/client-extended.routes";
 
 dotenv.config();
 

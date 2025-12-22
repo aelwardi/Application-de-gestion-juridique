@@ -168,7 +168,7 @@ const loadRequests = async () => {
 
   try {
     loading.value = true;
-    const response = await apiFetch(`/clients-extended/requests/client/${authStore.user.id}`);
+    const response = await apiFetch(`/clients-extended/requests/client/${authStore.user.id}`) as any;
     requests.value = response.data;
   } catch (error) {
     console.error('Error loading requests:', error);
