@@ -32,18 +32,17 @@ CREATE TABLE IF NOT EXISTS lawyer_specialties (
 
 INSERT INTO lawyer_specialties (name, description, icon) VALUES
 ('Droit pénal', 'Défense pénale, crimes, délits', '⚖️'),
-('Droit civil', 'Litiges civils, contrats, responsabilité', ''),
-('Droit de la famille', 'Divorce, garde d\'enfants, succession', ''),
-('Droit du travail', 'Conflits employeur-employé, licenciements', ''),
-('Droit commercial', 'Entreprises, sociétés, commerce', ''),
-('Droit immobilier', 'Transactions, litiges immobiliers', ''),
-('Droit fiscal', 'Fiscalité, impôts, contrôles', ''),
-('Droit administratif', 'Relations avec l\'administration', ''),
-('Droit international', 'Transactions internationales', ''),
-('Propriété intellectuelle', 'Brevets, marques, droits d\'auteur', '')
+('Droit civil', 'Litiges civils, contrats, responsabilité', '📄'),
+('Droit de la famille', 'Divorce, garde d''enfants, succession', '👨‍👩‍👧'),
+('Droit du travail', 'Conflits employeur-employé, licenciements', '💼'),
+('Droit commercial', 'Entreprises, sociétés, commerce', '🏢'),
+('Droit immobilier', 'Transactions, litiges immobiliers', '🏠'),
+('Droit fiscal', 'Fiscalité, impôts, contrôles', '💰'),
+('Droit administratif', 'Relations avec l''administration', '🏛️'),
+('Droit international', 'Transactions internationales', '🌍'),
+('Propriété intellectuelle', 'Brevets, marques, droits d''auteur', '©️')
 ON CONFLICT (name) DO NOTHING;
 
--- Create cases table
 CREATE TABLE IF NOT EXISTS cases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     case_number VARCHAR(50) UNIQUE NOT NULL,
@@ -64,7 +63,6 @@ CREATE TABLE IF NOT EXISTS cases (
     closed_at TIMESTAMP
 );
 
--- Create case_documents table
 CREATE TABLE IF NOT EXISTS case_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
@@ -78,7 +76,6 @@ CREATE TABLE IF NOT EXISTS case_documents (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create appointments table
 CREATE TABLE IF NOT EXISTS appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     case_id UUID REFERENCES cases(id) ON DELETE SET NULL,
@@ -97,7 +94,6 @@ CREATE TABLE IF NOT EXISTS appointments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create reviews table
 CREATE TABLE IF NOT EXISTS reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lawyer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -111,7 +107,6 @@ CREATE TABLE IF NOT EXISTS reviews (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_lawyers_user_id ON lawyers(user_id);
 CREATE INDEX IF NOT EXISTS idx_lawyers_city ON lawyers(office_city);
 CREATE INDEX IF NOT EXISTS idx_lawyers_verified ON lawyers(verified_by_admin);
@@ -124,7 +119,6 @@ CREATE INDEX IF NOT EXISTS idx_appointments_client_id ON appointments(client_id)
 CREATE INDEX IF NOT EXISTS idx_appointments_start_time ON appointments(start_time);
 CREATE INDEX IF NOT EXISTS idx_reviews_lawyer_id ON reviews(lawyer_id);
 
--- Comments
 COMMENT ON TABLE lawyers IS 'Extended information for lawyer users';
 COMMENT ON TABLE cases IS 'Legal cases managed by lawyers for clients';
 COMMENT ON TABLE appointments IS 'Scheduled appointments between lawyers and clients';

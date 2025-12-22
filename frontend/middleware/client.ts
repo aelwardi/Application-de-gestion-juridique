@@ -1,19 +1,11 @@
-export default defineNuxtRouteMiddleware(async (to, from) => {
+export default defineNuxtRouteMiddleware((to, from) => {
   const authStore = useAuthStore();
-
-  if (!authStore.isAuthenticated && process.client) {
-    authStore.loadTokensFromStorage();
-    if (authStore.accessToken) {
-      await authStore.getProfile();
-    }
-  }
 
   if (!authStore.isAuthenticated) {
     return navigateTo('/auth/login');
   }
 
-  if (!authStore.isClient) {
+  if (authStore.user?.role !== 'client') {
     return navigateTo('/dashboard');
   }
 });
-

@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.routes";
 import emailRoutes from "./routes/email.routes";
 import adminRoutes from "./routes/admin.routes";
 import supportRoutes from "./routes/support.routes";
+import clientRoutes from "./routes/client.routes";
 
 dotenv.config();
 
@@ -40,6 +41,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/clients", clientRoutes);
+app.use("/api/clients-extended", clientExtendedRoutes);
 
 const startServer = async () => {
   try {

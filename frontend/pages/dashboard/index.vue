@@ -98,6 +98,10 @@ const authStore = useAuthStore();
 onMounted(() => {
   if (authStore.isAdmin) {
     navigateTo('/admin/stats');
+  } else if (authStore.user?.role === 'client') {
+    navigateTo('/dashboard/client');
+  } else if (authStore.user?.role === 'avocat') {
+    navigateTo('/dashboard/avocat');
   }
 });
 
