@@ -194,6 +194,7 @@ definePageMeta({
 });
 
 const authStore = useAuthStore();
+const { getAllAppointments } = useAppointment();
 
 const appointments = ref<any[]>([]);
 const loading = ref(true);
@@ -229,36 +230,28 @@ onMounted(() => {
 });
 
 const loadAppointments = async () => {
+  if (!authStore.user) return;
+
   try {
     loading.value = true;
 
-    appointments.value = [
-      {
-        id: '1',
-        title: 'Consultation divorce',
-        description: 'Première consultation pour divorce à l\'amiable',
-        appointment_type: 'consultation',
-        start_time: new Date('2025-12-23T10:00:00'),
-        end_time: new Date('2025-12-23T11:00:00'),
-        location: 'Cabinet - 123 Rue de la Paix, Paris',
-        status: 'scheduled',
-        case_title: 'Divorce Dupont',
-        notes: 'Client très motivé, apporter documents',
-      },
-      {
-        id: '2',
-        title: 'Audience tribunal',
-        description: 'Audience pour litige commercial',
-        appointment_type: 'court',
-        start_time: new Date('2025-12-26T14:00:00'),
-        end_time: new Date('2025-12-26T16:00:00'),
-        location: 'Tribunal de Commerce de Paris',
-        status: 'confirmed',
-        case_title: 'Litige Commercial SAS Martin',
-      },
-    ];
+    // Construire les filtres basés sur le rôle
+    const filters: any = {};
+
+    if (authStore.user.role === 'avocat' && authStore.user.lawyerId) {
+      filters.lawyer_id = authStore.user.lawyerId;
+    } else if (authStore.user.role === 'client' && authStore.user.clientId) {
+      filters.client_id = authStore.user.clientId;
+    }
+
+    const response = await getAllAppointments(filters);
+
+    if (response.success && response.data) {
+      appointments.value = response.data;
+    }
   } catch (error) {
     console.error('Error loading appointments:', error);
+    appointments.value = [];
   } finally {
     loading.value = false;
   }

@@ -99,6 +99,138 @@
             </select>
           </div>
 
+          <!-- Champs spécifiques pour les avocats -->
+          <div v-if="form.role === 'avocat'" class="space-y-4 p-4 bg-blue-50 rounded-md border border-blue-200">
+            <h3 class="text-sm font-semibold text-blue-900">Informations professionnelles</h3>
+            
+            <div>
+              <label for="barNumber" class="block text-sm font-medium text-gray-700">
+                Numéro du Barreau <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="barNumber"
+                v-model="form.lawyerData.barNumber"
+                type="text"
+                :required="form.role === 'avocat'"
+                class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="ex: 75001234"
+              />
+            </div>
+
+            <div>
+              <label for="specialties" class="block text-sm font-medium text-gray-700">
+                Spécialités
+              </label>
+              <input
+                id="specialties"
+                v-model="specialtiesInput"
+                type="text"
+                class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="ex: Droit civil, Droit pénal (séparez par des virgules)"
+              />
+              <p class="mt-1 text-xs text-gray-500">Séparez les spécialités par des virgules</p>
+            </div>
+
+            <div>
+              <label for="officeAddress" class="block text-sm font-medium text-gray-700">
+                Adresse du cabinet
+              </label>
+              <input
+                id="officeAddress"
+                v-model="form.lawyerData.officeAddress"
+                type="text"
+                class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="ex: 123 Rue de la Loi, 75001 Paris"
+              />
+            </div>
+
+            <div>
+              <label for="officeCity" class="block text-sm font-medium text-gray-700">
+                Ville
+              </label>
+              <input
+                id="officeCity"
+                v-model="form.lawyerData.officeCity"
+                type="text"
+                class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="ex: Paris"
+              />
+            </div>
+
+            <div>
+              <label for="yearsOfExperience" class="block text-sm font-medium text-gray-700">
+                Années d'expérience
+              </label>
+              <input
+                id="yearsOfExperience"
+                v-model.number="form.lawyerData.yearsOfExperience"
+                type="number"
+                min="0"
+                max="60"
+                class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="ex: 5"
+              />
+            </div>
+
+            <div>
+              <label for="bio" class="block text-sm font-medium text-gray-700">
+                Présentation
+              </label>
+              <textarea
+                id="bio"
+                v-model="form.lawyerData.bio"
+                rows="3"
+                class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Présentez brièvement votre parcours et vos domaines d'expertise..."
+              />
+            </div>
+          </div>
+
+          <!-- Champs spécifiques pour les clients -->
+          <div v-if="form.role === 'client'" class="space-y-4 p-4 bg-green-50 rounded-md border border-green-200">
+            <h3 class="text-sm font-semibold text-green-900">Informations complémentaires</h3>
+            
+            <div>
+              <label for="clientAddress" class="block text-sm font-medium text-gray-700">
+                Adresse
+              </label>
+              <input
+                id="clientAddress"
+                v-model="form.clientData.address"
+                type="text"
+                class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="ex: 10 Rue de la Paix"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="clientCity" class="block text-sm font-medium text-gray-700">
+                  Ville
+                </label>
+                <input
+                  id="clientCity"
+                  v-model="form.clientData.city"
+                  type="text"
+                  class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="ex: Paris"
+                />
+              </div>
+              <div>
+                <label for="postalCode" class="block text-sm font-medium text-gray-700">
+                  Code postal
+                </label>
+                <input
+                  id="postalCode"
+                  v-model="form.clientData.postalCode"
+                  type="text"
+                  class="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="ex: 75001"
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700">
               Mot de passe
@@ -172,12 +304,35 @@ const form = ref({
   lastName: '',
   phone: '',
   role: 'client' as 'admin' | 'avocat' | 'client' | 'collaborateur',
+  lawyerData: {
+    barNumber: '',
+    specialties: [] as string[],
+    officeAddress: '',
+    officeCity: '',
+    yearsOfExperience: undefined as number | undefined,
+    bio: '',
+  },
+  clientData: {
+    address: '',
+    city: '',
+    postalCode: '',
+  },
 });
 
+const specialtiesInput = ref('');
 const confirmPassword = ref('');
 const isLoading = ref(false);
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
+
+// Watch specialties input to update the array
+watch(specialtiesInput, (value) => {
+  if (value) {
+    form.value.lawyerData.specialties = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+  } else {
+    form.value.lawyerData.specialties = [];
+  }
+});
 
 const handleRegister = async () => {
   console.log('Starting registration...');
@@ -194,9 +349,52 @@ const handleRegister = async () => {
     return;
   }
 
+  // Validate lawyer required fields
+  if (form.value.role === 'avocat') {
+    if (!form.value.lawyerData.barNumber) {
+      errorMessage.value = 'Le numéro du barreau est requis pour les avocats';
+      isLoading.value = false;
+      return;
+    }
+  }
+
   try {
     console.log('Calling authStore.register...');
-    const result = await authStore.register(form.value);
+    
+    // Prepare data to send - only include relevant fields based on role
+    const registrationData: any = {
+      email: form.value.email,
+      password: form.value.password,
+      firstName: form.value.firstName,
+      lastName: form.value.lastName,
+      phone: form.value.phone,
+      role: form.value.role,
+    };
+
+    // Add lawyerData only if role is avocat
+    if (form.value.role === 'avocat') {
+      registrationData.lawyerData = {
+        barNumber: form.value.lawyerData.barNumber,
+        specialties: form.value.lawyerData.specialties,
+        officeAddress: form.value.lawyerData.officeAddress || undefined,
+        officeCity: form.value.lawyerData.officeCity || undefined,
+        yearsOfExperience: form.value.lawyerData.yearsOfExperience || undefined,
+        bio: form.value.lawyerData.bio || undefined,
+      };
+    }
+
+    // Add clientData only if role is client
+    if (form.value.role === 'client') {
+      registrationData.clientData = {
+        address: form.value.clientData.address || undefined,
+        city: form.value.clientData.city || undefined,
+        postalCode: form.value.clientData.postalCode || undefined,
+      };
+    }
+
+    console.log('Registration data to send:', JSON.stringify(registrationData, null, 2));
+    
+    const result = await authStore.register(registrationData);
     console.log('Register result:', result);
 
     if (result.success) {
