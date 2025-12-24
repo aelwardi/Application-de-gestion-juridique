@@ -149,7 +149,7 @@ CREATE TABLE appointments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   case_id UUID REFERENCES cases(id) ON DELETE CASCADE,
   lawyer_id UUID NOT NULL REFERENCES lawyers(id) ON DELETE CASCADE,
-  client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   appointment_type VARCHAR(100) NOT NULL, -- (consultation, tribunal, rencontre_client, expertise...)
   title VARCHAR(255) NOT NULL,
   description TEXT,

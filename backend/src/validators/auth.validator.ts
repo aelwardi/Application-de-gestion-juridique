@@ -1,6 +1,27 @@
 import { z } from 'zod';
 
 /**
+ * Lawyer data schema
+ */
+export const lawyerDataSchema = z.object({
+  barNumber: z.string().min(1, 'Bar number is required'),
+  specialties: z.array(z.string()).optional(),
+  officeAddress: z.string().optional(),
+  officeCity: z.string().optional(),
+  yearsOfExperience: z.number().min(0).max(100).optional(),
+  bio: z.string().optional(),
+});
+
+/**
+ * Client data schema
+ */
+export const clientDataSchema = z.object({
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+});
+
+/**
  * User registration schema
  */
 export const registerSchema = z.object({
@@ -16,6 +37,8 @@ export const registerSchema = z.object({
   lastName: z.string().min(2, 'Last name must be at least 2 characters').max(100),
   role: z.enum(['admin', 'avocat', 'client', 'collaborateur']),
   phone: z.string().optional(),
+  lawyerData: lawyerDataSchema.optional(),
+  clientData: clientDataSchema.optional(),
 });
 
 /**
@@ -78,6 +101,8 @@ export const updateProfileSchema = z.object({
   profilePictureUrl: z.string().url().optional(),
 });
 
+export type LawyerData = z.infer<typeof lawyerDataSchema>;
+export type ClientData = z.infer<typeof clientDataSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;

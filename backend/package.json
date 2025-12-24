@@ -16,8 +16,7 @@
     "reset-users": "ts-node scripts/reset-users.ts",
     "sync-lawyers": "ts-node scripts/sync-lawyers.ts",
     "check-lawyers": "ts-node scripts/check-lawyers.ts",
-    "test-email": "ts-node test-email.ts",
-    "reset-users": "ts-node scripts/reset-users.ts"
+    "test-email": "ts-node test-email.ts"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +28,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^6.9.8",
+    "nodemailer": "^7.0.12",
     "pg": "^8.16.3",
     "zod": "^3.25.76"
   },

@@ -11,6 +11,8 @@ export interface User {
   lastLoginAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  lawyerId?: string | null; // ID de la table lawyers (pour les avocats)
+  clientId?: string | null; // ID de la table clients (pour les clients)
 }
 
 export interface AuthTokens {
@@ -24,6 +26,21 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface LawyerData {
+  barNumber: string;
+  specialties?: string[];
+  officeAddress?: string;
+  officeCity?: string;
+  yearsOfExperience?: number;
+  bio?: string;
+}
+
+export interface ClientData {
+  address?: string;
+  city?: string;
+  postalCode?: string;
+}
+
 export interface RegisterData {
   email: string;
   password: string;
@@ -31,6 +48,8 @@ export interface RegisterData {
   lastName: string;
   role: 'admin' | 'avocat' | 'client' | 'collaborateur';
   phone?: string;
+  lawyerData?: LawyerData;
+  clientData?: ClientData;
 }
 
 export interface LoginData {

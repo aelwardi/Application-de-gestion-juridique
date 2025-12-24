@@ -217,7 +217,7 @@ definePageMeta({
 });
 
 const authStore = useAuthStore();
-const { apiFetch } = useApi();
+const { getAllCases } = useCase();
 
 const cases = ref<any[]>([]);
 const loading = ref(true);
@@ -261,34 +261,36 @@ const loadCases = async () => {
   try {
     loading.value = true;
 
-    cases.value = [
-      {
-        id: '1',
-        case_number: 'CASE-2025-001',
-        title: 'Divorce à l\'amiable',
-        description: 'Procédure de divorce par consentement mutuel',
-        category: 'Droit de la famille',
-        status: 'in_progress',
-        priority: 'high',
-        court_reference: 'TGI-2025-123',
-        next_hearing_date: new Date('2025-12-30T10:00:00'),
-        created_at: new Date('2025-11-15'),
-      },
-      {
-        id: '2',
-        case_number: 'CASE-2025-002',
-        title: 'Litige commercial',
-        description: 'Contentieux avec fournisseur',
-        category: 'Droit commercial',
-        status: 'pending',
-        priority: 'medium',
-        created_at: new Date('2025-12-01'),
-      },
-    ];
+    // Construire les filtres pour l'API
+    const apiFilters: any = {
+      limit: pagination.value.limit,
+      offset: (pagination.value.page - 1) * pagination.value.limit
+    };
 
-    pagination.value.total = cases.value.length;
+    if (filters.value.status) apiFilters.status = filters.value.status;
+    if (filters.value.priority) apiFilters.priority = filters.value.priority;
+    if (filters.value.case_type) apiFilters.case_type = filters.value.case_type;
+    if (filters.value.search) apiFilters.search = filters.value.search;
+
+    // Si l'utilisateur est un avocat, récupérer ses dossiers
+    if (authStore.user.role === 'avocat' && authStore.user.lawyerId) {
+      apiFilters.lawyer_id = authStore.user.lawyerId;
+    }
+    // Si l'utilisateur est un client, récupérer ses dossiers
+    else if (authStore.user.role === 'client' && authStore.user.clientId) {
+      apiFilters.client_id = authStore.user.clientId;
+    }
+
+    const response = await getAllCases(apiFilters);
+
+    if (response.success && response.data) {
+      cases.value = response.data;
+      pagination.value.total = response.total || 0;
+      pagination.value.totalPages = Math.ceil(pagination.value.total / pagination.value.limit);
+    }
   } catch (error) {
     console.error('Error loading cases:', error);
+    cases.value = [];
   } finally {
     loading.value = false;
   }

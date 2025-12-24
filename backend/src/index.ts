@@ -11,6 +11,8 @@ import adminRoutes from "./routes/admin.routes";
 import supportRoutes from "./routes/support.routes";
 import clientRoutes from "./routes/client.routes";
 import clientExtendedRoutes from "./routes/client-extended.routes";
+import dossierRoutes from "./routes/dossier.routes";
+import appointmentRoutes from "./routes/appointment.routes";
 
 dotenv.config();
 
@@ -44,6 +46,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/clients-extended", clientExtendedRoutes);
+app.use("/api/cases", dossierRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 const startServer = async () => {
   try {
