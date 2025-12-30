@@ -2,7 +2,7 @@ import { pool } from '../../config/database.config';
 import { QueryResult } from 'pg';
 
 export interface Lawyer {
-  id: string;
+  id: string; // Ce sera l'ID utilisateur (u.id)
   user_id: string;
   bar_number: string;
   specialties: string[];
@@ -30,27 +30,6 @@ export interface Lawyer {
   is_active?: boolean;
 }
 
-export interface Case {
-  id: string;
-  case_number: string;
-  client_id: string;
-  lawyer_id: string | null;
-  title: string;
-  description: string;
-  category: string | null;
-  status: string;
-  priority: string;
-  court_reference: string | null;
-  next_hearing_date: Date | null;
-  created_at: Date;
-  updated_at: Date;
-  client_name?: string;
-  lawyer_name?: string;
-}
-
-/**
- * Get all lawyers with pagination and filters
- */
 export const getAllLawyers = async (
   page: number = 1,
   limit: number = 20,
@@ -58,14 +37,22 @@ export const getAllLawyers = async (
   city?: string,
   specialty?: string
 ): Promise<{ lawyers: Lawyer[]; total: number }> => {
+  // MODIFICATION : On sélectionne u.id explicitement comme l'ID principal
   let query = `
     SELECT 
-      l.*,
+      u.id, 
+      l.user_id,
+      l.bar_number,
+      l.specialties,
+      l.office_city,
+      l.verified_by_admin,
+      l.rating,
       u.email,
       u.first_name,
       u.last_name,
       u.phone,
-      u.is_active
+      u.is_active,
+      l.created_at
     FROM lawyers l
     INNER JOIN users u ON l.user_id = u.id
     WHERE 1=1
@@ -91,42 +78,21 @@ export const getAllLawyers = async (
     paramIndex++;
   }
 
-  const countQuery = `
-    SELECT COUNT(*) 
-    FROM lawyers l
-    INNER JOIN users u ON l.user_id = u.id
-    WHERE 1=1
-    ${verified !== undefined ? ` AND l.verified_by_admin = $1` : ''}
-    ${city ? ` AND l.office_city ILIKE $${verified !== undefined ? '2' : '1'}` : ''}
-    ${specialty ? ` AND $${(verified !== undefined ? 1 : 0) + (city ? 1 : 0) + 1} = ANY(l.specialties)` : ''}
-  `;
-
-  const countResult = await pool.query(countQuery, params);
+  const countResult = await pool.query(`SELECT COUNT(*) FROM lawyers l INNER JOIN users u ON l.user_id = u.id`, []);
   const total = parseInt(countResult.rows[0].count);
 
   query += ` ORDER BY l.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
   params.push(limit, (page - 1) * limit);
 
   const result: QueryResult<Lawyer> = await pool.query(query, params);
-
   return { lawyers: result.rows, total };
 };
 
-/**
- * Get lawyer by ID
- */
 export const getLawyerById = async (lawyerId: string): Promise<Lawyer | null> => {
   const query = `
-    SELECT 
-      l.*,
-      u.email,
-      u.first_name,
-      u.last_name,
-      u.phone,
-      u.is_active
-    FROM lawyers l
+    SELECT u.id, l.*, u.email, u.first_name, u.last_name FROM lawyers l
     INNER JOIN users u ON l.user_id = u.id
-    WHERE l.id = $1
+    WHERE u.id = $1
   `;
   const result: QueryResult<Lawyer> = await pool.query(query, [lawyerId]);
   return result.rows[0] || null;
@@ -147,6 +113,22 @@ export const verifyLawyer = async (lawyerId: string, adminId: string): Promise<v
 /**
  * Get all cases with pagination and filters
  */
+// Define the Case interface if not already imported
+export interface Case {
+  id: string;
+  client_id: string;
+  lawyer_id: string | null;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  created_at: Date;
+  updated_at: Date;
+  // Add any other fields returned by your SELECT query
+  client_name?: string;
+  lawyer_name?: string;
+}
+
 export const getAllCases = async (
   page: number = 1,
   limit: number = 20,

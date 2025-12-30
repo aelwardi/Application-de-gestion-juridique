@@ -32,8 +32,20 @@ export class UserService {
   async getAllUsers(limit = 50, offset = 0): Promise<{ users: User[]; total: number }> {
     const result = await pool.query(userQueries.getAll, [limit, offset]);
     const countResult = await pool.query(userQueries.count);
+    const users = await Promise.all(
+      (result.rows as User[]).map(async (user) => {
+        if (user.role === 'avocat') {
+          // On récupère l'ID de la table lawyers
+          const lawyerRes = await pool.query('SELECT id FROM lawyers WHERE user_id = $1', [user.id]);
+          if (lawyerRes.rows.length > 0) {
+            return { ...user, lawyerId: lawyerRes.rows[0].id };
+          }
+        }
+        return user;
+      })
+    );
     return {
-      users: result.rows as User[],
+      users,
       total: parseInt(countResult.rows[0].count),
     };
   }

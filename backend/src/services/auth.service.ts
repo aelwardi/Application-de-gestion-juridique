@@ -33,22 +33,44 @@ export interface AuthResponse {
 
 /**
  * Helper pour enrichir UserResponse avec lawyerId ou clientId
+ * On utilise strictement le rôle 'avocat' comme demandé
+ */
+/**
+ * Helper enrichi pour stabiliser le lawyerId et détecter les doublons
  */
 const enrichUserResponse = async (userResponse: UserResponse): Promise<UserResponse> => {
-  if (userResponse.role === 'avocat') {
-    const lawyerResult = await pool.query('SELECT id FROM lawyers WHERE user_id = $1', [userResponse.id]);
-    if (lawyerResult.rows.length > 0) {
-      userResponse.lawyerId = lawyerResult.rows[0].id;
+  try {
+    if (userResponse.role === 'avocat') {
+      // On trie par date de création (ASC) pour toujours prendre le tout premier profil créé
+      const lawyerResult = await pool.query(
+        'SELECT id FROM lawyers WHERE user_id = $1 ORDER BY created_at ASC', 
+        [userResponse.id]
+      );
+
+      if (lawyerResult.rows.length > 0) {
+        // On injecte l'ID stable pour le Dashboard
+        userResponse.lawyerId = lawyerResult.rows[0].id;
+
+        // Alerte de sécurité si doublons détectés
+        if (lawyerResult.rows.length > 1) {
+          console.warn(`⚠️ [DB_WARNING] L'utilisateur ${userResponse.email} possède ${lawyerResult.rows.length} entrées dans la table lawyers ! L'ID utilisé est : ${userResponse.lawyerId}`);
+        }
+      }
+    } else if (userResponse.role === 'client') {
+      const clientResult = await pool.query(
+        'SELECT id FROM clients WHERE user_id = $1 ORDER BY created_at ASC', 
+        [userResponse.id]
+      );
+      if (clientResult.rows.length > 0) {
+        userResponse.clientId = clientResult.rows[0].id;
+      }
     }
-  } else if (userResponse.role === 'client') {
-    const clientResult = await pool.query('SELECT id FROM clients WHERE user_id = $1', [userResponse.id]);
-    if (clientResult.rows.length > 0) {
-      userResponse.clientId = clientResult.rows[0].id;
-    }
+  } catch (error) {
+    console.error('❌ [ENRICH_ERROR] Erreur lors de l\'enrichissement du profil:', error);
   }
+  
   return userResponse;
 };
-
 /**
  * Register a new user
  */
@@ -57,8 +79,6 @@ export const register = async (data: RegisterInput): Promise<AuthResponse> => {
   if (existingUser) {
     throw new Error('User with this email already exists');
   }
-
-  console.log('authService.register - Received data:', JSON.stringify(data, null, 2));
 
   const passwordHash = await hashPassword(data.password);
 
@@ -122,6 +142,7 @@ export const login = async (data: LoginInput): Promise<AuthResponse> => {
 
   await updateLastLogin(user.id);
 
+  // Utilisation de l'helper pour récupérer le lawyerId avant de répondre au front
   const userResponse = await enrichUserResponse(userToResponse(user));
 
   return {
@@ -189,7 +210,8 @@ export const updateProfile = async (userId: string, data: UpdateProfileInput): P
     profilePictureUrl: data.profilePictureUrl,
   });
 
-  return userToResponse(updatedUser);
+  // On ré-enrichit après mise à jour pour ne pas perdre les IDs métier
+  return enrichUserResponse(userToResponse(updatedUser));
 };
 
 /**

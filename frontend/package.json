@@ -11,6 +11,7 @@
     "clean": "rm -rf .nuxt node_modules/.cache"
   },
   "dependencies": {
+    "@headlessui/vue": "^1.7.23",
     "@nuxtjs/tailwindcss": "^6.12.0",
     "@pinia/nuxt": "^0.5.1",
     "chart.js": "^4.5.1",
