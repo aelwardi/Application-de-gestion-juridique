@@ -14,6 +14,8 @@ import clientExtendedRoutes from "./routes/client-extended.routes";
 import dossierRoutes from "./routes/dossier.routes";
 import appointmentRoutes from "./routes/appointment.routes";
 import offerRoutes from './routes/offer.routes';
+import lawyerRequestRoutes from './routes/lawyer-request.routes';
+import lawyerRoutes from './routes/lawyer.routes';
 dotenv.config();
 
 const app = express();
@@ -49,6 +51,9 @@ app.use("/api/clients-extended", clientExtendedRoutes);
 app.use("/api/cases", dossierRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use('/api/offers', offerRoutes);
+app.use('/api/lawyer-requests', lawyerRequestRoutes);
+app.use('/api/lawyers', lawyerRoutes);
+
 const startServer = async () => {
   try {
     await pool.query("SELECT 1");

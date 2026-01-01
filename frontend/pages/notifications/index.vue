@@ -1,260 +1,286 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      
-      <NuxtLink to="/dashboard" class="flex items-center text-sm text-gray-600 hover:text-blue-600 mb-6 transition group">
-        <svg class="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Retour au tableau de bord
-      </NuxtLink>
-
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Notifications</h1>
-        <p class="text-gray-600 mt-2">Nouvelles offres de clients à valider</p>
-      </div>
-
-      <div class="bg-white rounded-lg shadow p-4 mb-8">
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="filter in filters" :key="filter.id"
-            @click="activeFilter = filter.id"
-            :class="[
-              activeFilter === filter.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200', 
-              'px-4 py-2 rounded-lg text-sm font-medium transition'
-            ]"
-          >
-            {{ filter.label }} ({{ filter.count }})
-          </button>
-        </div>
-      </div>
-
-      <div class="space-y-4">
-        <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        </div>
-
-        <div v-else-if="filteredNotifications.length === 0" class="bg-white rounded-lg shadow p-12 text-center text-gray-500 italic">
-          Aucune notification trouvée.
-        </div>
-
-        <div
-          v-for="notification in filteredNotifications"
-          :key="notification.id"
-          :id="'notif-' + notification.id"
-          class="bg-white rounded-lg shadow border-l-4 overflow-hidden transition-all duration-700"
-          :class="[
-            getBorderColor(notification.type),
-            highlightedId === notification.id ? 'ring-4 ring-blue-500/50 bg-blue-50 scale-[1.02] shadow-[0_20px_50px_rgba(37,99,235,0.3)] z-10' : ''
-          ]"
-        >
-          <div class="p-6">
-            <div class="flex items-start gap-4">
-              <div :class="['flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white', getIconBg(notification.type)]">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(notification.type)" />
-                </svg>
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h3 class="text-lg font-bold text-gray-900 uppercase leading-tight">{{ notification.title }}</h3>
-                    <p class="text-blue-600 text-xs font-bold uppercase tracking-wider mt-1">
-                      {{ notification.data?.case_category || (notification.type === 'message' ? 'Communication' : 'Calendrier') }}
-                    </p>
-                  </div>
-                  <span class="text-xs text-gray-400 font-medium">Reçu le {{ formatFullDate(notification.created_at) }}</span>
-                </div>
-
-                <div v-if="notification.type === 'case'" class="mt-5 flex flex-wrap gap-2">
-                  <button @click="openDetails(notification.data)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-bold rounded transition uppercase">
-                    DÉTAILS
-                  </button>
-                  <button @click="handleDeclineOffer(notification.id)" class="px-4 py-2 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-[10px] font-bold rounded transition uppercase">
-                    DÉCLINER
-                  </button>
-                  <button @click="handleAcceptOffer(notification.id)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded transition uppercase shadow-sm">
-                    ACCEPTER
-                  </button>
-                </div>
-                
-                <p v-else class="text-sm text-gray-600 mt-2">{{ notification.message }}</p>
-              </div>
-            </div>
+    <div class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Notifications</h1>
+            <p class="mt-2 text-sm text-gray-600">
+              Gérez toutes vos notifications
+            </p>
           </div>
+          <button
+            v-if="unreadCount > 0"
+            @click="markAllRead"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            Tout marquer comme lu
+          </button>
         </div>
       </div>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div class="p-6 border-b flex justify-between items-center bg-gray-50/50">
-          <div>
-            <h3 class="text-xl font-bold text-gray-900 uppercase">{{ selectedOffer?.title }}</h3>
-            <p class="text-xs text-blue-600 font-bold tracking-widest uppercase mt-1">{{ selectedOffer?.case_category }}</p>
-          </div>
-          <button @click="showModal = false" class="text-gray-400 hover:text-red-500 transition-colors text-3xl">&times;</button>
-        </div>
-
-        <div class="p-6 space-y-8">
-          <div class="bg-blue-50 rounded-xl p-4 flex items-center gap-4">
-            <div class="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md uppercase">
-              {{ selectedOffer?.client_first_name?.charAt(0) }}{{ selectedOffer?.client_last_name?.charAt(0) }}
-            </div>
-            <div>
-              <h4 class="font-bold text-gray-900">{{ selectedOffer?.client_first_name }} {{ selectedOffer?.client_last_name }}</h4>
-              <p class="text-sm text-gray-600 mt-1">📧 {{ selectedOffer?.client_email }}</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Détails de l'affaire</h4>
-            <div class="bg-gray-50 p-4 rounded-xl border italic text-gray-700 leading-relaxed">
-              "{{ selectedOffer?.description || 'Aucune description fournie' }}"
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="border p-4 rounded-xl shadow-sm">
-              <p class="text-xs text-gray-500 font-bold uppercase mb-1">Budget</p>
-              <p class="text-lg font-black text-gray-900">{{ selectedOffer?.budget_min }}€ - {{ selectedOffer?.budget_max }}€</p>
-            </div>
-            <div class="border p-4 rounded-xl shadow-sm">
-              <p class="text-xs text-gray-500 font-bold uppercase mb-1">Urgence</p>
-              <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{{ selectedOffer?.urgency || 'Normal' }}</span>
-            </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <div class="flex items-center gap-4">
+          <label class="text-sm font-medium text-gray-700">Filtrer:</label>
+          <div class="flex gap-2">
+            <button
+              v-for="filter in filters"
+              :key="filter.value"
+              @click="activeFilter = filter.value"
+              class="px-4 py-2 rounded-md text-sm font-medium transition"
+              :class="activeFilter === filter.value
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+            >
+              {{ filter.label }}
+              <span v-if="filter.value === 'unread' && unreadCount > 0" class="ml-2 px-2 py-0.5 bg-white text-blue-600 rounded-full text-xs">
+                {{ unreadCount }}
+              </span>
+            </button>
           </div>
         </div>
+      </div>
 
-        <div class="p-6 border-t bg-gray-50/50 flex gap-3 justify-end">
-          <button @click="showModal = false" class="px-6 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition uppercase text-xs">Fermer</button>
-          <button @click="handleAcceptOffer(selectedOffer.id)" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition uppercase text-xs shadow-lg shadow-blue-100">
-            Accepter l'affaire
-          </button>
+      <div v-if="loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p class="mt-4 text-gray-600">Chargement des notifications...</p>
+      </div>
+
+      <div v-else-if="filteredNotifications.length > 0" class="space-y-3">
+        <div
+          v-for="notification in filteredNotifications"
+          :key="notification.id"
+          @click="handleNotificationClick(notification)"
+          class="bg-white rounded-lg shadow hover:shadow-md transition cursor-pointer"
+          :class="!notification.is_read ? 'border-l-4 border-blue-500' : ''"
+        >
+          <div class="p-5">
+            <div class="flex items-start gap-4">
+              <div
+                class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                :class="getNotificationColor(notification.type)"
+              >
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    v-if="notification.type === 'appointment'"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                  <path
+                    v-else-if="notification.type === 'case'"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                  <path
+                    v-else-if="notification.type === 'message'"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                  />
+                  <path
+                    v-else
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+              </div>
+
+              <div class="flex-grow min-w-0">
+                <div class="flex items-start justify-between mb-2">
+                  <h3 class="text-base font-bold text-gray-900">
+                    {{ notification.title }}
+                  </h3>
+                  <div class="flex items-center gap-2 ml-4">
+                    <span v-if="!notification.is_read" class="w-3 h-3 bg-blue-600 rounded-full"></span>
+                    <button
+                      @click.stop="deleteNotif(notification.id)"
+                      class="text-gray-400 hover:text-red-600 transition"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <p class="text-sm text-gray-700 mb-3">
+                  {{ notification.message }}
+                </p>
+
+                <div class="flex items-center gap-4 text-xs text-gray-500">
+                  <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ formatDate(notification.created_at) }}
+                  </span>
+                  <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                    {{ getTypeLabel(notification.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div v-else class="text-center py-12 bg-white rounded-lg shadow">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">Aucune notification</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          Vous n'avez pas de notifications pour le moment
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useCase } from '~/composables/useCase'
-import { useAuthStore } from '~/stores/auth'
+import type { Notification } from '~/composables/useNotifications';
 
-const route = useRoute()
-const { getPendingOffers } = useCase()
-const authStore = useAuthStore()
-const config = useRuntimeConfig()
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'authenticated',
+});
 
-const notifications = ref<any[]>([])
-const loading = ref(true)
-const activeFilter = ref('all')
-const showModal = ref(false)
-const selectedOffer = ref<any>(null)
-const highlightedId = ref<string | null>(null)
+const { getUserNotifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+const authStore = useAuthStore();
 
-const filters = computed(() => [
-  { id: 'all', label: 'Toutes', count: notifications.value.length },
-  { id: 'case', label: 'Offres', count: notifications.value.filter(n => n.type === 'case').length },
-  { id: 'message', label: 'Messages', count: notifications.value.filter(n => n.type === 'message').length },
-])
+const notifications = ref<Notification[]>([]);
+const loading = ref(false);
+const activeFilter = ref('all');
+
+const filters = [
+  { value: 'all', label: 'Toutes' },
+  { value: 'unread', label: 'Non lues' },
+  { value: 'appointment', label: 'Rendez-vous' },
+  { value: 'case', label: 'Dossiers' },
+  { value: 'message', label: 'Messages' },
+];
 
 const filteredNotifications = computed(() => {
-  let list = notifications.value
-  if (activeFilter.value !== 'all') list = list.filter(n => n.type === activeFilter.value)
-  return list.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-})
+  if (activeFilter.value === 'all') return notifications.value;
+  if (activeFilter.value === 'unread') return notifications.value.filter(n => !n.is_read);
+  return notifications.value.filter(n => n.type === activeFilter.value);
+});
+
+const unreadCount = computed(() => notifications.value.filter(n => !n.is_read).length);
+
+onMounted(() => {
+  loadNotifications();
+});
 
 const loadNotifications = async () => {
-  if (!authStore.user) return
-  loading.value = true
+  if (!authStore.user?.id) return;
+
+  loading.value = true;
   try {
-    // ON RÉCUPÈRE LES DEUX POUR VOIR WASHLAFA
-    const userId = authStore.user.id
-    const lawyerId = authStore.user?.lawyer_id || authStore.user?.lawyerId
-
-    const [res1, res2] = await Promise.all([
-      getPendingOffers(userId),
-      lawyerId && lawyerId !== userId ? getPendingOffers(lawyerId) : Promise.resolve([])
-    ])
-
-    const data1 = Array.isArray(res1) ? res1 : (res1?.data || [])
-    const data2 = Array.isArray(res2) ? res2 : (res2?.data || [])
-    
-    const uniqueMap = new Map()
-    const all = [...data1, ...data2]
-    all.forEach(o => { if(o?.id) uniqueMap.set(o.id, o) })
-
-    const offerNotifs = Array.from(uniqueMap.values()).map((o: any) => ({
-      id: o.id,
-      type: 'case',
-      title: o.title || 'Sans titre',
-      created_at: o.created_at,
-      data: o 
-    }))
-
-    const otherNotifs = [{ id: 'm1', type: 'message', title: 'Nouveau message', message: 'Bienvenue sur la plateforme.', created_at: new Date() }]
-    notifications.value = [...offerNotifs, ...otherNotifs]
+    const response = await getUserNotifications(authStore.user.id, 100);
+    notifications.value = response.data;
+  } catch (error) {
+    console.error('Error loading notifications:', error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
-const handleAcceptOffer = async (id: string) => {
-  if (!confirm('Accepter ce dossier ?')) return
-  loading.value = true
+const handleNotificationClick = async (notification: Notification) => {
+  if (!notification.is_read) {
+    try {
+      await markAsRead(notification.id);
+      notification.is_read = true;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  }
+
+  if (notification.related_entity_type && notification.related_entity_id) {
+    switch (notification.related_entity_type) {
+      case 'appointment':
+        navigateTo(`/appointments/${notification.related_entity_id}`);
+        break;
+      case 'case':
+        navigateTo(`/cases/${notification.related_entity_id}`);
+        break;
+      case 'message':
+        navigateTo(`/messages`);
+        break;
+    }
+  }
+};
+
+const markAllRead = async () => {
+  if (!authStore.user?.id) return;
 
   try {
-    // Ton ID valide qui permet de passer la sécurité "Profil manquant"
-    const validId = "bccc7e35-e678-4a9a-894f-b07256a9104c"
-
-    const response: any = await $fetch(`${config.public.apiBaseUrl}/offers/${id}/accept`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${authStore.accessToken}` },
-      body: {
-        lawyer_id: validId,
-        user_id: validId
-      }
-    })
-
-    // Fermeture de la modale
-    showModal.value = false
-
-    // Redirection automatique vers le dossier créé
-    // On utilise le numéro de dossier ou l'ID retourné par le backend
-    const targetId = response.caseNumber || id
-    // On redirige vers la liste complète des dossiers
-await navigateTo('/cases')
-
-  } catch (e: any) {
-    alert("Erreur lors de l'acceptation. Le serveur refuse l'opération.")
-  } finally {
-    loading.value = false
+    await markAllAsRead(authStore.user.id);
+    notifications.value.forEach(n => n.is_read = true);
+  } catch (error) {
+    console.error('Error marking all as read:', error);
   }
-}
-const handleDeclineOffer = async (id: string) => {
-  if(!confirm('Refuser ?')) return
+};
+
+const deleteNotif = async (notificationId: string) => {
+  if (!confirm('Supprimer cette notification ?')) return;
+
   try {
-    await $fetch(`${config.public.apiBaseUrl}/offers/${id}/decline`, { 
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
-    })
-    await loadNotifications()
-  } catch (e) { alert("Erreur refus") }
-}
+    await deleteNotification(notificationId);
+    notifications.value = notifications.value.filter(n => n.id !== notificationId);
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+  }
+};
 
-const openDetails = (offer: any) => {
-  selectedOffer.value = offer
-  showModal.value = true
-}
+const getNotificationColor = (type: string) => {
+  const colors: Record<string, string> = {
+    appointment: 'bg-blue-500',
+    case: 'bg-green-500',
+    message: 'bg-purple-500',
+    system: 'bg-gray-500',
+    reminder: 'bg-orange-500',
+  };
+  return colors[type] || 'bg-gray-500';
+};
 
-const getBorderColor = (type: string) => type === 'case' ? 'border-blue-600' : 'border-green-500'
-const getIconBg = (type: string) => type === 'case' ? 'bg-blue-600' : 'bg-green-500'
-const getIconPath = (type: string) => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-const formatFullDate = (d: any) => new Date(d).toLocaleDateString('fr-FR')
+const getTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    appointment: 'Rendez-vous',
+    case: 'Dossier',
+    message: 'Message',
+    system: 'Système',
+    reminder: 'Rappel',
+  };
+  return labels[type] || type;
+};
 
-onMounted(loadNotifications)
+const formatDate = (date: string) => {
+  const d = new Date(date);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (minutes < 1) return 'À l\'instant';
+  if (minutes < 60) return `Il y a ${minutes} min`;
+  if (hours < 24) return `Il y a ${hours}h`;
+  if (days < 7) return `Il y a ${days}j`;
+
+  return d.toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
 </script>

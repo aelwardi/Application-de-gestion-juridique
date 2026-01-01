@@ -37,22 +37,33 @@ export const getAllLawyers = async (
   city?: string,
   specialty?: string
 ): Promise<{ lawyers: Lawyer[]; total: number }> => {
-  // MODIFICATION : On sélectionne u.id explicitement comme l'ID principal
   let query = `
     SELECT 
       u.id, 
       l.user_id,
       l.bar_number,
       l.specialties,
+      l.experience_years,
+      l.office_address,
       l.office_city,
+      l.office_postal_code,
+      l.hourly_rate,
+      l.description,
+      l.languages,
+      l.availability_status,
       l.verified_by_admin,
+      l.verified_at,
       l.rating,
+      l.total_reviews,
+      l.total_cases,
       u.email,
       u.first_name,
       u.last_name,
       u.phone,
       u.is_active,
-      l.created_at
+      u.profile_picture_url,
+      l.created_at,
+      l.updated_at
     FROM lawyers l
     INNER JOIN users u ON l.user_id = u.id
     WHERE 1=1
@@ -60,31 +71,43 @@ export const getAllLawyers = async (
   const params: any[] = [];
   let paramIndex = 1;
 
+  let whereClause = '';
+
   if (verified !== undefined) {
-    query += ` AND l.verified_by_admin = $${paramIndex}`;
+    whereClause += ` AND l.verified_by_admin = $${paramIndex}`;
     params.push(verified);
     paramIndex++;
   }
 
   if (city) {
-    query += ` AND l.office_city ILIKE $${paramIndex}`;
+    whereClause += ` AND l.office_city ILIKE $${paramIndex}`;
     params.push(`%${city}%`);
     paramIndex++;
   }
 
   if (specialty) {
-    query += ` AND $${paramIndex} = ANY(l.specialties)`;
+    whereClause += ` AND $${paramIndex} = ANY(l.specialties)`;
     params.push(specialty);
     paramIndex++;
   }
 
-  const countResult = await pool.query(`SELECT COUNT(*) FROM lawyers l INNER JOIN users u ON l.user_id = u.id`, []);
+  const countQuery = `
+    SELECT COUNT(*) 
+    FROM lawyers l 
+    INNER JOIN users u ON l.user_id = u.id 
+    WHERE 1=1 ${whereClause}
+  `;
+  const countResult = await pool.query(countQuery, params.slice(0, paramIndex - 1));
   const total = parseInt(countResult.rows[0].count);
 
+  query += whereClause;
   query += ` ORDER BY l.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
   params.push(limit, (page - 1) * limit);
 
   const result: QueryResult<Lawyer> = await pool.query(query, params);
+
+  console.log(`[Lawyers Query] Found ${result.rows.length} lawyers, total: ${total}`);
+
   return { lawyers: result.rows, total };
 };
 
@@ -124,7 +147,6 @@ export interface Case {
   priority: string;
   created_at: Date;
   updated_at: Date;
-  // Add any other fields returned by your SELECT query
   client_name?: string;
   lawyer_name?: string;
 }

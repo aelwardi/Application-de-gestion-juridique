@@ -33,14 +33,14 @@ CREATE TABLE IF NOT EXISTS lawyer_specialties (
 INSERT INTO lawyer_specialties (name, description, icon) VALUES
 ('Droit pénal', 'Défense pénale, crimes, délits', '⚖️'),
 ('Droit civil', 'Litiges civils, contrats, responsabilité', '📄'),
-('Droit de la famille', 'Divorce, garde d''enfants, succession', '👨‍👩‍👧'),
+('Droit de la famille', 'Divorce, garde enfants, succession', '👨‍👩‍👧'),
 ('Droit du travail', 'Conflits employeur-employé, licenciements', '💼'),
 ('Droit commercial', 'Entreprises, sociétés, commerce', '🏢'),
 ('Droit immobilier', 'Transactions, litiges immobiliers', '🏠'),
 ('Droit fiscal', 'Fiscalité, impôts, contrôles', '💰'),
-('Droit administratif', 'Relations avec l''administration', '🏛️'),
+('Droit administratif', 'Relations avec administration', '🏛️'),
 ('Droit international', 'Transactions internationales', '🌍'),
-('Propriété intellectuelle', 'Brevets, marques, droits d''auteur', '©️')
+('Propriété intellectuelle', 'Brevets, marques, droits auteur', '©️')
 ON CONFLICT (name) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS cases (
