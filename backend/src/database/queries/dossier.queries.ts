@@ -127,10 +127,8 @@ export const caseQueries = {
         lu.email as lawyer_email,
         lu.phone as lawyer_phone
       FROM cases c
-      LEFT JOIN clients cl ON c.client_id = cl.id
-      LEFT JOIN users cu ON cl.user_id = cu.id
-      LEFT JOIN lawyers l ON c.lawyer_id = l.id
-      LEFT JOIN users lu ON l.user_id = lu.id
+      LEFT JOIN users cu ON c.client_id = cu.id
+      LEFT JOIN users lu ON c.lawyer_id = lu.id
       WHERE c.id = $1
     `;
     

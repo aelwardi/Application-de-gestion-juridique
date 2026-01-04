@@ -61,10 +61,8 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}): Prom
       cu.email as client_email
     FROM appointments a
     LEFT JOIN cases c ON a.case_id = c.id
-    INNER JOIN lawyers l ON a.lawyer_id = l.id
-    INNER JOIN users lu ON l.user_id = lu.id
-    INNER JOIN clients cl ON a.client_id = cl.id
-    INNER JOIN users cu ON cl.user_id = cu.id
+    LEFT JOIN users lu ON a.lawyer_id = lu.id
+    LEFT JOIN users cu ON a.client_id = cu.id
     WHERE 1=1
   `;
 
@@ -156,10 +154,8 @@ export const getAppointmentById = async (id: string): Promise<AppointmentWithDet
       cu.email as client_email
     FROM appointments a
     LEFT JOIN cases c ON a.case_id = c.id
-    INNER JOIN lawyers l ON a.lawyer_id = l.id
-    INNER JOIN users lu ON l.user_id = lu.id
-    INNER JOIN clients cl ON a.client_id = cl.id
-    INNER JOIN users cu ON cl.user_id = cu.id
+    LEFT JOIN users lu ON a.lawyer_id = lu.id
+    LEFT JOIN users cu ON a.client_id = cu.id
     WHERE a.id = $1
   `;
 
