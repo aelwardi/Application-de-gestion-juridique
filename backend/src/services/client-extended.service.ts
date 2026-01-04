@@ -36,9 +36,38 @@ export class ClientExtendedService {
       preferred_date,
     } = data;
 
+    // Résoudre le lawyer_id : peut être soit un user_id soit un lawyer.id
+    let resolvedLawyerId = lawyer_id;
+
+    if (lawyer_id) {
+      // Vérifier si c'est un user_id valide
+      const userCheck = await pool.query(
+        'SELECT id FROM users WHERE id = $1 AND role = $2',
+        [lawyer_id, 'lawyer']
+      );
+
+      if (userCheck.rows.length === 0) {
+        // Si pas trouvé comme user_id, essayer de le récupérer depuis la table lawyers
+        const lawyerCheck = await pool.query(
+          'SELECT user_id FROM lawyers WHERE id = $1',
+          [lawyer_id]
+        );
+
+        if (lawyerCheck.rows.length > 0) {
+          resolvedLawyerId = lawyerCheck.rows[0].user_id;
+          console.log(`[SERVICE] Converted lawyer table ID ${lawyer_id} to user_id ${resolvedLawyerId}`);
+        } else {
+          // Si toujours pas trouvé, erreur
+          throw new Error(`Lawyer with ID ${lawyer_id} not found in users or lawyers table`);
+        }
+      } else {
+        console.log(`[SERVICE] Using user_id directly: ${lawyer_id}`);
+      }
+    }
+
     const result = await pool.query(clientRequestQueries.create, [
       client_id,
-      lawyer_id || null,
+      resolvedLawyerId || null,
       request_type,
       title,
       description,
