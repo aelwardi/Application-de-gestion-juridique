@@ -1,7 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Header -->
       <div class="mb-8">
         <button @click="$router.back()" class="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,17 +24,32 @@
               <h1 class="text-3xl font-bold text-gray-900">{{ caseData.title }}</h1>
               <p class="text-gray-600 mt-2">{{ caseData.case_number }}</p>
             </div>
-            <div class="flex gap-3">
-              <span :class="getStatusClass(caseData.status)" class="px-4 py-2 text-sm font-semibold rounded-full">
-                {{ getStatusLabel(caseData.status) }}
-              </span>
-              <span :class="getPriorityClass(caseData.priority)" class="px-4 py-2 text-sm font-semibold rounded-full">
+            <div class="flex gap-3 items-center">
+              <div class="relative">
+                <select 
+                  :value="caseData.status"
+                  @change="handleStatusChange($event)"
+                  :disabled="statusUpdating"
+                  class="block w-full pl-3 pr-10 py-2 text-sm font-semibold border-none rounded-full cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm"
+                  :class="getStatusClass(caseData.status)"
+                >
+                  <option value="pending">En attente</option>
+                  <option value="in_progress">En cours</option>
+                  <option value="on_hold">En pause</option>
+                  <option value="closed">Fermé</option>
+                  <option value="archived">Archivé</option>
+                </select>
+                <div v-if="statusUpdating" class="absolute -right-6 top-2">
+                   <div class="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                </div>
+              </div>
+
+              <span :class="getPriorityClass(caseData.priority)" class="px-4 py-2 text-sm font-semibold rounded-full h-fit">
                 {{ getPriorityLabel(caseData.priority) }}
               </span>
             </div>
           </div>
 
-          <!-- Case Info Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
             <div class="bg-white rounded-lg shadow p-6">
               <h3 class="text-sm font-medium text-gray-500 mb-2">Type de dossier</h3>
@@ -49,19 +63,30 @@
             </div>
           </div>
 
-          <!-- Client Information -->
           <div class="bg-white rounded-lg shadow p-6 mt-6">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
               <h2 class="text-xl font-semibold text-gray-900">Informations du client</h2>
-              <NuxtLink 
-                :to="`/messages?clientId=${caseData.client_id}`"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Contacter le client
-              </NuxtLink>
+              <div class="flex gap-3">
+                <button 
+                  @click="scheduleAppointment"
+                  class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Programmer un RDV
+                </button>
+
+                <NuxtLink 
+                  :to="`/messages?clientId=${caseData.client_id}`"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Contacter le client
+                </NuxtLink>
+              </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -91,13 +116,11 @@
             </div>
           </div>
 
-          <!-- Description -->
           <div class="bg-white rounded-lg shadow p-6 mt-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">Description</h2>
             <p class="text-gray-700 whitespace-pre-wrap">{{ caseData.description || 'Aucune description disponible' }}</p>
           </div>
 
-          <!-- Additional Info -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div class="bg-white rounded-lg shadow p-6">
               <h2 class="text-xl font-semibold text-gray-900 mb-4">Informations juridiques</h2>
@@ -142,6 +165,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useCase } from '~/composables/useCase'
 import type { CaseWithDetails } from '~/types/case'
 
 definePageMeta({
@@ -150,10 +176,12 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { getCaseById } = useCase()
+const router = useRouter()
+const { getCaseById, updateCase } = useCase()
 
 const caseData = ref<CaseWithDetails | null>(null)
 const loading = ref(true)
+const statusUpdating = ref(false)
 const error = ref<string | null>(null)
 
 const loadCase = async () => {
@@ -177,26 +205,54 @@ const loadCase = async () => {
   }
 }
 
+// Redirection vers création RDV avec paramètres
+const scheduleAppointment = () => {
+  if (!caseData.value) return
+  // On passe les infos en query params pour que la page Appointments puisse les pré-remplir
+  router.push({
+    path: '/appointments',
+    query: { 
+      create: 'true',
+      caseId: caseData.value.id,
+      clientId: caseData.value.client_id
+    }
+  })
+}
+
+const handleStatusChange = async (event: Event) => {
+  const newStatus = (event.target as HTMLSelectElement).value
+  if (!caseData.value || newStatus === caseData.value.status) return
+
+  statusUpdating.value = true
+  try {
+    const caseId = route.params.id as string
+    const response = await updateCase(caseId, { status: newStatus })
+    
+    if (response.success) {
+      caseData.value.status = newStatus
+      if (newStatus === 'closed') {
+        caseData.value.closing_date = new Date().toISOString()
+      }
+    } else {
+      alert("Erreur lors de la mise à jour du statut")
+    }
+  } catch (err) {
+    console.error('Update status error:', err)
+    alert("Une erreur est survenue")
+  } finally {
+    statusUpdating.value = false
+  }
+}
+
 const getStatusClass = (status: string) => {
   const classes: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
     in_progress: 'bg-blue-100 text-blue-800',
     on_hold: 'bg-gray-100 text-gray-800',
     closed: 'bg-green-100 text-green-800',
-    archived: 'bg-gray-100 text-gray-600'
+    archived: 'bg-gray-200 text-gray-600'
   }
   return classes[status] || 'bg-gray-100 text-gray-800'
-}
-
-const getStatusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    pending: 'En attente',
-    in_progress: 'En cours',
-    on_hold: 'En pause',
-    closed: 'Fermé',
-    archived: 'Archivé'
-  }
-  return labels[status] || status
 }
 
 const getPriorityClass = (priority: string) => {

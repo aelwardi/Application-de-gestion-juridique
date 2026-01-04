@@ -6,127 +6,100 @@
           <h1 class="text-3xl font-bold text-gray-900">Mes Demandes</h1>
           <p class="text-gray-600 mt-2">Suivez vos demandes aux avocats</p>
         </div>
-        <button
-          @click="showRequestForm = true"
-          class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Nouvelle demande
-        </button>
       </div>
 
-      <div v-if="showRequestForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div v-if="showRequestForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
           <div class="p-6">
-            <ClientRequestForm @success="handleRequestSuccess" @cancel="showRequestForm = false" />
+            <ClientRequestForm 
+              :initial-data="editingRequest" 
+              @success="handleRequestSuccess" 
+              @cancel="closeForm" 
+            />
           </div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Total</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Total</p>
           <p class="text-3xl font-bold text-gray-900">{{ stats.total }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">En attente</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">En attente</p>
           <p class="text-3xl font-bold text-yellow-600">{{ stats.pending }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Acceptées</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Acceptées</p>
           <p class="text-3xl font-bold text-green-600">{{ stats.accepted }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Rejetées</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Rejetées</p>
           <p class="text-3xl font-bold text-red-600">{{ stats.rejected }}</p>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div v-if="loading" class="text-center py-12">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
         </div>
 
         <div v-else-if="requests.length === 0" class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune demande</h3>
-          <p class="mt-1 text-sm text-gray-500">Commencez par créer une nouvelle demande</p>
+          <p class="mt-1 text-sm text-gray-500 text-[10px] uppercase font-bold">Commencez par créer une nouvelle demande</p>
         </div>
 
-        <div v-else class="divide-y divide-gray-200">
+        <div v-else class="divide-y divide-gray-100">
           <div
             v-for="request in requests"
             :key="request.id"
-            class="p-6 hover:bg-gray-50 transition-colors"
+            class="p-6 hover:bg-gray-50/50 transition-colors"
           >
-            <div class="flex items-start justify-between">
+            <div class="flex items-start justify-between gap-4">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
-                  <h3 class="text-lg font-semibold text-gray-900">{{ request.title }}</h3>
+                  <h3 class="text-lg font-bold text-gray-900 uppercase italic">{{ request.title }}</h3>
                   <span
-                    class="px-2 py-1 text-xs rounded-full"
+                    class="px-2 py-0.5 text-[10px] font-black uppercase rounded-full"
                     :class="getStatusClass(request.status)"
                   >
                     {{ getStatusLabel(request.status) }}
                   </span>
                   <span
-                    class="px-2 py-1 text-xs rounded-full"
+                    class="px-2 py-0.5 text-[10px] font-black uppercase rounded-full"
                     :class="getUrgencyClass(request.urgency)"
                   >
                     {{ getUrgencyLabel(request.urgency) }}
                   </span>
                 </div>
 
-                <p class="text-sm text-gray-600 mb-3">{{ request.description }}</p>
+                <p class="text-sm text-gray-600 mb-4">{{ request.description }}</p>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span class="text-gray-500">Type:</span>
-                    <span class="ml-1 font-medium">{{ getRequestTypeLabel(request.request_type) }}</span>
-                  </div>
-                  <div v-if="request.case_category">
-                    <span class="text-gray-500">Catégorie:</span>
-                    <span class="ml-1 font-medium">{{ request.case_category }}</span>
-                  </div>
-                  <div v-if="request.budget_min || request.budget_max">
-                    <span class="text-gray-500">Budget:</span>
-                    <span class="ml-1 font-medium">
-                      {{ request.budget_min ? `${request.budget_min}€` : '?' }} -
-                      {{ request.budget_max ? `${request.budget_max}€` : '?' }}
-                    </span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Date:</span>
-                    <span class="ml-1 font-medium">{{ formatDate(request.created_at) }}</span>
-                  </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] uppercase font-bold text-gray-500">
+                  <div>TYPE: <span class="text-gray-900">{{ getRequestTypeLabel(request.request_type) }}</span></div>
+                  <div v-if="request.case_category">CATÉGORIE: <span class="text-gray-900">{{ request.case_category }}</span></div>
+                  <div v-if="request.budget_min">BUDGET: <span class="text-gray-900">{{ request.budget_min }}€ - {{ request.budget_max }}€</span></div>
+                  <div>SOUMIS LE: <span class="text-gray-900">{{ formatDate(request.created_at) }}</span></div>
                 </div>
 
-                <div v-if="request.lawyer_first_name" class="mt-3 p-3 bg-blue-50 rounded-lg">
-                  <p class="text-sm text-gray-700">
-                    <span class="font-medium">Avocat:</span>
-                    {{ request.lawyer_first_name }} {{ request.lawyer_last_name }}
-                    <span class="text-gray-500">({{ request.lawyer_email }})</span>
-                  </p>
-                </div>
-
-                <div v-if="request.lawyer_response" class="mt-3 p-3 bg-gray-50 rounded-lg">
-                  <p class="text-sm font-medium text-gray-700 mb-1">Réponse de l'avocat:</p>
-                  <p class="text-sm text-gray-600">{{ request.lawyer_response }}</p>
-                  <p class="text-xs text-gray-500 mt-1">
-                    {{ formatDate(request.responded_at) }}
-                  </p>
-                </div>
+               
               </div>
 
-              <div class="ml-4">
+              <div class="flex flex-col gap-2 min-w-[120px]">
+                <button
+                  v-if="request.status === 'pending'"
+                  @click="handleEdit(request)"
+                  class="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-black uppercase rounded-lg transition"
+                >
+                  Modifier
+                </button>
                 <button
                   v-if="request.status === 'pending'"
                   @click="cancelRequest(request.id)"
-                  class="text-red-600 hover:text-red-700 text-sm font-medium"
+                  class="w-full py-2 text-red-600 hover:bg-red-50 text-[10px] font-black uppercase rounded-lg transition border border-red-50"
                 >
                   Annuler
                 </button>
@@ -140,6 +113,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
 import ClientRequestForm from '~/components/clients/ClientRequestForm.vue';
 
 definePageMeta({
@@ -153,6 +127,7 @@ const { apiFetch } = useApi();
 const requests = ref<any[]>([]);
 const loading = ref(true);
 const showRequestForm = ref(false);
+const editingRequest = ref<any>(null); // Pour stocker la demande à modifier
 
 const stats = computed(() => {
   return {
@@ -165,7 +140,6 @@ const stats = computed(() => {
 
 const loadRequests = async () => {
   if (!authStore.user) return;
-
   try {
     loading.value = true;
     const response = await apiFetch(`/clients-extended/requests/client/${authStore.user.id}`) as any;
@@ -177,26 +151,34 @@ const loadRequests = async () => {
   }
 };
 
-const handleRequestSuccess = () => {
+const handleEdit = (request: any) => {
+  editingRequest.value = request; // On définit la demande à modifier
+  showRequestForm.value = true;   // On ouvre la modale
+};
+
+const closeForm = () => {
   showRequestForm.value = false;
+  editingRequest.value = null; // Important : on vide l'état pour la prochaine ouverture
+};
+
+const handleRequestSuccess = () => {
+  closeForm();
   loadRequests();
 };
 
 const cancelRequest = async (id: string) => {
   if (!confirm('Êtes-vous sûr de vouloir annuler cette demande ?')) return;
-
   try {
     await apiFetch(`/clients-extended/requests/${id}`, {
       method: 'DELETE',
     });
     loadRequests();
   } catch (error) {
-    console.error('Error cancelling request:', error);
-    alert('Erreur lors de l\'annulation de la demande');
+    alert('Erreur lors de l\'annulation');
   }
 };
 
-const formatDate = (date: Date) => {
+const formatDate = (date: any) => {
   return new Date(date).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',

@@ -29,26 +29,42 @@ export class UserService {
     return result.rows[0] || null;
   }
 
-  async getAllUsers(limit = 50, offset = 0): Promise<{ users: User[]; total: number }> {
-    const result = await pool.query(userQueries.getAll, [limit, offset]);
-    const countResult = await pool.query(userQueries.count);
-    const users = await Promise.all(
-      (result.rows as User[]).map(async (user) => {
-        if (user.role === 'avocat') {
-          // On récupère l'ID de la table lawyers
-          const lawyerRes = await pool.query('SELECT id FROM lawyers WHERE user_id = $1', [user.id]);
-          if (lawyerRes.rows.length > 0) {
-            return { ...user, lawyerId: lawyerRes.rows[0].id };
-          }
+  async getAllUsers(limit = 50, offset = 0): Promise<{ users: any[]; total: number }> {
+  // 1. On récupère les utilisateurs de base
+  const result = await pool.query(userQueries.getAll, [limit, offset]);
+  
+  // 2. Correction : On utilise userQueries.count qui existe déjà dans tes imports
+  const countResult = await pool.query(userQueries.count);
+
+  const users = await Promise.all(
+    (result.rows).map(async (user: any) => {
+      // 3. Correction : On compare sans bloquer le type TS
+      // On vérifie si c'est un avocat
+      const isLawyer = user.role === 'avocat' || user.role === 'lawyer';
+
+      if (isLawyer) {
+        // On récupère TOUTES les colonnes de la table lawyers
+        const lawyerRes = await pool.query('SELECT * FROM lawyers WHERE user_id = $1', [user.id]);
+        
+        if (lawyerRes.rows.length > 0) {
+          const lawyerData = lawyerRes.rows[0];
+          return { 
+            ...user, 
+            ...lawyerData, // Fusionne description, experience_years, office_city, etc.
+            lawyerId: lawyerData.id,
+            lawyerTableId: lawyerData.id 
+          };
         }
-        return user;
-      })
-    );
-    return {
-      users,
-      total: parseInt(countResult.rows[0].count),
-    };
-  }
+      }
+      return user;
+    })
+  );
+
+  return {
+    users,
+    total: parseInt(countResult.rows[0].count),
+  };
+}
 
   async updateUser(id: string, data: UpdateUserInput): Promise<User | null> {
     const fields = Object.keys(data);
