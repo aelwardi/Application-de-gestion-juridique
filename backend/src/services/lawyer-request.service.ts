@@ -1,5 +1,10 @@
 import { pool } from '../config/database.config';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  sendNewRequestToLawyer,
+  sendRequestAcceptedToClient,
+  sendRequestRejectedToClient
+} from '../utils/email.util';
 
 export interface LawyerRequest {
   id: string;
@@ -75,7 +80,47 @@ export const createLawyerRequest = async (data: CreateLawyerRequestInput): Promi
   ];
 
   const result = await pool.query(query, values);
-  return result.rows[0];
+  const createdRequest = result.rows[0];
+
+  // Récupérer les informations du client et de l'avocat pour l'email
+  try {
+    const userQuery = `
+      SELECT 
+        uc.first_name as client_first_name,
+        uc.last_name as client_last_name,
+        ul.first_name as lawyer_first_name,
+        ul.last_name as lawyer_last_name,
+        ul.email as lawyer_email
+      FROM users uc
+      CROSS JOIN users ul
+      WHERE uc.id = $1 AND ul.id = $2
+    `;
+
+    const userResult = await pool.query(userQuery, [data.client_id, data.lawyer_id]);
+
+    if (userResult.rows.length > 0) {
+      const userData = userResult.rows[0];
+      const clientFullName = `${userData.client_first_name} ${userData.client_last_name}`;
+
+      // Envoyer l'email à l'avocat de manière asynchrone (ne pas bloquer la création)
+      sendNewRequestToLawyer(
+        userData.lawyer_email,
+        userData.lawyer_first_name,
+        clientFullName,
+        data.title,
+        data.description,
+        data.urgency || 'medium',
+        data.case_category
+      ).catch(error => {
+        console.error('Erreur lors de l\'envoi de l\'email à l\'avocat:', error);
+      });
+    }
+  } catch (emailError) {
+    console.error('Erreur lors de la récupération des données pour l\'email:', emailError);
+    // On ne fait pas échouer la création de la demande si l'email échoue
+  }
+
+  return createdRequest;
 };
 
 /**
@@ -200,7 +245,45 @@ export const acceptLawyerRequest = async (requestId: string): Promise<LawyerRequ
     throw new Error('Request not found');
   }
 
-  return result.rows[0];
+  const acceptedRequest = result.rows[0];
+
+  // Récupérer les informations du client et de l'avocat pour l'email
+  try {
+    const userQuery = `
+      SELECT 
+        uc.first_name as client_first_name,
+        uc.last_name as client_last_name,
+        uc.email as client_email,
+        ul.first_name as lawyer_first_name,
+        ul.last_name as lawyer_last_name
+      FROM client_requests r
+      INNER JOIN users uc ON r.client_id = uc.id
+      INNER JOIN users ul ON r.lawyer_id = ul.id
+      WHERE r.id = $1
+    `;
+
+    const userResult = await pool.query(userQuery, [requestId]);
+
+    if (userResult.rows.length > 0) {
+      const userData = userResult.rows[0];
+      const lawyerFullName = `${userData.lawyer_first_name} ${userData.lawyer_last_name}`;
+
+      // Envoyer l'email au client de manière asynchrone
+      sendRequestAcceptedToClient(
+        userData.client_email,
+        userData.client_first_name,
+        lawyerFullName,
+        acceptedRequest.title
+      ).catch(error => {
+        console.error('Erreur lors de l\'envoi de l\'email au client:', error);
+      });
+    }
+  } catch (emailError) {
+    console.error('Erreur lors de la récupération des données pour l\'email:', emailError);
+    // On ne fait pas échouer l'acceptation si l'email échoue
+  }
+
+  return acceptedRequest;
 };
 
 /**
@@ -220,7 +303,45 @@ export const rejectLawyerRequest = async (requestId: string): Promise<LawyerRequ
     throw new Error('Request not found');
   }
 
-  return result.rows[0];
+  const rejectedRequest = result.rows[0];
+
+  // Récupérer les informations du client et de l'avocat pour l'email
+  try {
+    const userQuery = `
+      SELECT 
+        uc.first_name as client_first_name,
+        uc.last_name as client_last_name,
+        uc.email as client_email,
+        ul.first_name as lawyer_first_name,
+        ul.last_name as lawyer_last_name
+      FROM client_requests r
+      INNER JOIN users uc ON r.client_id = uc.id
+      INNER JOIN users ul ON r.lawyer_id = ul.id
+      WHERE r.id = $1
+    `;
+
+    const userResult = await pool.query(userQuery, [requestId]);
+
+    if (userResult.rows.length > 0) {
+      const userData = userResult.rows[0];
+      const lawyerFullName = `${userData.lawyer_first_name} ${userData.lawyer_last_name}`;
+
+      // Envoyer l'email au client de manière asynchrone
+      sendRequestRejectedToClient(
+        userData.client_email,
+        userData.client_first_name,
+        lawyerFullName,
+        rejectedRequest.title
+      ).catch(error => {
+        console.error('Erreur lors de l\'envoi de l\'email au client:', error);
+      });
+    }
+  } catch (emailError) {
+    console.error('Erreur lors de la récupération des données pour l\'email:', emailError);
+    // On ne fait pas échouer le refus si l'email échoue
+  }
+
+  return rejectedRequest;
 };
 
 /**

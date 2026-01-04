@@ -275,6 +275,251 @@ export const sendAppointmentNotification = async (
 };
 
 /**
+ * Envoyer un email à l'avocat pour une nouvelle demande client
+ */
+export const sendNewRequestToLawyer = async (
+  lawyerEmail: string,
+  lawyerFirstName: string,
+  clientName: string,
+  requestTitle: string,
+  requestDescription: string,
+  urgency: string,
+  caseCategory: string
+): Promise<boolean> => {
+  const urgencyColors: Record<string, string> = {
+    low: '#10b981',
+    medium: '#f59e0b',
+    high: '#f97316',
+    urgent: '#dc2626'
+  };
+
+  const urgencyLabels: Record<string, string> = {
+    low: 'Faible',
+    medium: 'Moyenne',
+    high: 'Haute',
+    urgent: 'Urgente'
+  };
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .request-details { background-color: white; border: 1px solid #e5e7eb; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .detail-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+        .detail-label { font-weight: bold; color: #6b7280; display: block; margin-bottom: 5px; }
+        .detail-value { color: #1f2937; }
+        .urgency-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; color: white; font-weight: bold; margin: 10px 0; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+        .button-secondary { background-color: #6b7280; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📩 Nouvelle Demande Client</h1>
+        </div>
+        <div class="content">
+          <h2>Bonjour Me ${lawyerFirstName},</h2>
+          <p>Vous avez reçu une nouvelle demande d'un client sur la plateforme Gestion Juridique.</p>
+          
+          <div class="request-details">
+            <div class="detail-row">
+              <span class="detail-label">Client :</span>
+              <span class="detail-value">${clientName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Titre de la demande :</span>
+              <span class="detail-value"><strong>${requestTitle}</strong></span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Catégorie :</span>
+              <span class="detail-value">${caseCategory}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Urgence :</span>
+              <span class="urgency-badge" style="background-color: ${urgencyColors[urgency] || '#6b7280'}">
+                ${urgencyLabels[urgency] || urgency}
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Description :</span>
+              <p class="detail-value">${requestDescription}</p>
+            </div>
+          </div>
+
+          <p><strong>Actions requises :</strong></p>
+          <p>Veuillez vous connecter à votre espace avocat pour consulter les détails complets de la demande et y répondre.</p>
+          
+          <center>
+            <a href="http://localhost:3001/dashboard" class="button">Voir la demande</a>
+          </center>
+
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: lawyerEmail,
+    subject: `Nouvelle demande client : ${requestTitle}`,
+    html,
+  });
+};
+
+/**
+ * Envoyer un email au client quand l'avocat accepte sa demande
+ */
+export const sendRequestAcceptedToClient = async (
+  clientEmail: string,
+  clientFirstName: string,
+  lawyerName: string,
+  requestTitle: string
+): Promise<boolean> => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #10b981; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .success-box { background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .icon { font-size: 48px; text-align: center; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✅ Demande Acceptée !</h1>
+        </div>
+        <div class="content">
+          <div class="icon">🎉</div>
+          <h2>Bonjour ${clientFirstName},</h2>
+          <p>Bonne nouvelle ! Votre demande a été acceptée par l'avocat.</p>
+          
+          <div class="success-box">
+            <p><strong>Détails de la demande :</strong></p>
+            <p><strong>Titre :</strong> ${requestTitle}</p>
+            <p><strong>Avocat :</strong> Me ${lawyerName}</p>
+          </div>
+
+          <p><strong>Prochaines étapes :</strong></p>
+          <ul>
+            <li>L'avocat va vous contacter prochainement pour discuter des détails</li>
+            <li>Vous pouvez également le contacter via votre espace client</li>
+            <li>Un rendez-vous pourra être programmé pour approfondir votre dossier</li>
+          </ul>
+          
+          <center>
+            <a href="http://localhost:3001/dashboard" class="button">Accéder à mon espace</a>
+          </center>
+
+          <p>Nous vous souhaitons une excellente collaboration !</p>
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: clientEmail,
+    subject: `Votre demande "${requestTitle}" a été acceptée`,
+    html,
+  });
+};
+
+/**
+ * Envoyer un email au client quand l'avocat refuse sa demande
+ */
+export const sendRequestRejectedToClient = async (
+  clientEmail: string,
+  clientFirstName: string,
+  lawyerName: string,
+  requestTitle: string
+): Promise<boolean> => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #ef4444; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .info-box { background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .suggestion-box { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Réponse à votre demande</h1>
+        </div>
+        <div class="content">
+          <h2>Bonjour ${clientFirstName},</h2>
+          <p>Nous avons reçu une réponse concernant votre demande.</p>
+          
+          <div class="info-box">
+            <p><strong>Détails de la demande :</strong></p>
+            <p><strong>Titre :</strong> ${requestTitle}</p>
+            <p><strong>Avocat :</strong> Me ${lawyerName}</p>
+            <p><strong>Statut :</strong> Non retenue</p>
+          </div>
+
+          <p>Malheureusement, Me ${lawyerName} n'est pas en mesure de donner suite à votre demande pour le moment. Cela peut être dû à plusieurs raisons (disponibilité, spécialisation, etc.).</p>
+
+          <div class="suggestion-box">
+            <p><strong>💡 Suggestions :</strong></p>
+            <ul>
+              <li>Consultez notre liste d'avocats pour trouver d'autres spécialistes dans votre domaine</li>
+              <li>Affinez votre demande avec plus de détails si nécessaire</li>
+              <li>Contactez notre support pour obtenir de l'aide dans votre recherche</li>
+            </ul>
+          </div>
+          
+          <center>
+            <a href="http://localhost:3001/lawyers" class="button">Trouver un autre avocat</a>
+          </center>
+
+          <p>Ne vous découragez pas, nous sommes là pour vous aider à trouver l'avocat qui correspond à vos besoins.</p>
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: clientEmail,
+    subject: `Réponse à votre demande "${requestTitle}"`,
+    html,
+  });
+};
+
+/**
  * Tester la configuration email
  */
 export const testEmailConfiguration = async (): Promise<boolean> => {
