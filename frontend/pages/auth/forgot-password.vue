@@ -137,13 +137,23 @@ const handleSubmit = async () => {
   successMessage.value = '';
 
   try {
-    // TODO: Implement actual password reset API call
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+    const config = useRuntimeConfig();
 
-    successMessage.value = `Un email de réinitialisation a été envoyé à ${email.value}. Veuillez vérifier votre boîte de réception.`;
+    const response = await $fetch<any>(`${config.public.apiBaseUrl}/auth/forgot-password`, {
+      method: 'POST',
+      body: {
+        email: email.value
+      }
+    });
+
+    if (response.success) {
+      successMessage.value = response.message || `Un email de réinitialisation a été envoyé à ${email.value}. Veuillez vérifier votre boîte de réception.`;
+    } else {
+      errorMessage.value = response.message || 'Une erreur est survenue. Veuillez réessayer.';
+    }
   } catch (error: any) {
     console.error('Password reset error:', error);
-    errorMessage.value = 'Une erreur est survenue. Veuillez réessayer.';
+    errorMessage.value = error.data?.message || 'Une erreur est survenue. Veuillez réessayer.';
   } finally {
     isLoading.value = false;
   }
