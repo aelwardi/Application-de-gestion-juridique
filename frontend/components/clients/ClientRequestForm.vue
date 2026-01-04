@@ -1,12 +1,12 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm p-2">
+  <div class="bg-white rounded-lg">
     <div v-if="form.lawyer_id" class="mb-4 p-2 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2">
-      <span class="text-green-600">✅</span>
+      <span class="text-green-600"></span>
       <p class="text-[10px] font-black text-green-700 uppercase">Avocat lié avec succès</p>
     </div>
-    <div v-else class="mb-4 p-2 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2">
-      <span class="text-red-600">⚠️</span>
-      <p class="text-[10px] font-black text-red-700 uppercase">Attention: Aucun avocat lié</p>
+    <div v-else class="mb-4 p-2 bg-orange-50 rounded-lg border border-orange-100 flex items-center gap-2">
+      <span class="text-orange-600"></span>
+      <p class="text-[10px] font-black text-orange-700 uppercase">Mode modification - Avocat: {{ initialData?.lawyer_id ? 'Déjà assigné' : 'Non assigné' }}</p>
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -125,8 +125,11 @@ watch(() => props.preselectedLawyerId, () => {
 const handleSubmit = async () => {
   if (!authStore.user) return;
   
-  // Vérification ultime avant l'envoi
-  if (!form.value.lawyer_id) {
+  const isEdit = !!props.initialData;
+
+  // En mode création, vérifier que lawyer_id est présent
+  // En mode édition, on peut modifier sans changer l'avocat
+  if (!isEdit && !form.value.lawyer_id) {
     alert("Erreur: L'ID de l'avocat est manquant. La demande ne peut pas être envoyée.");
     return;
   }
@@ -141,8 +144,7 @@ const handleSubmit = async () => {
 
     console.log("[DEBUG SUBMIT] Envoi du payload:", payload);
 
-    const isEdit = !!props.initialData;
-    const url = isEdit 
+    const url = isEdit
       ? `/clients-extended/requests/${props.initialData.id}` 
       : '/clients-extended/requests';
     

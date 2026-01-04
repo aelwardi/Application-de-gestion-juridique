@@ -32,7 +32,10 @@
       <div v-if="showRequestForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
           <div class="p-6">
-            <ClientRequestForm
+            <h2 class="text-xl font-bold text-gray-900 mb-4">
+              {{ editingRequest ? 'Modifier la demande' : 'Nouvelle demande' }}
+            </h2>
+            <ClientsClientRequestForm
               :initial-data="editingRequest"
               @success="handleRequestSuccess"
               @cancel="closeForm"
