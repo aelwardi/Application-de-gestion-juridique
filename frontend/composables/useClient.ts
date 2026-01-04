@@ -1,42 +1,38 @@
 import type {
   Client,
-  ClientWithUser,
-  CreateClientInput,
   UpdateClientInput,
   ClientSearchFilters,
   ClientStats,
-  ClientCase,
-  ClientAppointment,
-  ClientDocument,
 } from '~/types/client';
 import type { ApiResponse, PaginatedResponse } from '~/types/api';
 
 export const useClient = () => {
   const { apiFetch } = useApi();
 
-  const createClient = async (data: CreateClientInput): Promise<Client> => {
-    const response = await apiFetch<ApiResponse<Client>>('/clients', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  // Note: Création de client via /auth/register maintenant
+  // const createClient = async (data: CreateClientInput): Promise<Client> => {
+  //   const response = await apiFetch<ApiResponse<Client>>('/clients', {
+  //     method: 'POST',
+  //     body: JSON.stringify(data),
+  //   });
+  //   return response.data!;
+  // };
+
+  const getClientById = async (id: string): Promise<Client> => {
+    const response = await apiFetch<ApiResponse<Client>>(`/clients/${id}`);
     return response.data!;
   };
 
-  const getClientById = async (id: string): Promise<ClientWithUser> => {
-    const response = await apiFetch<ApiResponse<ClientWithUser>>(`/clients/${id}`);
-    return response.data!;
-  };
-
-  const getClientByUserId = async (userId: string): Promise<ClientWithUser> => {
-    const response = await apiFetch<ApiResponse<ClientWithUser>>(`/clients/user/${userId}`);
+  const getClientByUserId = async (userId: string): Promise<Client> => {
+    const response = await apiFetch<ApiResponse<Client>>(`/clients/user/${userId}`);
     return response.data!;
   };
 
   const getAllClients = async (
-    limit = 50,
-    offset = 0
-  ): Promise<PaginatedResponse<ClientWithUser>> => {
-    const response = await apiFetch<any>(`/clients?limit=${limit}&offset=${offset}`);
+    page = 1,
+    limit = 50
+  ): Promise<PaginatedResponse<Client>> => {
+    const response = await apiFetch<any>(`/clients?page=${page}&limit=${limit}`);
     return {
       data: response.data,
       total: response.pagination.total,
@@ -48,7 +44,7 @@ export const useClient = () => {
 
   const searchClients = async (
     filters: ClientSearchFilters
-  ): Promise<PaginatedResponse<ClientWithUser>> => {
+  ): Promise<PaginatedResponse<Client>> => {
     const params = new URLSearchParams();
 
     if (filters.name) params.append('name', filters.name);
@@ -73,7 +69,7 @@ export const useClient = () => {
     lawyerId: string,
     limit = 50,
     offset = 0
-  ): Promise<PaginatedResponse<ClientWithUser>> => {
+  ): Promise<PaginatedResponse<Client>> => {
     const response = await apiFetch<any>(`/clients/lawyer/${lawyerId}?limit=${limit}&offset=${offset}`);
     return {
       data: response.data,
@@ -92,16 +88,9 @@ export const useClient = () => {
     return response.data!;
   };
 
-  const updateClientByUserId = async (userId: string, data: UpdateClientInput): Promise<Client> => {
-    const response = await apiFetch<ApiResponse<Client>>(`/clients/user/${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    return response.data!;
-  };
 
   const deleteClient = async (id: string): Promise<void> => {
-    await apiFetch<ApiResponse>(`/clients/${id}`, {
+    await apiFetch<ApiResponse<void>>(`/clients/${id}`, {
       method: 'DELETE',
     });
   };
@@ -111,64 +100,23 @@ export const useClient = () => {
     return response.data!;
   };
 
-  const getClientCases = async (
-    userId: string,
-    limit = 20,
-    offset = 0
-  ): Promise<PaginatedResponse<ClientCase>> => {
-    const response = await apiFetch<any>(`/clients/user/${userId}/cases?limit=${limit}&offset=${offset}`);
-    return {
-      data: response.data,
-      total: response.pagination.total,
-      page: response.pagination.page,
-      limit: response.pagination.limit,
-      totalPages: response.pagination.totalPages,
-    };
-  };
-
-  const getClientAppointments = async (
-    userId: string,
-    limit = 20,
-    offset = 0
-  ): Promise<PaginatedResponse<ClientAppointment>> => {
-    const response = await apiFetch<any>(`/clients/user/${userId}/appointments?limit=${limit}&offset=${offset}`);
-    return {
-      data: response.data,
-      total: response.pagination.total,
-      page: response.pagination.page,
-      limit: response.pagination.limit,
-      totalPages: response.pagination.totalPages,
-    };
-  };
-
-  const getClientDocuments = async (
-    userId: string,
-    limit = 20,
-    offset = 0
-  ): Promise<PaginatedResponse<ClientDocument>> => {
-    const response = await apiFetch<any>(`/clients/user/${userId}/documents?limit=${limit}&offset=${offset}`);
-    return {
-      data: response.data,
-      total: response.pagination.total,
-      page: response.pagination.page,
-      limit: response.pagination.limit,
-      totalPages: response.pagination.totalPages,
-    };
-  };
+  // TODO: Ces méthodes ne sont pas encore implémentées dans le backend
+  // const getClientCases = async (userId: string, limit = 20, offset = 0) => { ... };
+  // const getClientAppointments = async (userId: string, limit = 20, offset = 0) => { ... };
+  // const getClientDocuments = async (userId: string, limit = 20, offset = 0) => { ... };
 
   return {
-    createClient,
+    // createClient, // Utiliser /auth/register à la place
     getClientById,
     getClientByUserId,
     getAllClients,
     searchClients,
     getClientsByLawyer,
     updateClient,
-    updateClientByUserId,
     deleteClient,
     getClientStats,
-    getClientCases,
-    getClientAppointments,
-    getClientDocuments,
+    // getClientCases, // TODO
+    // getClientAppointments, // TODO
+    // getClientDocuments, // TODO
   };
 };

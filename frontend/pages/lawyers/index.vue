@@ -39,7 +39,7 @@
 
           <h2 class="text-xl font-black text-gray-900 uppercase italic">Me {{ lawyer.first_name }} {{ lawyer.last_name }}</h2>
           <p class="text-blue-600 text-[11px] font-bold uppercase tracking-widest mt-1 italic">
-            Barreau de {{ lawyer.office_city || 'Paris' }}
+            Barreau de {{ lawyer.officeCity || 'Paris' }}
           </p>
         </div>
 
@@ -72,9 +72,9 @@
             </button>
           </div>
 
-          <h3 class="text-2xl font-black text-gray-900 uppercase italic">Me {{ lawyerDetails.first_name }} {{ lawyerDetails.last_name }}</h3>
+          <h3 class="text-2xl font-black text-gray-900 uppercase italic">Me {{ lawyerDetails.firstName }} {{ lawyerDetails.lastName }}</h3>
           <p class="text-blue-600 font-bold text-sm italic mb-4">
-            Barreau de {{ lawyerDetails.office_city }} — Toque n°{{ lawyerDetails.bar_number }}
+            Barreau de {{ lawyerDetails.officeCity }} — Toque n°{{ lawyerDetails.barNumber }}
           </p>
 
           <div class="p-4 bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-2xl border border-blue-100/50 flex items-center justify-between mb-6">

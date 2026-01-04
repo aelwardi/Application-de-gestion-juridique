@@ -273,12 +273,12 @@ const loadCases = async () => {
     if (filters.value.search) apiFilters.search = filters.value.search;
 
     // Si l'utilisateur est un avocat, récupérer ses dossiers
-    if (authStore.user.role === 'avocat' && authStore.user.lawyerId) {
-      apiFilters.lawyer_id = authStore.user.lawyerId;
+    if (authStore.user.role === 'avocat') {
+      apiFilters.lawyer_id = authStore.user.id;
     }
     // Si l'utilisateur est un client, récupérer ses dossiers
-    else if (authStore.user.role === 'client' && authStore.user.clientId) {
-      apiFilters.client_id = authStore.user.clientId;
+    else if (authStore.user.role === 'client') {
+      apiFilters.client_id = authStore.user.id;
     }
 
     const response = await getAllCases(apiFilters);

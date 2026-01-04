@@ -3,8 +3,8 @@
     <div class="flex flex-col md:flex-row gap-4">
       <div class="flex-shrink-0">
         <img
-          :src="lawyer.profile_picture_url || '/images/default-avatar.png'"
-          :alt="`${lawyer.first_name} ${lawyer.last_name}`"
+          :src="lawyer.profilePictureUrl || '/images/default-avatar.png'"
+          :alt="`${lawyer.firstName} ${lawyer.lastName}`"
           class="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
         />
       </div>
@@ -13,15 +13,15 @@
         <div class="flex items-start justify-between">
           <div>
             <h3 class="text-xl font-bold text-gray-900">
-              {{ lawyer.first_name }} {{ lawyer.last_name }}
+              {{ lawyer.firstName }} {{ lawyer.lastName }}
             </h3>
             <p class="text-sm text-gray-600 mt-1">
-              Barreau n° {{ lawyer.bar_number }}
+              Barreau n° {{ lawyer.barNumber }}
             </p>
           </div>
 
           <span
-            v-if="lawyer.verified_by_admin"
+            v-if="lawyer.verifiedByAdmin"
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
           >
             <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -48,12 +48,12 @@
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
             <span class="ml-2 text-sm text-gray-600">
-              {{ lawyer.rating.toFixed(1) }} ({{ lawyer.total_reviews }} avis)
+              {{ lawyer.rating.toFixed(1) }} ({{ lawyer.totalReviews }} avis)
             </span>
           </div>
 
           <span class="text-sm text-gray-600">
-            {{ lawyer.experience_years }} ans d'expérience
+            {{ lawyer.experienceYears }} ans d'expérience
           </span>
         </div>
 
@@ -80,7 +80,7 @@
         </p>
 
         <div class="mt-3 flex items-center gap-4 text-sm text-gray-600">
-          <span v-if="lawyer.office_city" class="flex items-center">
+          <span v-if="lawyer.officeCity" class="flex items-center">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -95,10 +95,10 @@
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            {{ lawyer.office_city }}
+            {{ lawyer.officeCity }}
           </span>
 
-          <span v-if="lawyer.hourly_rate" class="flex items-center">
+          <span v-if="lawyer.hourlyRate" class="flex items-center">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -107,29 +107,29 @@
                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            {{ lawyer.hourly_rate }}€/heure
+            {{ lawyer.hourlyRate }}€/heure
           </span>
 
           <span
             class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
             :class="{
-              'bg-green-100 text-green-800': lawyer.availability_status === 'available',
-              'bg-orange-100 text-orange-800': lawyer.availability_status === 'busy',
-              'bg-red-100 text-red-800': lawyer.availability_status === 'unavailable',
+              'bg-green-100 text-green-800': lawyer.availabilityStatus === 'available',
+              'bg-orange-100 text-orange-800': lawyer.availabilityStatus === 'busy',
+              'bg-red-100 text-red-800': lawyer.availabilityStatus === 'unavailable',
             }"
           >
             <span
               class="w-2 h-2 rounded-full mr-1"
               :class="{
-                'bg-green-500': lawyer.availability_status === 'available',
-                'bg-orange-500': lawyer.availability_status === 'busy',
-                'bg-red-500': lawyer.availability_status === 'unavailable',
+                'bg-green-500': lawyer.availabilityStatus === 'available',
+                'bg-orange-500': lawyer.availabilityStatus === 'busy',
+                'bg-red-500': lawyer.availabilityStatus === 'unavailable',
               }"
             ></span>
             {{
-              lawyer.availability_status === 'available'
+              lawyer.availabilityStatus === 'available'
                 ? 'Disponible'
-                : lawyer.availability_status === 'busy'
+                : lawyer.availabilityStatus === 'busy'
                 ? 'Occupé'
                 : 'Indisponible'
             }}

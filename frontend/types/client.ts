@@ -1,6 +1,20 @@
+// =====================================================
+// Types CLIENT - Frontend adapté à la table users unifiée
+// =====================================================
+
+// Client = User avec role='client' (table unifiée)
 export interface Client {
-  id: string;
-  userId: string;
+  id: string; // ID user (plus besoin de userId séparé)
+  email: string;
+  role: 'client';
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  profilePictureUrl?: string;
+  isActive: boolean;
+  isVerified: boolean;
+
+  // Champs spécifiques clients
   address?: string;
   city?: string;
   postalCode?: string;
@@ -9,37 +23,20 @@ export interface Client {
   notes?: string;
   totalCases: number;
   activeCases: number;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface ClientWithUser extends Client {
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  profilePictureUrl?: string;
-  isActive: boolean;
-  isVerified: boolean;
-}
-
-export interface CreateClientInput {
-  userId: string;
-  address?: string;
-  city?: string;
-  postalCode?: string;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  notes?: string;
-}
-
 export interface UpdateClientInput {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   address?: string;
   city?: string;
   postalCode?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
-  notes?: string;
 }
 
 export interface ClientSearchFilters {
@@ -60,7 +57,7 @@ export interface ClientStats {
   completedCases: number;
   upcomingAppointments: number;
   totalDocuments: number;
-  unreadMessages: number;
+  unreadMessages?: number;
 }
 
 export interface ClientCase {

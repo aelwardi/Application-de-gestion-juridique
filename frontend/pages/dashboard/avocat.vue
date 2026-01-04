@@ -187,13 +187,14 @@ const loadDashboardData = async () => {
   loading.value = true
 
   try {
-    const lawyerId = user.value.lawyer_id || user.value.lawyerId || user.value.id
+    // Avec la table unifiée, user.id suffit (plus besoin de lawyerId séparé)
+    const userId = user.value.id;
 
     // 1. Stats & Documents & RDV
     const [statsRes, aptStatsRes, docsRes] = await Promise.all([
-      getCaseStats(lawyerId),
-      getAppointmentStats(lawyerId),
-      getRecentDocuments(user.value.id) // On récupère les docs récents
+      getCaseStats(userId),
+      getAppointmentStats(userId),
+      getRecentDocuments(userId) // On récupère les docs récents
     ])
     
     // Traitement Stats
@@ -208,7 +209,7 @@ const loadDashboardData = async () => {
     // 2. Dossiers (Dernier dossier)
     const casesRes: any = await $fetch(`${config.public.apiBaseUrl}/cases`, {
       headers: { 'Authorization': `Bearer ${authStore.accessToken}` },
-      params: { lawyer_id: lawyerId }
+      params: { lawyer_id: userId }
     })
     const dataCases = Array.isArray(casesRes) ? casesRes : (casesRes?.data || [])
     const sortedCases = dataCases.sort((a: any, b: any) => 
@@ -217,7 +218,7 @@ const loadDashboardData = async () => {
     recentCases.value = sortedCases.length > 0 ? [sortedCases[0]] : []
 
     // 3. Rendez-vous
-    const aptRes = await getAllAppointments({ lawyer_id: lawyerId })
+    const aptRes = await getAllAppointments({ lawyer_id: userId })
     const allApts = aptRes.success ? aptRes.data : []
     
     if (allApts.length > 0) {

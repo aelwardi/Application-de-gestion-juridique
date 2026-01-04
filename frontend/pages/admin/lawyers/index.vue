@@ -90,20 +90,20 @@
                   <div class="flex-shrink-0 h-10 w-10">
                     <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                       <span class="text-blue-600 font-medium text-sm">
-                        {{ lawyer.first_name?.charAt(0) }}{{ lawyer.last_name?.charAt(0) }}
+                        {{ lawyer.firstName?.charAt(0) }}{{ lawyer.lastName?.charAt(0) }}
                       </span>
                     </div>
                   </div>
                   <div class="ml-4">
                     <div class="text-sm font-medium text-gray-900">
-                      {{ lawyer.first_name }} {{ lawyer.last_name }}
+                      {{ lawyer.firstName }} {{ lawyer.lastName }}
                     </div>
                     <div class="text-sm text-gray-500">{{ lawyer.email }}</div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ lawyer.bar_number || 'N/A' }}
+                {{ lawyer.barNumber || 'N/A' }}
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-wrap gap-1">
@@ -120,11 +120,11 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ lawyer.office_city || 'Non renseigné' }}
+                {{ lawyer.officeCity || 'Non renseigné' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
-                  v-if="lawyer.verified_by_admin"
+                  v-if="lawyer.verifiedByAdmin"
                   class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
                 >
                   ✓ Vérifié
@@ -139,7 +139,7 @@
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end space-x-2">
                   <button
-                    v-if="!lawyer.verified_by_admin"
+                    v-if="!lawyer.verifiedByAdmin"
                     @click="verifyLawyer(lawyer)"
                     class="text-green-600 hover:text-green-900"
                     title="Vérifier"
@@ -180,14 +180,16 @@ definePageMeta({
 
 interface Lawyer {
   id: string;
-  user_id: string;
-  bar_number: string | null;
+  email: string;
+  role: 'avocat';
+  firstName?: string;
+  lastName?: string;
+  barNumber: string | null;
   specialties: string[];
-  office_city: string | null;
-  verified_by_admin: boolean;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
+  officeCity: string | null;
+  verifiedByAdmin: boolean;
+  rating?: number;
+  totalCases?: number;
 }
 
 const { apiFetch } = useApi();
@@ -269,7 +271,7 @@ const resetFilters = () => {
 };
 
 const verifyLawyer = async (lawyer: Lawyer) => {
-  if (!confirm(`Vérifier l'avocat ${lawyer.first_name} ${lawyer.last_name} ?`)) {
+  if (!confirm(`Vérifier l'avocat ${lawyer.firstName} ${lawyer.lastName} ?`)) {
     return;
   }
 
@@ -277,7 +279,7 @@ const verifyLawyer = async (lawyer: Lawyer) => {
     const response = await apiFetch(`/admin/lawyers/${lawyer.id}/verify`, { method: 'PATCH' });
 
     if (response.success) {
-      lawyer.verified_by_admin = true;
+      lawyer.verifiedByAdmin = true;
       alert('Avocat vérifié avec succès !');
       fetchStats();
     }

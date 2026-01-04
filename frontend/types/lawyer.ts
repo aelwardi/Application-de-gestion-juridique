@@ -1,3 +1,7 @@
+// =====================================================
+// Types LAWYER - Frontend adapté à la table users unifiée
+// =====================================================
+
 export interface LawyerRequest {
   id: string;
   client_id: string;
@@ -50,33 +54,40 @@ export interface LawyerRequestStats {
   cancelled?: number;
 }
 
+// Lawyer = User avec role='avocat' (table unifiée)
 export interface Lawyer {
-  id: string;
-  user_id: string;
-  bar_number: string;
+  id: string; // ID user (plus besoin de user_id séparé)
+  email: string;
+  role: 'avocat';
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  profilePictureUrl?: string;
+  isActive: boolean;
+  isVerified: boolean;
+
+  // Champs spécifiques avocats
+  barNumber: string;
   specialties: string[];
-  experience_years: number;
-  office_address?: string;
-  office_city?: string;
-  office_postal_code?: string;
+  experienceYears: number;
+  officeAddress?: string;
+  officeCity?: string;
+  officePostalCode?: string;
   latitude?: number;
   longitude?: number;
-  hourly_rate?: number;
+  hourlyRate?: number;
   description?: string;
   languages?: string[];
-  availability_status: 'available' | 'busy' | 'unavailable';
-  verified_by_admin: boolean;
-  verified_at?: string;
+  availabilityStatus: 'available' | 'busy' | 'unavailable';
+  verifiedByAdmin: boolean;
+  verifiedAt?: string;
   rating: number;
-  total_reviews: number;
-  total_cases: number;
-  created_at: string;
-  updated_at: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  phone?: string;
-  profile_picture_url?: string;
+  totalReviews: number;
+  totalCases: number;
+  activeCases: number;
+
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LawyerSearchFilters {
@@ -88,4 +99,14 @@ export interface LawyerSearchFilters {
   verified?: boolean;
   limit?: number;
   offset?: number;
+}
+
+export interface LawyerStats {
+  totalCases: number;
+  activeCases: number;
+  completedCases: number;
+  totalClients: number;
+  totalReviews: number;
+  rating: number;
+  upcomingAppointments: number;
 }

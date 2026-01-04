@@ -303,7 +303,7 @@ onMounted(() => {
 const loadInitialData = async () => {
   try {
     loading.value = true;
-    const casesRes = await getAllCases({ lawyer_id: authStore.user?.lawyerId || authStore.user?.id });
+    const casesRes = await getAllCases({ lawyer_id: authStore.user?.id });
     if (casesRes.success) cases.value = casesRes.data;
     await loadDocuments();
   } catch (error) {

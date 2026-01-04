@@ -253,12 +253,12 @@ onMounted(() => fetchInitialData());
 
 const fetchInitialData = async () => {
   loading.value = true;
-  const lId = authStore.user?.lawyerId;
+  const userId = authStore.user?.id;
   try {
     const [aptRes, statsRes, casesRes, clientsRes] = await Promise.all([
-      getAllAppointments({ lawyer_id: lId }),
-      getAppointmentStats(lId),
-      getAllCases({ lawyer_id: lId }),
+      getAllAppointments({ lawyer_id: userId }),
+      getAppointmentStats(userId),
+      getAllCases({ lawyer_id: userId }),
       getClients()
     ]);
     if (aptRes.success) appointments.value = aptRes.data;
@@ -316,7 +316,7 @@ const resetForm = () => {
   form.value = {
     title: '', appointment_type: 'consultation', location_type: 'office',
     location_address: '', meeting_url: '', start_time: '', end_time: '',
-    case_id: null, client_id: '', lawyer_id: authStore.user?.lawyerId || authStore.user?.id
+    case_id: null, client_id: '', lawyer_id: authStore.user?.id || ''
   };
 };
 
