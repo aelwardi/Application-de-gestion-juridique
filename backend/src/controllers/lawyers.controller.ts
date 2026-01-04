@@ -96,37 +96,6 @@ export const verifyLawyer = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-/**
- * GET /api/admin/cases
- * Get all cases
- */
-export const getCases = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const status = req.query.status as string | undefined;
-    const priority = req.query.priority as string | undefined;
-
-    const result = await lawyersService.getAllCases(page, limit, status, priority);
-
-    res.json({
-      success: true,
-      data: result.cases,
-      pagination: {
-        page,
-        limit,
-        total: result.total,
-        totalPages: Math.ceil(result.total / limit),
-      },
-    });
-  } catch (error) {
-    console.error('Get cases error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch cases',
-    });
-  }
-};
 
 /**
  * GET /api/admin/stats/comprehensive

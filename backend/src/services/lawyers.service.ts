@@ -57,19 +57,7 @@ export const verifyLawyer = async (lawyerId: string, adminId: string) => {
 };
 
 /**
- * Get all cases
- */
-export const getAllCases = async (
-  page: number,
-  limit: number,
-  status?: string,
-  priority?: string
-) => {
-  return await lawyersQueries.getAllCases(page, limit, status, priority);
-};
-
-/**
- * Get case statistics
+ * Get case statistics (non-confidential stats only)
  */
 export const getCaseStats = async () => {
   return await lawyersQueries.getCaseStats();
@@ -121,6 +109,8 @@ export const getSpecialties = async () => {
 
 /**
  * Get comprehensive dashboard stats
+ * Note: Les statistiques des dossiers sont agrégées et anonymisées.
+ * L'accès aux dossiers individuels est strictement limité aux clients et avocats concernés.
  */
 export const getComprehensiveStats = async () => {
   const [caseStats, lawyerStats, appointmentStats] = await Promise.all([
@@ -130,7 +120,7 @@ export const getComprehensiveStats = async () => {
   ]);
 
   return {
-    cases: caseStats,
+    cases: caseStats, // Statistiques agrégées uniquement
     lawyers: lawyerStats,
     appointments: appointmentStats,
   };

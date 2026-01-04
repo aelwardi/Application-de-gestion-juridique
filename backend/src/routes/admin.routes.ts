@@ -38,10 +38,6 @@ router.get('/lawyers/:id', lawyersController.getLawyerDetails);
 router.patch('/lawyers/:id/verify', lawyersController.verifyLawyer);
 router.get('/specialties', lawyersController.getSpecialties);
 
-/**
- * Cases Management
- */
-router.get('/cases', lawyersController.getCases);
 
 /**
  * Reviews Moderation
