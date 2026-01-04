@@ -105,6 +105,22 @@ export const useCase = () => {
     }
   };
 
+  /**
+   * Refuser une offre
+   */
+  const declineOffer = async (offerId: string): Promise<any> => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/offers/${offerId}/decline`, {
+        method: 'POST',
+        headers: getHeaders()
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Error declining offer:', error);
+      throw error;
+    }
+  };
+
   // --- FONCTIONS DE GESTION DES DOSSIERS ---
 
   const createCase = async (caseData: CreateCaseDTO): Promise<CaseResponse> => {
@@ -314,6 +330,7 @@ export const useCase = () => {
     getPendingOffers,
     getLawyers, 
     acceptOffer,
+    declineOffer,
     createCase,
     getAllCases,
     getCaseById,

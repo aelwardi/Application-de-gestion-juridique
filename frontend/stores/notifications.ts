@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { useAuthStore } from '~/stores/auth';
 
 // On définit une interface plus complète pour correspondre à ton UI
-interface Notification {
+export interface Notification {
   id: string;
   type: string;        // 'offer', 'message', etc.
   category: string;    // 'Nouveau Dossier ⚖️', 'Communication 💬'

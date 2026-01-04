@@ -33,7 +33,7 @@ export const acceptOfferQuery = async (offerId: string) => {
         // 4. Insertion dans 'cases' (Dossiers) - utilise user_ids pour les clés étrangères
         const insertCaseQuery = `
             INSERT INTO cases (
-                case_number, title, description, category, 
+                case_number, title, description, case_type, 
                 status, client_id, lawyer_id, created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
             RETURNING id;
