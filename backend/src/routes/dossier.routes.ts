@@ -17,6 +17,7 @@ router.get('/client/:clientId', dossierController.getCasesByClient);
 router.get('/:id', dossierController.getCaseById);
 router.put('/:id', dossierController.updateCase);
 router.delete('/:id', dossierController.deleteCase);
+router.patch('/:id/status', dossierController.updateCase);
 
 // Routes spécifiques
 router.post('/:id/assign-lawyer', dossierController.assignLawyer);

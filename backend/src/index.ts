@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from 'path';
 import cookieParser from "cookie-parser";
 import { pool } from "./config/database.config";
 import { testEmailConfiguration } from "./utils/email.util";
@@ -16,6 +17,8 @@ import appointmentRoutes from "./routes/appointment.routes";
 import offerRoutes from './routes/offer.routes';
 import lawyerRequestRoutes from './routes/lawyer-request.routes';
 import lawyerRoutes from './routes/lawyer.routes';
+import documentRoutes from "./routes/document.routes";
+
 dotenv.config();
 
 const app = express();
@@ -40,7 +43,11 @@ app.get("/db-test", async (_req: Request, res: Response) => {
     res.status(500).json({ status: "ERROR", message: "Database connection failed", error });
   }
 });
+// Cette ligne est cruciale : elle lie l'URL /api/storage au dossier physique sur ton PC
 
+const uploadPath = path.resolve(process.cwd(), 'uploads/documents');
+console.log('📂 Dossier documents servi depuis :', uploadPath); // Pour vérifier au démarrage
+app.use('/api/storage', express.static(uploadPath));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/email", emailRoutes);
@@ -54,6 +61,7 @@ app.use('/api/offers', offerRoutes);
 app.use('/api/lawyer-requests', lawyerRequestRoutes);
 app.use('/api/lawyers', lawyerRoutes);
 
+app.use("/api/documents", documentRoutes);
 const startServer = async () => {
   try {
     await pool.query("SELECT 1");

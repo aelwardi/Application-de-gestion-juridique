@@ -5,14 +5,6 @@ export const dossierService = {
   // Créer un nouveau dossier
   async createCase(data: CreateCaseDTO) {
     try {
-      // Vérifier que le client existe
-      // TODO: Ajouter une vérification si nécessaire
-      
-      // Vérifier que l'avocat existe si fourni
-      if (data.lawyer_id) {
-        // TODO: Ajouter une vérification si nécessaire
-      }
-      
       const newCase = await caseQueries.createCase(data);
       return {
         success: true,
@@ -74,11 +66,12 @@ export const dossierService = {
         };
       }
       
-      // Si le statut passe à 'closed', définir la date de clôture
+      // AJUSTEMENT STATUT : Si on reçoit un nouveau statut, on l'applique
       if (data.status === 'closed' && !data.closing_date) {
         data.closing_date = new Date();
       }
       
+      // Appel de la query de mise à jour (inclut le statut)
       const updatedCase = await caseQueries.updateCase(id, data);
       
       return {

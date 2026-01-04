@@ -24,36 +24,48 @@ export const useCase = () => {
     return headers;
   };
 
-  /**
-   * Récupère la liste des avocats (Dynamique)
-   */
  /**
-   * Récupère dynamiquement la liste des avocats depuis la table Users
+   * Récupère dynamiquement la liste des avocats et aplatit les données SQL
    */
   const getLawyers = async (): Promise<any[]> => {
     try {
-      // On appelle la route GET /users définie dans ton backend Express
       const response = await $fetch<any>(`${baseURL}/users`, {
         method: 'GET',
         headers: getHeaders()
       });
 
-      // Express renvoie souvent les données directement ou dans .data
       const allUsers = Array.isArray(response) ? response : (response.data || []);
 
-      // On filtre pour ne garder que les avocats
-      // On enrichit chaque avocat avec l'ID de la table lawyers
       return allUsers
         .filter((u: any) => 
           u.role === 'avocat' || 
           u.role === 'lawyer' || 
           u.user_type === 'lawyer'
         )
-        .map((u: any) => ({
-          ...u,
-          // On utilise lawyerId si présent, sinon id (fallback)
-          lawyerTableId: u.lawyerId || u.lawyer_id || u.id
-        }));
+        .map((u: any) => {
+          // On cherche où sont les infos "lawyer" (soit à la racine, soit dans un sous-objet)
+          const lawyerData = u.lawyer_info || u.lawyer_profile || u; 
+          
+          return {
+            // Infos User
+            id: u.id,
+            first_name: u.first_name,
+            last_name: u.last_name,
+            email: u.email,
+            
+            // Infos Lawyer (Mapping exact avec ton CREATE TABLE)
+            lawyerTableId: lawyerData.id || u.id,
+            bar_number: lawyerData.bar_number || 'NC',
+            specialties: lawyerData.specialties || [],
+            experience_years: lawyerData.experience_years || 0,
+            office_address: lawyerData.office_address || '',
+            office_city: lawyerData.office_city || 'Paris',
+            office_postal_code: lawyerData.office_postal_code || '',
+            description: lawyerData.description || lawyerData.presentation || '',
+            hourly_rate: lawyerData.hourly_rate || 0,
+            availability_status: lawyerData.availability_status || 'available'
+          };
+        });
     } catch (error: any) {
       console.error('ERREUR FETCH USERS:', error.message);
       return [];
@@ -66,7 +78,6 @@ export const useCase = () => {
    */
   const getPendingOffers = async (lawyerId: string): Promise<any[]> => {
     try {
-      // On utilise l'ID passé en paramètre de façon dynamique
       const response = await $fetch<any[]>(`${baseURL}/offers/pending/${lawyerId}`, {
         method: 'GET',
         headers: getHeaders()
@@ -94,7 +105,7 @@ export const useCase = () => {
     }
   };
 
-  // --- FONCTIONS EXISTANTES ---
+  // --- FONCTIONS DE GESTION DES DOSSIERS ---
 
   const createCase = async (caseData: CreateCaseDTO): Promise<CaseResponse> => {
     try {
@@ -149,6 +160,9 @@ export const useCase = () => {
     }
   };
 
+  /**
+   * MISE À JOUR (Utilisée pour le statut)
+   */
   const updateCase = async (id: string, updates: UpdateCaseDTO): Promise<CaseResponse> => {
     try {
       const response = await $fetch<CaseResponse>(`${baseURL}/cases/${id}`, {
@@ -214,8 +228,6 @@ export const useCase = () => {
       if (filters?.priority) params.append('priority', filters.priority);
       if (filters?.case_type) params.append('case_type', filters.case_type);
       if (filters?.search) params.append('search', filters.search);
-      if (filters?.limit) params.append('limit', filters.limit.toString());
-      if (filters?.offset) params.append('offset', filters.offset.toString());
       
       const queryString = params.toString();
       const url = queryString 
@@ -238,10 +250,6 @@ export const useCase = () => {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
       if (filters?.priority) params.append('priority', filters.priority);
-      if (filters?.case_type) params.append('case_type', filters.case_type);
-      if (filters?.search) params.append('search', filters.search);
-      if (filters?.limit) params.append('limit', filters.limit.toString());
-      if (filters?.offset) params.append('offset', filters.offset.toString());
       
       const queryString = params.toString();
       const url = queryString 
