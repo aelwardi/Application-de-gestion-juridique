@@ -69,7 +69,7 @@
           <p class="text-3xl font-bold text-gray-900">{{ stats.total }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Clients</p>
+          <p class="text-sm text-gray-600">{{ authStore.user?.role === 'avocat' ? 'Clients' : 'Avocats' }}</p>
           <p class="text-3xl font-bold text-blue-600">{{ stats.clients }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
@@ -101,24 +101,41 @@
           :key="clientId"
           class="bg-white rounded-lg shadow overflow-hidden"
         >
-          <!-- En-tête du client -->
+          <!-- En-tête du client/avocat -->
           <div
             @click="toggleClient(clientId)"
-            class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-colors"
+            class="p-6 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-colors"
+            :class="group.isLawyer ? 'bg-gradient-to-r from-blue-50 to-indigo-50' : 'bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100'"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-4">
-                <div class="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                <div
+                  class="h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                  :class="group.isLawyer ? 'bg-blue-600' : 'bg-green-600'"
+                >
                   {{ getInitials(group.clientName) }}
                 </div>
                 <div>
-                  <h3 class="text-lg font-bold text-gray-900">{{ group.clientName }}</h3>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-bold text-gray-900">{{ group.clientName }}</h3>
+                    <span
+                      v-if="!group.isLawyer"
+                      class="px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800"
+                    >
+                      Avocat
+                    </span>
+                  </div>
                   <p class="text-sm text-gray-600">{{ group.clientEmail }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-4">
                 <div class="text-right">
-                  <p class="text-2xl font-bold text-blue-600">{{ group.cases.length }}</p>
+                  <p
+                    class="text-2xl font-bold"
+                    :class="group.isLawyer ? 'text-blue-600' : 'text-green-600'"
+                  >
+                    {{ group.cases.length }}
+                  </p>
                   <p class="text-sm text-gray-600">{{ group.cases.length === 1 ? 'dossier' : 'dossiers' }}</p>
                 </div>
                 <svg

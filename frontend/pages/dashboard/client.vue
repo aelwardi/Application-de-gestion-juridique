@@ -1,6 +1,13 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Titre -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+        <p class="text-gray-600 mt-2">Bienvenue {{ authStore.user?.firstName }}</p>
+      </div>
+
+      <!-- Statistiques -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-lg shadow p-6">
           <div class="flex items-center justify-between">
@@ -85,7 +92,7 @@
                   <div class="flex items-start justify-between">
                     <div class="flex-1">
                       <h3 class="font-semibold text-gray-900">{{ caseItem.title }}</h3>
-                      <p class="text-sm text-gray-600 mt-1">{{ caseItem.caseNumber }}</p>
+                      <p class="text-sm text-gray-600 mt-1">{{ caseItem.case_number }}</p>
                       <div class="flex items-center gap-2 mt-2">
                         <span
                           class="px-2 py-1 text-xs rounded-full"
@@ -97,14 +104,14 @@
                           class="px-2 py-1 text-xs rounded-full"
                           :class="getCasePriorityClass(caseItem.priority)"
                         >
-                          {{ caseItem.priority }}
+                          {{ getPriorityLabel(caseItem.priority) }}
                         </span>
                       </div>
                     </div>
-                    <div v-if="caseItem.lawyerFirstName" class="text-right ml-4">
+                    <div v-if="caseItem.lawyer_first_name" class="text-right ml-4">
                       <p class="text-sm text-gray-600">Avocat</p>
                       <p class="font-medium text-gray-900">
-                        {{ caseItem.lawyerFirstName }} {{ caseItem.lawyerLastName }}
+                        {{ caseItem.lawyer_first_name }} {{ caseItem.lawyer_last_name }}
                       </p>
                     </div>
                   </div>
@@ -137,14 +144,14 @@
                 >
                   <h3 class="font-semibold text-gray-900 text-sm">{{ appointment.title }}</h3>
                   <p class="text-xs text-gray-600 mt-1">
-                    {{ formatDate(appointment.startTime) }}
+                    {{ formatDate(appointment.start_time) }}
                   </p>
                   <p class="text-xs text-gray-600">
-                    {{ formatTime(appointment.startTime) }} - {{ formatTime(appointment.endTime) }}
+                    {{ formatTime(appointment.start_time) }} - {{ formatTime(appointment.end_time) }}
                   </p>
-                  <div v-if="appointment.lawyerFirstName" class="mt-2">
+                  <div v-if="appointment.lawyer_first_name" class="mt-2">
                     <p class="text-xs text-gray-500">
-                      Avec {{ appointment.lawyerFirstName }} {{ appointment.lawyerLastName }}
+                      Avec {{ appointment.lawyer_first_name }} {{ appointment.lawyer_last_name }}
                     </p>
                   </div>
                   <span
@@ -205,20 +212,22 @@
 </template>
 
 <script setup lang="ts">
-import type { ClientStats, ClientCase, ClientAppointment, ClientDocument } from '~/types/client';
+import type { ClientStats } from '~/types/client';
 
 definePageMeta({
   middleware: ['auth', 'client'],
   layout: 'authenticated',
 });
 
-const { getClientStats, getClientCases, getClientAppointments, getClientDocuments } = useClient();
+const { getClientStats } = useClient();
+const { getAllCases } = useCase();
+const { getAllAppointments } = useAppointment();
 const authStore = useAuthStore();
 
 const stats = ref<ClientStats | null>(null);
-const cases = ref<ClientCase[]>([]);
-const appointments = ref<ClientAppointment[]>([]);
-const documents = ref<ClientDocument[]>([]);
+const cases = ref<any[]>([]);
+const appointments = ref<any[]>([]);
+const documents = ref<any[]>([]);
 
 const loadingCases = ref(true);
 const loadingAppointments = ref(true);
@@ -228,24 +237,34 @@ onMounted(async () => {
   if (!authStore.user) return;
 
   try {
+    // Charger les stats
     stats.value = await getClientStats(authStore.user.id);
 
+    // Charger les dossiers
     loadingCases.value = true;
-    const casesData = await getClientCases(authStore.user.id, 5, 0);
-    cases.value = casesData.data;
+    const casesResponse = await getAllCases({
+      client_id: authStore.user.id,
+      limit: 5
+    });
+    cases.value = casesResponse.data || [];
     loadingCases.value = false;
 
+    // Charger les rendez-vous
     loadingAppointments.value = true;
-    const appointmentsData = await getClientAppointments(authStore.user.id, 5, 0);
-    appointments.value = appointmentsData.data.filter(apt => new Date(apt.startTime) > new Date());
+    const appointmentsResponse = await getAllAppointments({
+      client_id: authStore.user.id,
+      limit: 5
+    });
+    appointments.value = (appointmentsResponse.data || []).filter((apt: any) => new Date(apt.start_time) > new Date());
     loadingAppointments.value = false;
 
-    loadingDocuments.value = true;
-    const documentsData = await getClientDocuments(authStore.user.id, 5, 0);
-    documents.value = documentsData.data;
+    // Documents - à implémenter si nécessaire
     loadingDocuments.value = false;
   } catch (error) {
     console.error('Error loading client dashboard:', error);
+    loadingCases.value = false;
+    loadingAppointments.value = false;
+    loadingDocuments.value = false;
   }
 });
 
@@ -298,6 +317,16 @@ const getCasePriorityClass = (priority: string) => {
     urgent: 'bg-red-100 text-red-800',
   };
   return classes[priority] || 'bg-gray-100 text-gray-800';
+};
+
+const getPriorityLabel = (priority: string) => {
+  const labels: Record<string, string> = {
+    low: 'Faible',
+    medium: 'Moyenne',
+    high: 'Haute',
+    urgent: 'Urgente',
+  };
+  return labels[priority] || priority;
 };
 
 const getAppointmentStatusClass = (status: string) => {
