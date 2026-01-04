@@ -202,17 +202,30 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="doc in documents" :key="doc.id" class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <span class="text-sm font-medium text-gray-900">{{ doc.file_name }}</span>
+                        <div class="flex flex-col">
+                          <span class="text-sm font-medium text-gray-900">{{ doc.file_name }}</span>
+                          <span class="text-xs text-gray-500">{{ doc.title }}</span>
+                        </div>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {{ getDocumentTypeLabel(doc.document_type) }}
-                      </span>
+                      <div class="flex flex-col gap-1">
+                        <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 w-fit">
+                          {{ getDocumentTypeLabel(doc.document_type) }}
+                        </span>
+                        <!-- Badge de visibilité pour l'avocat -->
+                        <span
+                          v-if="authStore.user?.role === 'avocat'"
+                          class="px-2 py-1 text-xs rounded-full w-fit"
+                          :class="doc.is_confidential ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'"
+                        >
+                          {{ doc.is_confidential ? '🔒 Privé' : '👁️ Partagé' }}
+                        </span>
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ formatFileSize(doc.file_size) }}
@@ -293,8 +306,12 @@
             </select>
           </div>
 
-          <div class="p-4 rounded-xl border-2 transition-all flex items-center justify-between"
-               :class="uploadForm.is_confidential ? 'bg-gray-50 border-gray-100' : 'bg-green-50/50 border-green-100'">
+          <!-- Section confidentialité - visible uniquement pour les avocats -->
+          <div
+            v-if="authStore.user?.role === 'avocat'"
+            class="p-4 rounded-xl border-2 transition-all flex items-center justify-between"
+            :class="uploadForm.is_confidential ? 'bg-gray-50 border-gray-100' : 'bg-green-50/50 border-green-100'"
+          >
             <div class="flex items-center gap-3">
                <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="uploadForm.is_confidential ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-600'">
                     <span v-if="uploadForm.is_confidential">🔒</span>
@@ -314,6 +331,22 @@
               <input type="checkbox" v-model="uploadForm.is_confidential" class="sr-only peer">
               <div class="w-11 h-6 bg-green-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-400"></div>
             </label>
+          </div>
+
+          <!-- Message pour les clients -->
+          <div
+            v-else
+            class="p-4 rounded-xl bg-blue-50 border-2 border-blue-100"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                ℹ️
+              </div>
+              <div>
+                <p class="text-sm font-black text-blue-800">Document visible par votre avocat</p>
+                <p class="text-[10px] text-blue-600">Votre avocat recevra une notification de ce dépôt</p>
+              </div>
+            </div>
           </div>
 
           <div class="flex justify-end gap-3 pt-2">

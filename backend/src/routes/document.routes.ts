@@ -3,6 +3,7 @@ const router = express.Router();
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { authenticate } from '../middleware/auth.middleware';
 
 // @ts-ignore (si tu n'as pas de types pour ton fichier db)
 import { pool } from '../config/database.config';
@@ -32,8 +33,11 @@ const upload = multer({
 
 /**
  * POST /api/documents
+ * Upload un document et envoie des notifications :
+ * - Si avocat upload ET non confidentiel → notifie le client
+ * - Si client upload → notifie l'avocat (toujours is_confidential = false)
  */
-router.post('/', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/', authenticate, upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "Aucun fichier fourni" });
@@ -47,6 +51,20 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
       uploaded_by,
       description 
     } = req.body;
+
+    // Récupérer le rôle de l'uploader
+    const uploaderQuery = await pool.query(
+      'SELECT role FROM users WHERE id = $1',
+      [uploaded_by]
+    );
+    const uploaderRole = uploaderQuery.rows[0]?.role;
+
+    // Si c'est un client, forcer is_confidential à false
+    let finalIsConfidential = false;
+    if (uploaderRole === 'avocat') {
+      finalIsConfidential = is_confidential === 'true';
+    }
+    // Pour le client, c'est toujours false (déjà défini)
 
     const query = `
       INSERT INTO documents (
@@ -73,18 +91,74 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
       req.file.originalname, 
       req.file.size, 
       req.file.mimetype, 
-      req.file.filename, // On stocke juste le nom du fichier généré
-      is_confidential === 'true'
+      req.file.filename,
+      finalIsConfidential
     ];
 
     const result = await pool.query(query, values);
+    const document = result.rows[0];
+
+    // === NOTIFICATIONS ===
+    if (case_id && case_id !== 'null') {
+      try {
+        // Récupérer les infos du dossier (client_id, lawyer_id)
+        const caseQuery = await pool.query(
+          'SELECT client_id, lawyer_id, title as case_title FROM cases WHERE id = $1',
+          [case_id]
+        );
+
+        if (caseQuery.rows.length > 0) {
+          const caseData = caseQuery.rows[0];
+
+          // Récupérer le nom de l'uploader
+          const uploaderNameQuery = await pool.query(
+            'SELECT first_name, last_name FROM users WHERE id = $1',
+            [uploaded_by]
+          );
+          const uploaderName = `${uploaderNameQuery.rows[0]?.first_name} ${uploaderNameQuery.rows[0]?.last_name}`;
+
+          if (uploaderRole === 'avocat' && !finalIsConfidential) {
+            // Avocat upload un document NON confidentiel → notifier le client
+            await pool.query(
+              `INSERT INTO notifications (user_id, type, title, message, related_entity_type, related_entity_id)
+               VALUES ($1, $2, $3, $4, $5, $6)`,
+              [
+                caseData.client_id,
+                'document',
+                'Nouveau document disponible',
+                `Votre avocat a ajouté le document "${title}" au dossier "${caseData.case_title}"`,
+                'document',
+                document.id
+              ]
+            );
+          } else if (uploaderRole === 'client') {
+            // Client upload → notifier l'avocat
+            await pool.query(
+              `INSERT INTO notifications (user_id, type, title, message, related_entity_type, related_entity_id)
+               VALUES ($1, $2, $3, $4, $5, $6)`,
+              [
+                caseData.lawyer_id,
+                'document',
+                'Nouveau document client',
+                `${uploaderName} a ajouté le document "${title}" au dossier "${caseData.case_title}"`,
+                'document',
+                document.id
+              ]
+            );
+          }
+        }
+      } catch (notifError) {
+        console.error('Erreur création notification:', notifError);
+        // On ne fait pas échouer l'upload si la notification échoue
+      }
+    }
 
     res.status(201).json({
       success: true,
-      data: result.rows[0]
+      data: document
     });
 
-  } catch (error: any) { // Correction de l'erreur "unknown"
+  } catch (error: any) {
     console.error('Erreur Upload Backend:', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
@@ -95,7 +169,7 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
  * GET /api/documents/lawyer/:lawyerId
  * Récupère les documents récents d'un avocat (tous dossiers confondus)
  */
-router.get('/lawyer/:lawyerId', async (req: Request, res: Response) => {
+router.get('/lawyer/:lawyerId', authenticate, async (req: Request, res: Response) => {
   try {
     const { lawyerId } = req.params;
     const limit = 5; // On limite aux 20 plus récents
@@ -117,14 +191,46 @@ router.get('/lawyer/:lawyerId', async (req: Request, res: Response) => {
 
 /**
  * GET /api/documents/case/:caseId
+ * Filtre les documents selon le rôle :
+ * - Avocat : voit TOUS les documents (tous les documents du dossier)
+ * - Client : voit :
+ *   1) Ses propres documents (uploaded_by = userId)
+ *   2) Les documents de l'avocat NON confidentiels (is_confidential = false)
  */
-router.get('/case/:caseId', async (req: Request, res: Response) => {
+router.get('/case/:caseId', authenticate, async (req: Request, res: Response) => {
   try {
     const { caseId } = req.params;
-    const result = await pool.query(
-      'SELECT * FROM documents WHERE case_id = $1 ORDER BY created_at DESC',
-      [caseId]
-    );
+    const userId = (req as any).user?.userId; // ID de l'utilisateur connecté depuis le middleware auth
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Non autorisé' });
+    }
+
+    // Récupérer le rôle de l'utilisateur
+    const userQuery = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
+    const userRole = userQuery.rows[0]?.role;
+
+    let query: string;
+    let params: any[];
+
+    if (userRole === 'avocat') {
+      // L'avocat voit TOUS les documents du dossier
+      query = 'SELECT * FROM documents WHERE case_id = $1 ORDER BY created_at DESC';
+      params = [caseId];
+    } else {
+      // Le client voit :
+      // 1) Ses propres documents (uploaded_by = userId)
+      // 2) Les documents non confidentiels (is_confidential = false)
+      query = `
+        SELECT * FROM documents 
+        WHERE case_id = $1 
+        AND (uploaded_by = $2 OR is_confidential = false)
+        ORDER BY created_at DESC
+      `;
+      params = [caseId, userId];
+    }
+
+    const result = await pool.query(query, params);
     res.json({ success: true, data: result.rows });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -138,7 +244,7 @@ router.get('/case/:caseId', async (req: Request, res: Response) => {
 /**
  * DELETE /api/documents/:id
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
