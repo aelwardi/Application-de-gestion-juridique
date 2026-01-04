@@ -1,4 +1,5 @@
 import { pool } from '../../config/database.config';
+import { resolveLawyerId } from '../../utils/lawyer-id-resolver.util';
 import type {
   Appointment,
   AppointmentWithDetails,
@@ -12,6 +13,9 @@ import type {
  * Créer un nouveau rendez-vous
  */
 export const createAppointment = async (data: CreateAppointmentDTO): Promise<Appointment> => {
+  // Résoudre le lawyer_id pour obtenir le user_id
+  const resolvedLawyerId = await resolveLawyerId(data.lawyer_id);
+
   const query = `
     INSERT INTO appointments (
       case_id, lawyer_id, client_id, appointment_type, title, description,
@@ -23,7 +27,7 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
 
   const values = [
     data.case_id || null,
-    data.lawyer_id,
+    resolvedLawyerId,
     data.client_id,
     data.appointment_type,
     data.title,

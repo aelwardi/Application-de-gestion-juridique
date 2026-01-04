@@ -1,4 +1,5 @@
 import { pool } from '../../config/database.config';
+import { resolveLawyerId } from '../../utils/lawyer-id-resolver.util';
 
 /**
  * ACCEPTER UNE OFFRE
@@ -18,58 +19,48 @@ export const acceptOfferQuery = async (offerId: string) => {
         const offer = offerRes.rows[0];
         if (!offer) throw new Error("Offre introuvable");
 
-        // 2. Tenter de trouver le vrai ID dans la table 'lawyers'
-        const lawyerRes = await client.query(
-            'SELECT id FROM lawyers WHERE user_id = $1',
-            [offer.lawyer_id]
-        );
-        // FALLBACK : On prend l'ID trouvé, sinon on garde l'ID d'origine de l'offre
-        const realLawyerId = lawyerRes.rows[0]?.id || offer.lawyer_id;
-        console.log(`[DEBUG] Lawyer check: UserID ${offer.lawyer_id} -> ResultID: ${realLawyerId}`);
+        // 2. Résoudre le lawyer_id pour obtenir le user_id correct
+        const resolvedLawyerId = await resolveLawyerId(offer.lawyer_id);
+        console.log(`[ACCEPT_OFFER] Resolved lawyer_id: ${offer.lawyer_id} -> ${resolvedLawyerId}`);
 
-        // 3. Tenter de trouver le vrai ID dans la table 'clients'
-        const clientRes = await client.query(
-            'SELECT id FROM clients WHERE user_id = $1',
-            [offer.client_id]
-        );
-        // FALLBACK : On prend l'ID trouvé, sinon on garde l'ID d'origine de l'offre
-        const realClientId = clientRes.rows[0]?.id || offer.client_id;
-        console.log(`[DEBUG] Client check: UserID ${offer.client_id} -> ResultID: ${realClientId}`);
+        // 3. Le client_id est déjà un user_id dans client_requests
+        const clientUserId = offer.client_id;
+        console.log(`[ACCEPT_OFFER] Using client user_id: ${clientUserId}`);
 
         // Génération d'un numéro de dossier
         const caseNumber = `DOS-${Date.now().toString().slice(-6)}`;
 
-        // 4. Insertion dans 'cases' (Dossiers)
+        // 4. Insertion dans 'cases' (Dossiers) - utilise user_ids pour les clés étrangères
         const insertCaseQuery = `
             INSERT INTO cases (
-                case_number, title, description, case_type, 
-                status, client_id, lawyer_id, opening_date
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE)
+                case_number, title, description, category, 
+                status, client_id, lawyer_id, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
             RETURNING id;
         `;
 
-        await client.query(insertCaseQuery, [
+        const newCaseResult = await client.query(insertCaseQuery, [
             caseNumber,
             offer.title || 'Nouveau dossier',
             offer.description,
             offer.case_category || 'Général',
             'in_progress', 
-            realClientId,
-            realLawyerId
+            clientUserId,
+            resolvedLawyerId
         ]);
 
         // 5. Mettre à jour le statut de la requête initiale
         await client.query(
-            "UPDATE client_requests SET status = 'accepted' WHERE id = $1",
+            "UPDATE client_requests SET status = 'accepted', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
             [offerId]
         );
 
         await client.query('COMMIT');
-        return { success: true, caseNumber };
+        return { success: true, caseNumber, caseId: newCaseResult.rows[0].id };
 
     } catch (error: any) {
         await client.query('ROLLBACK');
-        console.error('--- ERREUR ACCEPTER ---', error.message);
+        console.error('[ACCEPT_OFFER ERROR]', error.message);
         throw error;
     } finally {
         client.release();

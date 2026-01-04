@@ -1,11 +1,15 @@
 import { pool } from '../../config/database.config';
 import { Case, CaseWithDetails, CreateCaseDTO, UpdateCaseDTO, CaseFilters, CaseStats } from '../../types/case.types';
+import { resolveLawyerIdOptional } from '../../utils/lawyer-id-resolver.util';
 
 export const caseQueries = {
   // Créer un nouveau dossier
   createCase: async (data: CreateCaseDTO): Promise<Case> => {
     const caseNumber = `CASE-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     
+    // Résoudre le lawyer_id si présent
+    const resolvedLawyerId = await resolveLawyerIdOptional(data.lawyer_id);
+
     const query = `
       INSERT INTO cases (
         case_number, title, description, case_type, priority, 
@@ -22,7 +26,7 @@ export const caseQueries = {
       data.case_type,
       data.priority || 'medium',
       data.client_id,
-      data.lawyer_id,
+      resolvedLawyerId,
       data.court_name,
       data.judge_name,
       data.next_hearing_date,
@@ -184,8 +188,10 @@ export const caseQueries = {
     }
     
     if (data.lawyer_id !== undefined) {
+      // Résoudre le lawyer_id avant de l'utiliser
+      const resolvedLawyerId = await resolveLawyerIdOptional(data.lawyer_id);
       fields.push(`lawyer_id = $${paramCount}`);
-      values.push(data.lawyer_id);
+      values.push(resolvedLawyerId);
       paramCount++;
     }
     
@@ -247,6 +253,9 @@ export const caseQueries = {
 
   // Assigner un avocat à un dossier
   assignLawyer: async (caseId: string, lawyerId: string): Promise<Case | null> => {
+    // Résoudre le lawyer_id pour obtenir le user_id
+    const resolvedLawyerId = await resolveLawyerIdOptional(lawyerId);
+
     const query = `
       UPDATE cases 
       SET lawyer_id = $1, 
@@ -255,8 +264,8 @@ export const caseQueries = {
       WHERE id = $2
       RETURNING *
     `;
-    
-    const result = await pool.query(query, [lawyerId, caseId]);
+
+    const result = await pool.query(query, [resolvedLawyerId, caseId]);
     return result.rows[0] || null;
   },
 
