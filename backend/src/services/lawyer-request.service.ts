@@ -1,6 +1,5 @@
 import { pool } from '../config/database.config';
 import { v4 as uuidv4 } from 'uuid';
-import { resolveLawyerId } from '../utils/lawyer-id-resolver.util';
 
 export interface LawyerRequest {
   id: string;
@@ -51,9 +50,7 @@ export interface LawyerRequestStats {
  * Créer une nouvelle demande vers un avocat
  */
 export const createLawyerRequest = async (data: CreateLawyerRequestInput): Promise<LawyerRequest> => {
-  // Résoudre le lawyer_id pour obtenir le user_id
-  const resolvedLawyerId = await resolveLawyerId(data.lawyer_id);
-
+  // lawyer_id est maintenant directement un users.id
   const query = `
     INSERT INTO client_requests (
       id, client_id, lawyer_id, request_type, title, description,
@@ -66,7 +63,7 @@ export const createLawyerRequest = async (data: CreateLawyerRequestInput): Promi
   const values = [
     uuidv4(),
     data.client_id,
-    resolvedLawyerId,
+    data.lawyer_id,
     data.request_type,
     data.title,
     data.description,

@@ -41,7 +41,7 @@ export interface ActivityLog {
 }
 
 /**
- * Get dashboard statistics
+ * Get dashboard statistics (compatible avec table users unifiée)
  */
 export const getDashboardStats = async (): Promise<AdminStats> => {
   const queries = {
@@ -65,6 +65,7 @@ export const getDashboardStats = async (): Promise<AdminStats> => {
 
   let totalCases = 0;
   let newCasesThisMonth = 0;
+  let totalMessages = 0;
   try {
     const casesResult = await pool.query('SELECT COUNT(*) as count FROM cases');
     totalCases = parseInt(casesResult.rows[0].count) || 0;
@@ -72,6 +73,7 @@ export const getDashboardStats = async (): Promise<AdminStats> => {
     const newCasesResult = await pool.query(`SELECT COUNT(*) as count FROM cases WHERE created_at >= date_trunc('month', CURRENT_DATE)`);
     newCasesThisMonth = parseInt(newCasesResult.rows[0].count) || 0;
   } catch (error) {
+    console.error('Error fetching cases stats:', error);
   }
 
   let totalAppointments = 0;
@@ -79,6 +81,14 @@ export const getDashboardStats = async (): Promise<AdminStats> => {
     const apptResult = await pool.query('SELECT COUNT(*) as count FROM appointments');
     totalAppointments = parseInt(apptResult.rows[0].count) || 0;
   } catch (error) {
+    console.error('Error fetching appointments stats:', error);
+  }
+
+  try {
+    const messagesResult = await pool.query('SELECT COUNT(*) as count FROM messages');
+    totalMessages = parseInt(messagesResult.rows[0].count) || 0;
+  } catch (error) {
+    console.error('Error fetching messages stats:', error);
   }
 
   return {
@@ -88,7 +98,7 @@ export const getDashboardStats = async (): Promise<AdminStats> => {
     totalCollaborators: parseInt(results[3].rows[0].count),
     totalCases,
     totalAppointments,
-    totalMessages: 0, // TODO: implement when messages table exists
+    totalMessages,
     activeUsers: parseInt(results[4].rows[0].count),
     newUsersThisMonth: parseInt(results[5].rows[0].count),
     newCasesThisMonth,

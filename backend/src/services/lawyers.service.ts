@@ -1,8 +1,12 @@
+// =====================================================
+// SERVICE AVOCATS - Utilise table users unifiée
+// =====================================================
+
 import * as lawyersQueries from '../database/queries/lawyers.queries';
 import { sendEmail } from '../utils/email.util';
 
 /**
- * Get all lawyers
+ * Get all lawyers with filters
  */
 export const getAllLawyers = async (
   page: number,
@@ -15,7 +19,7 @@ export const getAllLawyers = async (
 };
 
 /**
- * Get lawyer details
+ * Get lawyer details by ID
  */
 export const getLawyerDetails = async (lawyerId: string) => {
   const lawyer = await lawyersQueries.getLawyerById(lawyerId);
@@ -26,7 +30,7 @@ export const getLawyerDetails = async (lawyerId: string) => {
 };
 
 /**
- * Verify lawyer account
+ * Verify a lawyer (admin only)
  */
 export const verifyLawyer = async (lawyerId: string, adminId: string) => {
   const lawyer = await lawyersQueries.getLawyerById(lawyerId);
@@ -37,18 +41,13 @@ export const verifyLawyer = async (lawyerId: string, adminId: string) => {
   await lawyersQueries.verifyLawyer(lawyerId, adminId);
 
   sendEmail({
-    to: lawyer.email!,
+    to: lawyer.email,
     subject: 'Votre compte avocat a été vérifié',
     html: `
       <h1>Compte Vérifié</h1>
       <p>Bonjour ${lawyer.first_name} ${lawyer.last_name},</p>
       <p>Votre compte avocat a été vérifié par un administrateur.</p>
-      <p>Vous avez maintenant accès à toutes les fonctionnalités de la plateforme et votre profil est visible par les clients.</p>
-      <p><strong>Vos informations :</strong></p>
-      <ul>
-        <li>Numéro au barreau : ${lawyer.bar_number}</li>
-        <li>Spécialités : ${lawyer.specialties.join(', ')}</li>
-      </ul>
+      <p>Vous avez maintenant accès à toutes les fonctionnalités de la plateforme.</p>
       <p>Cordialement,<br>L'équipe de Gestion Juridique</p>
     `,
   }).catch(err => console.error('Failed to send lawyer verification email:', err));
@@ -57,7 +56,7 @@ export const verifyLawyer = async (lawyerId: string, adminId: string) => {
 };
 
 /**
- * Get case statistics (non-confidential stats only)
+ * Get case statistics
  */
 export const getCaseStats = async () => {
   return await lawyersQueries.getCaseStats();
@@ -85,7 +84,7 @@ export const getPendingReviews = async (page: number, limit: number) => {
 };
 
 /**
- * Approve review
+ * Approve a review
  */
 export const approveReview = async (reviewId: string, adminId: string) => {
   await lawyersQueries.moderateReview(reviewId, true, adminId);
@@ -93,7 +92,7 @@ export const approveReview = async (reviewId: string, adminId: string) => {
 };
 
 /**
- * Reject review
+ * Reject a review
  */
 export const rejectReview = async (reviewId: string, adminId: string) => {
   await lawyersQueries.moderateReview(reviewId, false, adminId);
@@ -109,8 +108,6 @@ export const getSpecialties = async () => {
 
 /**
  * Get comprehensive dashboard stats
- * Note: Les statistiques des dossiers sont agrégées et anonymisées.
- * L'accès aux dossiers individuels est strictement limité aux clients et avocats concernés.
  */
 export const getComprehensiveStats = async () => {
   const [caseStats, lawyerStats, appointmentStats] = await Promise.all([
@@ -120,7 +117,7 @@ export const getComprehensiveStats = async () => {
   ]);
 
   return {
-    cases: caseStats, // Statistiques agrégées uniquement
+    cases: caseStats,
     lawyers: lawyerStats,
     appointments: appointmentStats,
   };

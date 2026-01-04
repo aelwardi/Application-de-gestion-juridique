@@ -1,7 +1,10 @@
+-- =====================================================
+-- Migration : Création de la table des demandes vers les avocats
+-- =====================================================
 CREATE TABLE IF NOT EXISTS lawyer_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    lawyer_id UUID NOT NULL REFERENCES lawyers(id) ON DELETE CASCADE,
+    lawyer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Référence vers users (avocats)
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     case_type VARCHAR(100) NOT NULL,

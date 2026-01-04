@@ -1,19 +1,16 @@
 import { Request, Response } from "express";
-import { ClientService } from "../services";
-import { CreateClientInput, UpdateClientInput, ClientSearchFilters } from "../types/client.types";
-
-const clientService = new ClientService();
+import * as clientService from "../services/client.service";
+import { UpdateClientInput, ClientSearchFilters } from "../types/client.types";
 
 export class ClientController {
   async createClient(req: Request, res: Response): Promise<void> {
     try {
-      const data: CreateClientInput = req.body;
-      const client = await clientService.createClient(data);
+      // Note: createClient n'existe plus, utiliser la création via auth.service
+      // Cette méthode devrait être supprimée ou redirigée vers auth/register
 
-      res.status(201).json({
-        success: true,
-        message: "Client créé avec succès",
-        data: client,
+      res.status(501).json({
+        success: false,
+        message: "Utilisez /auth/register pour créer un client",
       });
     } catch (error: any) {
       console.error("Error creating client:", error);
@@ -27,7 +24,7 @@ export class ClientController {
 
   async getClientById(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const {id} = req.params;
       const client = await clientService.getClientById(id);
 
       if (!client) {
@@ -54,8 +51,8 @@ export class ClientController {
 
   async getClientByUserId(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
-      const client = await clientService.getClientByUserId(userId);
+      const {userId} = req.params;
+      const client = await clientService.getClientById(userId);
 
       if (!client) {
         res.status(404).json({
@@ -82,10 +79,9 @@ export class ClientController {
   async getAllClients(req: Request, res: Response): Promise<void> {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
-      const offset = parseInt(req.query.offset as string) || 0;
-      const page = Math.floor(offset / limit) + 1;
+      const page = parseInt(req.query.page as string) || 1;
 
-      const { clients, total } = await clientService.getAllClients(limit, offset);
+      const {clients, total} = await clientService.getAllClients(page, limit);
 
       res.status(200).json({
         success: true,
@@ -119,7 +115,7 @@ export class ClientController {
         offset: parseInt(req.query.offset as string) || 0,
       };
 
-      const { clients, total } = await clientService.searchClients(filters);
+      const {clients, total} = await clientService.searchClients(filters);
       const page = Math.floor((filters.offset || 0) / (filters.limit || 50)) + 1;
 
       res.status(200).json({
@@ -144,15 +140,15 @@ export class ClientController {
 
   async getClientsByLawyer(req: Request, res: Response): Promise<void> {
     try {
-      const { lawyerId } = req.params;
+      const {lawyerId} = req.params;
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       const page = Math.floor(offset / limit) + 1;
 
-      const { clients, total } = await clientService.getClientsByLawyer(
-        lawyerId,
-        limit,
-        offset
+      const {clients, total} = await clientService.getClientsByLawyer(
+          lawyerId,
+          limit,
+          offset
       );
 
       res.status(200).json({
@@ -177,7 +173,7 @@ export class ClientController {
 
   async updateClient(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const {id} = req.params;
       const data: UpdateClientInput = req.body;
 
       const client = await clientService.updateClient(id, data);
@@ -205,39 +201,10 @@ export class ClientController {
     }
   }
 
-  async updateClientByUserId(req: Request, res: Response): Promise<void> {
-    try {
-      const { userId } = req.params;
-      const data: UpdateClientInput = req.body;
-
-      const client = await clientService.updateClientByUserId(userId, data);
-
-      if (!client) {
-        res.status(404).json({
-          success: false,
-          message: "Client non trouvé",
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Client mis à jour avec succès",
-        data: client,
-      });
-    } catch (error: any) {
-      console.error("Error updating client by user ID:", error);
-      res.status(500).json({
-        success: false,
-        message: "Erreur lors de la mise à jour du client",
-        error: error.message,
-      });
-    }
-  }
 
   async deleteClient(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const {id} = req.params;
       const deleted = await clientService.deleteClient(id);
 
       if (!deleted) {
@@ -264,7 +231,7 @@ export class ClientController {
 
   async getClientStats(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
+      const {userId} = req.params;
       const stats = await clientService.getClientStats(userId);
 
       if (!stats) {
@@ -288,103 +255,9 @@ export class ClientController {
       });
     }
   }
-
-  async getClientCases(req: Request, res: Response): Promise<void> {
-    try {
-      const { userId } = req.params;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const offset = parseInt(req.query.offset as string) || 0;
-      const page = Math.floor(offset / limit) + 1;
-
-      const { cases, total } = await clientService.getClientCases(
-        userId,
-        limit,
-        offset
-      );
-
-      res.status(200).json({
-        success: true,
-        data: cases,
-        pagination: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
-    } catch (error: any) {
-      console.error("Error getting client cases:", error);
-      res.status(500).json({
-        success: false,
-        message: "Erreur lors de la récupération des dossiers",
-        error: error.message,
-      });
-    }
-  }
-
-  async getClientAppointments(req: Request, res: Response): Promise<void> {
-    try {
-      const { userId } = req.params;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const offset = parseInt(req.query.offset as string) || 0;
-      const page = Math.floor(offset / limit) + 1;
-
-      const { appointments, total } = await clientService.getClientAppointments(
-        userId,
-        limit,
-        offset
-      );
-
-      res.status(200).json({
-        success: true,
-        data: appointments,
-        pagination: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
-    } catch (error: any) {
-      console.error("Error getting client appointments:", error);
-      res.status(500).json({
-        success: false,
-        message: "Erreur lors de la récupération des rendez-vous",
-        error: error.message,
-      });
-    }
-  }
-
-  async getClientDocuments(req: Request, res: Response): Promise<void> {
-    try {
-      const { userId } = req.params;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const offset = parseInt(req.query.offset as string) || 0;
-      const page = Math.floor(offset / limit) + 1;
-
-      const { documents, total } = await clientService.getClientDocuments(
-        userId,
-        limit,
-        offset
-      );
-
-      res.status(200).json({
-        success: true,
-        data: documents,
-        pagination: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
-    } catch (error: any) {
-      console.error("Error getting client documents:", error);
-      res.status(500).json({
-        success: false,
-        message: "Erreur lors de la récupération des documents",
-        error: error.message,
-      });
-    }
-  }
 }
+
+// TODO: Implémenter ces méthodes dans client.service.ts puis les décommenter ici:
+// - getClientCases(userId)
+// - getClientAppointments(userId)
+// - getClientDocuments(userId)

@@ -17,7 +17,6 @@ import {
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateTokens, verifyRefreshToken, TokenPayload } from '../utils/jwt.util';
 import { sendWelcomeEmail, sendPasswordChangedEmail, sendPasswordResetEmail } from '../utils/email.util';
-import { pool } from '../config/database.config';
 import {
   RegisterInput,
   LoginInput,
@@ -32,45 +31,15 @@ export interface AuthResponse {
 }
 
 /**
- * Helper pour enrichir UserResponse avec lawyerId ou clientId
- * On utilise strictement le rôle 'avocat' comme demandé
+ * Helper pour formater UserResponse
+ * Note: Avec la table unifiée, l'ID user est suffisant (pas besoin de lawyerId/clientId séparés)
  */
-/**
- * Helper enrichi pour stabiliser le lawyerId et détecter les doublons
- */
-const enrichUserResponse = async (userResponse: UserResponse): Promise<UserResponse> => {
-  try {
-    if (userResponse.role === 'avocat') {
-      // On trie par date de création (ASC) pour toujours prendre le tout premier profil créé
-      const lawyerResult = await pool.query(
-        'SELECT id FROM lawyers WHERE user_id = $1 ORDER BY created_at ASC', 
-        [userResponse.id]
-      );
-
-      if (lawyerResult.rows.length > 0) {
-        // On injecte l'ID stable pour le Dashboard
-        userResponse.lawyerId = lawyerResult.rows[0].id;
-
-        // Alerte de sécurité si doublons détectés
-        if (lawyerResult.rows.length > 1) {
-          console.warn(`⚠️ [DB_WARNING] L'utilisateur ${userResponse.email} possède ${lawyerResult.rows.length} entrées dans la table lawyers ! L'ID utilisé est : ${userResponse.lawyerId}`);
-        }
-      }
-    } else if (userResponse.role === 'client') {
-      const clientResult = await pool.query(
-        'SELECT id FROM clients WHERE user_id = $1 ORDER BY created_at ASC', 
-        [userResponse.id]
-      );
-      if (clientResult.rows.length > 0) {
-        userResponse.clientId = clientResult.rows[0].id;
-      }
-    }
-  } catch (error) {
-    console.error('❌ [ENRICH_ERROR] Erreur lors de l\'enrichissement du profil:', error);
-  }
-  
+const formatUserResponse = (userResponse: UserResponse): UserResponse => {
+  // Avec la table unifiée, user.id est l'identifiant unique pour tous les rôles
+  // Pas besoin de lawyerId ou clientId séparés
   return userResponse;
 };
+
 /**
  * Register a new user
  */
@@ -106,7 +75,7 @@ export const register = async (data: RegisterInput): Promise<AuthResponse> => {
 
   await updateLastLogin(user.id);
 
-  const userResponse = await enrichUserResponse(userToResponse(user));
+  const userResponse = formatUserResponse(userToResponse(user));
 
   return {
     user: userResponse,
@@ -142,8 +111,7 @@ export const login = async (data: LoginInput): Promise<AuthResponse> => {
 
   await updateLastLogin(user.id);
 
-  // Utilisation de l'helper pour récupérer le lawyerId avant de répondre au front
-  const userResponse = await enrichUserResponse(userToResponse(user));
+  const userResponse = formatUserResponse(userToResponse(user));
 
   return {
     user: userResponse,
@@ -190,7 +158,7 @@ export const getProfile = async (userId: string): Promise<UserResponse> => {
     throw new Error('User not found');
   }
 
-  const userResponse = await enrichUserResponse(userToResponse(user));
+  const userResponse = formatUserResponse(userToResponse(user));
   return userResponse;
 };
 
@@ -210,8 +178,7 @@ export const updateProfile = async (userId: string, data: UpdateProfileInput): P
     profilePictureUrl: data.profilePictureUrl,
   });
 
-  // On ré-enrichit après mise à jour pour ne pas perdre les IDs métier
-  return enrichUserResponse(userToResponse(updatedUser));
+  return formatUserResponse(userToResponse(updatedUser));
 };
 
 /**

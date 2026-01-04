@@ -1,17 +1,15 @@
 import { pool } from '../../config/database.config';
-import { resolveLawyerId } from '../../utils/lawyer-id-resolver.util';
 
 /**
  * ACCEPTER UNE OFFRE
- * Cette version utilise un fallback sur l'ID utilisateur si les tables 
- * lawyers/clients ne sont pas encore renseignées pour l'utilisateur.
+ * Simplifié : lawyer_id et client_id sont directement des users.id
  */
 export const acceptOfferQuery = async (offerId: string) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // 1. Récupérer l'offre (qui contient les user_ids)
+        // 1. Récupérer l'offre
         const offerRes = await client.query(
             'SELECT * FROM client_requests WHERE id = $1',
             [offerId]
@@ -19,18 +17,14 @@ export const acceptOfferQuery = async (offerId: string) => {
         const offer = offerRes.rows[0];
         if (!offer) throw new Error("Offre introuvable");
 
-        // 2. Résoudre le lawyer_id pour obtenir le user_id correct
-        const resolvedLawyerId = await resolveLawyerId(offer.lawyer_id);
-        console.log(`[ACCEPT_OFFER] Resolved lawyer_id: ${offer.lawyer_id} -> ${resolvedLawyerId}`);
-
-        // 3. Le client_id est déjà un user_id dans client_requests
-        const clientUserId = offer.client_id;
-        console.log(`[ACCEPT_OFFER] Using client user_id: ${clientUserId}`);
+        // 2. lawyer_id et client_id sont directement des users.id
+        const lawyerId = offer.lawyer_id;
+        const clientId = offer.client_id;
 
         // Génération d'un numéro de dossier
         const caseNumber = `DOS-${Date.now().toString().slice(-6)}`;
 
-        // 4. Insertion dans 'cases' (Dossiers) - utilise user_ids pour les clés étrangères
+        // 3. Insertion dans 'cases'
         const insertCaseQuery = `
             INSERT INTO cases (
                 case_number, title, description, case_type, 
@@ -45,11 +39,11 @@ export const acceptOfferQuery = async (offerId: string) => {
             offer.description,
             offer.case_category || 'Général',
             'in_progress', 
-            clientUserId,
-            resolvedLawyerId
+            clientId,
+            lawyerId
         ]);
 
-        // 5. Mettre à jour le statut de la requête initiale
+        // 4. Mettre à jour le statut de la requête initiale
         await client.query(
             "UPDATE client_requests SET status = 'accepted', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
             [offerId]

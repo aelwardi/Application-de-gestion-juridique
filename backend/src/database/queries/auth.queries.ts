@@ -1,3 +1,8 @@
+// =====================================================
+// Requêtes d'AUTHENTIFICATION
+// Utilise la table USERS UNIFIÉE
+// =====================================================
+
 import { pool } from '../../config/database.config';
 import { QueryResult } from 'pg';
 
@@ -15,6 +20,33 @@ export interface User {
   last_login_at: Date | null;
   created_at: Date;
   updated_at: Date;
+  // Champs avocats
+  bar_number?: string | null;
+  specialties?: string[];
+  experience_years?: number | null;
+  office_address?: string | null;
+  office_city?: string | null;
+  office_postal_code?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  hourly_rate?: number | null;
+  description?: string | null;
+  languages?: string[];
+  availability_status?: string | null;
+  verified_by_admin?: boolean;
+  verified_at?: Date | null;
+  rating?: number;
+  total_reviews?: number;
+  // Champs clients
+  address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  notes?: string | null;
+  // Statistiques
+  total_cases?: number;
+  active_cases?: number;
 }
 
 export interface UserResponse {
@@ -30,8 +62,16 @@ export interface UserResponse {
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  lawyerId?: string | null; // ID de la table lawyers (pour les avocats)
-  clientId?: string | null; // ID de la table clients (pour les clients)
+  // Champs avocats
+  barNumber?: string | null;
+  specialties?: string[];
+  officeCity?: string | null;
+  rating?: number;
+  verifiedByAdmin?: boolean;
+  // Champs clients
+  city?: string | null;
+  totalCases?: number;
+  activeCases?: number;
 }
 
 export interface LawyerData {
@@ -39,18 +79,25 @@ export interface LawyerData {
   specialties?: string[];
   officeAddress?: string;
   officeCity?: string;
+  officePostalCode?: string;
+  latitude?: number;
+  longitude?: number;
   yearsOfExperience?: number;
   bio?: string;
+  languages?: string[];
+  hourlyRate?: number;
 }
 
 export interface ClientData {
   address?: string;
   city?: string;
   postalCode?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
 }
 
 /**
- * Create a new user
+ * Create a new user (avec données spécifiques selon le rôle)
  */
 export const createUser = async (
   email: string,
@@ -62,73 +109,79 @@ export const createUser = async (
   lawyerData?: LawyerData,
   clientData?: ClientData
 ): Promise<User> => {
-  const client = await pool.connect();
-  
-  try {
-    await client.query('BEGIN');
-    
-    console.log('createUser - Received lawyerData:', JSON.stringify(lawyerData, null, 2));
-    console.log('createUser - Received clientData:', JSON.stringify(clientData, null, 2));
-    
-    // Create user
-    const userQuery = `
+  console.log('createUser - Role:', role);
+  console.log('createUser - LawyerData:', JSON.stringify(lawyerData, null, 2));
+  console.log('createUser - ClientData:', JSON.stringify(clientData, null, 2));
+
+  let query = '';
+  let values: any[] = [];
+
+  if (role === 'avocat' && lawyerData) {
+    // Créer un avocat avec toutes ses données
+    query = `
+      INSERT INTO users (
+        email, password_hash, role, first_name, last_name, phone,
+        bar_number, specialties, experience_years, office_address, 
+        office_city, office_postal_code, latitude, longitude,
+        hourly_rate, description, languages
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      RETURNING *
+    `;
+    values = [
+      email,
+      passwordHash,
+      role,
+      firstName,
+      lastName,
+      phone || null,
+      lawyerData.barNumber,
+      lawyerData.specialties || [],
+      lawyerData.yearsOfExperience || 0,
+      lawyerData.officeAddress || null,
+      lawyerData.officeCity || null,
+      lawyerData.officePostalCode || null,
+      lawyerData.latitude || null,
+      lawyerData.longitude || null,
+      lawyerData.hourlyRate || null,
+      lawyerData.bio || null,
+      lawyerData.languages || []
+    ];
+  } else if (role === 'client' && clientData) {
+    // Créer un client avec ses données
+    query = `
+      INSERT INTO users (
+        email, password_hash, role, first_name, last_name, phone,
+        address, city, postal_code, emergency_contact_name, emergency_contact_phone
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *
+    `;
+    values = [
+      email,
+      passwordHash,
+      role,
+      firstName,
+      lastName,
+      phone || null,
+      clientData.address || null,
+      clientData.city || null,
+      clientData.postalCode || null,
+      clientData.emergencyContactName || null,
+      clientData.emergencyContactPhone || null
+    ];
+  } else {
+    // Créer un utilisateur basique (admin, collaborateur, ou sans données supplémentaires)
+    query = `
       INSERT INTO users (email, password_hash, role, first_name, last_name, phone)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
-    const userValues = [email, passwordHash, role, firstName, lastName, phone || null];
-    const userResult: QueryResult<User> = await client.query(userQuery, userValues);
-    const user = userResult.rows[0];
-
-    // If role is 'avocat', create corresponding lawyer entry
-    if (role === 'avocat') {
-      const lawyerQuery = `
-        INSERT INTO lawyers (user_id, bar_number, specialties, office_address, office_city, experience_years, description)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `;
-      // Use provided data or generate temporary values
-      const barNumber = lawyerData?.barNumber || `TEMP-${user.id.substring(0, 8)}`;
-      const specialties = lawyerData?.specialties || [];
-      const officeAddress = lawyerData?.officeAddress || null;
-      const officeCity = lawyerData?.officeCity || null;
-      const experienceYears = lawyerData?.yearsOfExperience || null;
-      const description = lawyerData?.bio || null;
-      
-      console.log('createUser - Inserting lawyer with values:', {
-        barNumber,
-        specialties,
-        officeAddress,
-        officeCity,
-        experienceYears,
-        description
-      });
-      
-      const lawyerValues = [user.id, barNumber, specialties, officeAddress, officeCity, experienceYears, description];
-      await client.query(lawyerQuery, lawyerValues);
-    }
-    
-    // If role is 'client', create corresponding client entry
-    if (role === 'client') {
-      const clientQuery = `
-        INSERT INTO clients (user_id, address, city, postal_code, total_cases, active_cases)
-        VALUES ($1, $2, $3, $4, $5, $6)
-      `;
-      const address = clientData?.address || null;
-      const city = clientData?.city || null;
-      const postalCode = clientData?.postalCode || null;
-      
-      const clientValues = [user.id, address, city, postalCode, 0, 0];
-      await client.query(clientQuery, clientValues);
-    }
-
-    await client.query('COMMIT');
-    return user;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
+    values = [email, passwordHash, role, firstName, lastName, phone || null];
   }
+
+  const result: QueryResult<User> = await pool.query(query, values);
+  return result.rows[0];
 };
 
 /**
@@ -137,7 +190,6 @@ export const createUser = async (
 export const findUserByEmail = async (email: string): Promise<User | null> => {
   const query = 'SELECT * FROM users WHERE email = $1';
   const result: QueryResult<User> = await pool.query(query, [email]);
-
   return result.rows[0] || null;
 };
 
@@ -147,7 +199,6 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
 export const findUserById = async (id: string): Promise<User | null> => {
   const query = 'SELECT * FROM users WHERE id = $1';
   const result: QueryResult<User> = await pool.query(query, [id]);
-
   return result.rows[0] || null;
 };
 
@@ -234,7 +285,7 @@ export const deactivateUser = async (id: string): Promise<void> => {
  * Convert database user to response format
  */
 export const userToResponse = (user: User): UserResponse => {
-  return {
+  const response: UserResponse = {
     id: user.id,
     email: user.email,
     role: user.role,
@@ -248,5 +299,22 @@ export const userToResponse = (user: User): UserResponse => {
     createdAt: user.created_at,
     updatedAt: user.updated_at,
   };
-};
 
+  // Ajouter les champs avocats si applicable
+  if (user.role === 'avocat') {
+    response.barNumber = user.bar_number || null;
+    response.specialties = user.specialties || [];
+    response.officeCity = user.office_city || null;
+    response.rating = user.rating || 0;
+    response.verifiedByAdmin = user.verified_by_admin || false;
+  }
+
+  // Ajouter les champs clients si applicable
+  if (user.role === 'client') {
+    response.city = user.city || null;
+    response.totalCases = user.total_cases || 0;
+    response.activeCases = user.active_cases || 0;
+  }
+
+  return response;
+};

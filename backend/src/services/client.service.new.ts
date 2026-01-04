@@ -101,6 +101,7 @@ export const getClientsByLawyer = async (
     offset,
   ]);
 
+  // Note: Avec table unifiée, pas besoin de jointure clients
   const countQuery = `
     SELECT COUNT(DISTINCT u.id)
     FROM users u

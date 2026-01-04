@@ -20,7 +20,6 @@ import {
   clientPaymentQueries,
   clientCommunicationQueries,
 } from "../database/queries/client-extended.queries";
-import { resolveLawyerIdOptional } from "../utils/lawyer-id-resolver.util";
 
 export class ClientExtendedService {
   async createClientRequest(data: CreateClientRequestInput): Promise<ClientRequest> {
@@ -37,12 +36,10 @@ export class ClientExtendedService {
       preferred_date,
     } = data;
 
-    // Résoudre le lawyer_id : peut être soit un user_id soit un lawyer.id
-    const resolvedLawyerId = await resolveLawyerIdOptional(lawyer_id);
-
+    // lawyer_id est maintenant directement un users.id (plus besoin de résolution)
     const result = await pool.query(clientRequestQueries.create, [
       client_id,
-      resolvedLawyerId,
+      lawyer_id,
       request_type,
       title,
       description,

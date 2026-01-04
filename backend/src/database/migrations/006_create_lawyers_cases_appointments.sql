@@ -1,26 +1,7 @@
-CREATE TABLE IF NOT EXISTS lawyers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    bar_number VARCHAR(50) UNIQUE NOT NULL,
-    specialties TEXT[] NOT NULL DEFAULT '{}',
-    experience_years INTEGER DEFAULT 0,
-    office_address TEXT,
-    office_city VARCHAR(100),
-    office_postal_code VARCHAR(20),
-    latitude DECIMAL(10, 8),
-    longitude DECIMAL(11, 8),
-    hourly_rate DECIMAL(10, 2),
-    description TEXT,
-    languages TEXT[] DEFAULT '{}',
-    availability_status VARCHAR(50) DEFAULT 'available' CHECK (availability_status IN ('available', 'busy', 'unavailable')),
-    verified_by_admin BOOLEAN DEFAULT FALSE,
-    verified_at TIMESTAMP,
-    rating DECIMAL(3, 2) DEFAULT 0.00,
-    total_reviews INTEGER DEFAULT 0,
-    total_cases INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- =====================================================
+-- Note: La table 'lawyers' a été fusionnée dans la table 'users'
+-- Les avocats sont maintenant identifiés par role='avocat' dans users
+-- =====================================================
 
 CREATE TABLE IF NOT EXISTS lawyer_specialties (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -107,9 +88,12 @@ CREATE TABLE IF NOT EXISTS reviews (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_lawyers_user_id ON lawyers(user_id);
-CREATE INDEX IF NOT EXISTS idx_lawyers_city ON lawyers(office_city);
-CREATE INDEX IF NOT EXISTS idx_lawyers_verified ON lawyers(verified_by_admin);
+-- =====================================================
+-- INDEX pour optimiser les performances
+-- =====================================================
+
+-- Note: Les index pour les avocats sont maintenant dans 001_create_unified_users.sql
+
 CREATE INDEX IF NOT EXISTS idx_cases_client_id ON cases(client_id);
 CREATE INDEX IF NOT EXISTS idx_cases_lawyer_id ON cases(lawyer_id);
 CREATE INDEX IF NOT EXISTS idx_cases_status ON cases(status);
@@ -119,7 +103,10 @@ CREATE INDEX IF NOT EXISTS idx_appointments_client_id ON appointments(client_id)
 CREATE INDEX IF NOT EXISTS idx_appointments_start_time ON appointments(start_time);
 CREATE INDEX IF NOT EXISTS idx_reviews_lawyer_id ON reviews(lawyer_id);
 
-COMMENT ON TABLE lawyers IS 'Extended information for lawyer users';
+-- =====================================================
+-- COMMENTAIRES pour documentation
+-- =====================================================
+
 COMMENT ON TABLE cases IS 'Legal cases managed by lawyers for clients';
 COMMENT ON TABLE appointments IS 'Scheduled appointments between lawyers and clients';
 COMMENT ON TABLE reviews IS 'Client reviews for lawyers';
