@@ -242,29 +242,12 @@
                 <p class="mt-1 text-xs text-neutral-500">Séparez les spécialités par des virgules</p>
               </div>
 
-              <div>
-                <label for="officeCity" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Ville du cabinet
-                </label>
-                <input
-                  id="officeCity"
-                  v-model="form.lawyerData.officeCity"
-                  type="text"
-                  class="input-field"
-                  placeholder="Paris"
-                />
-              </div>
-
-              <div>
-                <label for="officeAddress" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Adresse du cabinet
-                </label>
-                <input
-                  id="officeAddress"
-                  v-model="form.lawyerData.officeAddress"
-                  type="text"
-                  class="input-field"
-                  placeholder="123 Rue de la Loi"
+              <div class="md:col-span-2">
+                <AddressAutocomplete
+                  v-model="lawyerLocationData"
+                  label="Adresse du cabinet"
+                  placeholder="Entrez l'adresse de votre cabinet..."
+                  :show-current-location-button="true"
                 />
               </div>
 
@@ -290,45 +273,13 @@
               Informations complémentaires
             </h3>
 
-            <div class="grid md:grid-cols-2 gap-6">
-              <div class="md:col-span-2">
-                <label for="clientAddress" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Adresse
-                </label>
-                <input
-                  id="clientAddress"
-                  v-model="form.clientData.address"
-                  type="text"
-                  class="input-field"
-                  placeholder="10 Rue de la Paix"
-                />
-              </div>
-
-              <div>
-                <label for="clientCity" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Ville
-                </label>
-                <input
-                  id="clientCity"
-                  v-model="form.clientData.city"
-                  type="text"
-                  class="input-field"
-                  placeholder="Paris"
-                />
-              </div>
-
-              <div>
-                <label for="postalCode" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Code postal
-                </label>
-                <input
-                  id="postalCode"
-                  v-model="form.clientData.postalCode"
-                  type="text"
-                  class="input-field"
-                  placeholder="75001"
-                />
-              </div>
+            <div class="grid md:grid-cols-1 gap-6">
+              <AddressAutocomplete
+                v-model="clientLocationData"
+                label="Adresse"
+                placeholder="Entrez votre adresse..."
+                :show-current-location-button="true"
+              />
             </div>
           </div>
 
@@ -468,6 +419,8 @@
 </template>
 
 <script setup lang="ts">
+import AddressAutocomplete from '~/components/common/AddressAutocomplete.vue'
+
 definePageMeta({
   middleware: 'guest',
   layout: false,
@@ -488,6 +441,8 @@ const form = ref({
     specialties: [] as string[],
     officeAddress: '',
     officeCity: '',
+    officeLatitude: null as number | null,
+    officeLongitude: null as number | null,
     yearsOfExperience: undefined as number | undefined,
     bio: '',
   },
@@ -495,7 +450,32 @@ const form = ref({
     address: '',
     city: '',
     postalCode: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
   },
+});
+
+// Variables pour l'autocomplete d'adresse
+const lawyerLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
+const clientLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
 });
 
 const specialtiesInput = ref('');
@@ -505,6 +485,47 @@ const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
 const showPassword = ref(false);
 const acceptTerms = ref(false);
+
+// Watcher pour synchroniser les données d'adresse de l'avocat
+watch(lawyerLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.lawyerData.officeAddress = newValue.address
+    form.value.lawyerData.officeLatitude = newValue.latitude
+    form.value.lawyerData.officeLongitude = newValue.longitude
+
+    // Extraire la ville depuis l'adresse formatée si disponible
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      // Généralement la ville est dans les dernières parties
+      if (parts.length > 1) {
+        form.value.lawyerData.officeCity = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
+
+// Watcher pour synchroniser les données d'adresse du client
+watch(clientLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.clientData.address = newValue.address
+    form.value.clientData.latitude = newValue.latitude
+    form.value.clientData.longitude = newValue.longitude
+
+    // Extraire ville et code postal depuis l'adresse formatée
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      if (parts.length > 1) {
+        // Chercher le code postal dans l'adresse
+        const postalMatch = newValue.formattedAddress.match(/\b\d{5}\b/)
+        if (postalMatch) {
+          form.value.clientData.postalCode = postalMatch[0]
+        }
+        // Extraire la ville
+        form.value.clientData.city = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
 
 // Watch specialties input to update the array
 watch(specialtiesInput, (value) => {

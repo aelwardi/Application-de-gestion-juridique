@@ -243,34 +243,26 @@
                         />
                       </div>
 
-                      <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label for="specialties" class="block text-sm font-medium text-neutral-700 mb-2">
-                            Spécialités
-                          </label>
-                          <input
-                            id="specialties"
-                            v-model="specialtiesInput"
-                            type="text"
-                            class="input-field"
-                            placeholder="Droit civil, Droit pénal"
-                          />
-                          <p class="mt-1 text-xs text-neutral-500">Séparez par des virgules</p>
-                        </div>
-
-                        <div>
-                          <label for="officeCity" class="block text-sm font-medium text-neutral-700 mb-2">
-                            Ville du cabinet
-                          </label>
-                          <input
-                            id="officeCity"
-                            v-model="form.lawyerData.officeCity"
-                            type="text"
-                            class="input-field"
-                            placeholder="Paris"
-                          />
-                        </div>
+                      <div>
+                        <label for="specialties" class="block text-sm font-medium text-neutral-700 mb-2">
+                          Spécialités
+                        </label>
+                        <input
+                          id="specialties"
+                          v-model="specialtiesInput"
+                          type="text"
+                          class="input-field"
+                          placeholder="Droit civil, Droit pénal"
+                        />
+                        <p class="mt-1 text-xs text-neutral-500">Séparez par des virgules</p>
                       </div>
+
+                      <AddressAutocomplete
+                        v-model="lawyerLocationData"
+                        label="Adresse du cabinet"
+                        placeholder="Entrez l'adresse de votre cabinet..."
+                        :show-current-location-button="true"
+                      />
                     </div>
                   </div>
 
@@ -281,46 +273,12 @@
                       Adresse (optionnel)
                     </h3>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                      <div class="md:col-span-2">
-                        <label for="clientAddress" class="block text-sm font-medium text-neutral-700 mb-2">
-                          Adresse
-                        </label>
-                        <input
-                          id="clientAddress"
-                          v-model="form.clientData.address"
-                          type="text"
-                          class="input-field"
-                          placeholder="10 Rue de la Paix"
-                        />
-                      </div>
-
-                      <div>
-                        <label for="clientCity" class="block text-sm font-medium text-neutral-700 mb-2">
-                          Ville
-                        </label>
-                        <input
-                          id="clientCity"
-                          v-model="form.clientData.city"
-                          type="text"
-                          class="input-field"
-                          placeholder="Paris"
-                        />
-                      </div>
-
-                      <div>
-                        <label for="postalCode" class="block text-sm font-medium text-neutral-700 mb-2">
-                          Code postal
-                        </label>
-                        <input
-                          id="postalCode"
-                          v-model="form.clientData.postalCode"
-                          type="text"
-                          class="input-field"
-                          placeholder="75001"
-                        />
-                      </div>
-                    </div>
+                    <AddressAutocomplete
+                      v-model="clientLocationData"
+                      label="Adresse"
+                      placeholder="Entrez votre adresse..."
+                      :show-current-location-button="true"
+                    />
                   </div>
 
                   <!-- Password Section -->
@@ -468,6 +426,8 @@
 </template>
 
 <script setup lang="ts">
+import AddressAutocomplete from '~/components/common/AddressAutocomplete.vue';
+
 interface Props {
   modelValue: boolean;
   userType?: 'avocat' | 'client';
@@ -513,6 +473,29 @@ const form = ref({
   },
 });
 
+// Variables pour l'autocomplete d'adresse
+const lawyerLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
+const clientLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
 const specialtiesInput = ref('');
 const confirmPassword = ref('');
 const isLoading = ref(false);
@@ -520,6 +503,42 @@ const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
 const showPassword = ref(false);
 const acceptTerms = ref(false);
+
+// Watcher pour synchroniser les données d'adresse de l'avocat
+watch(lawyerLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.lawyerData.officeAddress = newValue.address
+
+    // Extraire la ville depuis l'adresse formatée si disponible
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      if (parts.length > 1) {
+        form.value.lawyerData.officeCity = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
+
+// Watcher pour synchroniser les données d'adresse du client
+watch(clientLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.clientData.address = newValue.address
+
+    // Extraire ville et code postal depuis l'adresse formatée
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      if (parts.length > 1) {
+        // Chercher le code postal dans l'adresse
+        const postalMatch = newValue.formattedAddress.match(/\b\d{5}\b/)
+        if (postalMatch) {
+          form.value.clientData.postalCode = postalMatch[0]
+        }
+        // Extraire la ville
+        form.value.clientData.city = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
 
 // Watch specialties input
 watch(specialtiesInput, (value) => {
@@ -595,6 +614,11 @@ const closeModal = () => {
         postalCode: '',
       },
     };
+
+    // Réinitialiser les données de localisation
+    lawyerLocationData.value = { address: '', latitude: null, longitude: null };
+    clientLocationData.value = { address: '', latitude: null, longitude: null };
+
     specialtiesInput.value = '';
     confirmPassword.value = '';
     errorMessage.value = '';

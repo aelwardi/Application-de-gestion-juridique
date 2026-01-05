@@ -148,4 +148,3 @@ INSERT INTO users (
     true,
     true
 ) ON CONFLICT (email) DO NOTHING;
-
