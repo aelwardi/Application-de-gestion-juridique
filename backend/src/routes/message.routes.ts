@@ -16,6 +16,15 @@ router.get('/conversations', authenticate, async (req: Request, res: Response) =
       SELECT 
         c.*,
         (
+          SELECT json_build_object(
+            'id', cases.id,
+            'title', cases.title,
+            'case_number', cases.case_number
+          )
+          FROM cases
+          WHERE cases.id = c.case_id
+        ) as case_info,
+        (
           SELECT json_agg(
             json_build_object(
               'id', u.id,

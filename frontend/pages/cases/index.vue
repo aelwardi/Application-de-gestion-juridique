@@ -345,7 +345,7 @@ const toggleClient = (clientId: string) => {
 };
 
 const contactPerson = (personId: string, personName: string) => {
-  // Rediriger vers la page messages avec l'ID de la personne à contacter
+  // Conversation globale sans lien à un dossier spécifique
   navigateTo(`/messages?recipientId=${personId}&recipientName=${encodeURIComponent(personName)}`);
 };
 

@@ -45,14 +45,21 @@
                   {{ getInitials(conv) }}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between mb-1">
-                    <p class="text-sm font-semibold text-gray-900 truncate">
+                  <div class="flex items-center gap-2 mb-1">
+                    <p class="text-sm font-semibold text-gray-900 truncate flex-1">
                       {{ getConversationName(conv) }}
                     </p>
-                    <span v-if="conv.unread_count > 0" class="ml-2 px-2 py-1 text-xs font-bold text-white bg-blue-600 rounded-full">
+                    <span v-if="conv.case_info" class="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700 font-medium flex-shrink-0">
+                      📁
+                    </span>
+                    <span v-if="conv.unread_count > 0" class="px-2 py-1 text-xs font-bold text-white bg-blue-600 rounded-full flex-shrink-0">
                       {{ conv.unread_count }}
                     </span>
                   </div>
+                  <!-- Afficher le nom du participant si c'est un dossier -->
+                  <p v-if="conv.case_info && conv.other_participants && conv.other_participants.length > 0" class="text-xs text-gray-500 mb-1">
+                    {{ conv.other_participants[0].first_name }} {{ conv.other_participants[0].last_name }}
+                  </p>
                   <p class="text-xs text-gray-600 truncate">
                     {{ conv.last_message?.message_text || 'Nouvelle conversation' }}
                   </p>
@@ -421,6 +428,12 @@ const getInitials = (conv: any) => {
 }
 
 const getConversationName = (conv: any) => {
+  // Si la conversation est liée à un dossier, afficher le titre du dossier
+  if (conv.case_info && conv.case_info.title) {
+    return `Dossier: ${conv.case_info.title}`
+  }
+
+  // Sinon, afficher le nom du participant (conversation globale)
   if (!conv.other_participants || conv.other_participants.length === 0) return 'Conversation'
   const participant = conv.other_participants[0]
   return `${participant.first_name} ${participant.last_name}`
@@ -429,6 +442,13 @@ const getConversationName = (conv: any) => {
 const getConversationRole = (conv: any) => {
   if (!conv.other_participants || conv.other_participants.length === 0) return ''
   const participant = conv.other_participants[0]
+
+  // Si c'est un dossier, afficher le nom du participant
+  if (conv.case_info && conv.case_info.title) {
+    return `avec ${participant.first_name} ${participant.last_name}`
+  }
+
+  // Sinon, afficher le rôle (conversation globale)
   const roleLabels: Record<string, string> = {
     avocat: 'Avocat',
     client: 'Client',
