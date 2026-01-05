@@ -4,42 +4,38 @@ import { v4 as uuidv4 } from 'uuid';
 export interface Notification {
   id: string;
   user_id: string;
-  type: string;
+  notification_type: string;
   title: string;
   message: string;
-  related_entity_type?: string;
-  related_entity_id?: string;
+  data?: any;
   is_read: boolean;
   created_at: Date;
 }
 
 export interface CreateNotificationInput {
   user_id: string;
-  type: string;
+  notification_type: string;
   title: string;
   message: string;
-  related_entity_type?: string;
-  related_entity_id?: string;
+  data?: any;
 }
 
 export class NotificationService {
   async createNotification(data: CreateNotificationInput): Promise<Notification> {
     const query = `
       INSERT INTO notifications (
-        id, user_id, type, title, message, 
-        related_entity_type, related_entity_id, is_read
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, false)
+        id, user_id, notification_type, title, message, data, is_read
+      ) VALUES ($1, $2, $3, $4, $5, $6, false)
       RETURNING *
     `;
 
     const values = [
       uuidv4(),
       data.user_id,
-      data.type,
+      data.notification_type,
       data.title,
       data.message,
-      data.related_entity_type || null,
-      data.related_entity_id || null,
+      data.data ? JSON.stringify(data.data) : null,
     ];
 
     const result = await pool.query(query, values);

@@ -120,29 +120,36 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
           if (uploaderRole === 'avocat' && !finalIsConfidential) {
             // Avocat upload un document NON confidentiel → notifier le client
             await pool.query(
-              `INSERT INTO notifications (user_id, type, title, message, related_entity_type, related_entity_id)
-               VALUES ($1, $2, $3, $4, $5, $6)`,
+              `INSERT INTO notifications (user_id, notification_type, title, message, data)
+               VALUES ($1, $2, $3, $4, $5)`,
               [
                 caseData.client_id,
-                'document',
+                'document_uploaded',
                 'Nouveau document disponible',
                 `Votre avocat a ajouté le document "${title}" au dossier "${caseData.case_title}"`,
-                'document',
-                document.id
+                JSON.stringify({
+                  document_id: document.id,
+                  case_id: case_id,
+                  document_title: title
+                })
               ]
             );
           } else if (uploaderRole === 'client') {
             // Client upload → notifier l'avocat
             await pool.query(
-              `INSERT INTO notifications (user_id, type, title, message, related_entity_type, related_entity_id)
-               VALUES ($1, $2, $3, $4, $5, $6)`,
+              `INSERT INTO notifications (user_id, notification_type, title, message, data)
+               VALUES ($1, $2, $3, $4, $5)`,
               [
                 caseData.lawyer_id,
-                'document',
+                'document_uploaded',
                 'Nouveau document client',
                 `${uploaderName} a ajouté le document "${title}" au dossier "${caseData.case_title}"`,
-                'document',
-                document.id
+                JSON.stringify({
+                  document_id: document.id,
+                  case_id: case_id,
+                  document_title: title,
+                  uploader_name: uploaderName
+                })
               ]
             );
           }
