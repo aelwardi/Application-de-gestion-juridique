@@ -480,6 +480,17 @@ const formatTime = (date: string) => {
 onMounted(async () => {
   await loadConversations()
 
+  // Si conversationId est passé (depuis une notification), ouvrir directement la conversation
+  const conversationId = route.query.conversationId as string
+  if (conversationId) {
+    const conv = conversations.value.find(c => c.id === conversationId)
+    if (conv) {
+      selectedConversation.value = conv
+      await loadMessages(conv.id)
+    }
+    return
+  }
+
   // Si recipientId est passé en query param, créer/ouvrir la conversation
   const recipientId = route.query.recipientId as string
   const caseId = route.query.caseId as string

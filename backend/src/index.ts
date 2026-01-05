@@ -19,6 +19,7 @@ import lawyerRequestRoutes from './routes/lawyer-request.routes';
 import lawyerRoutes from './routes/lawyer.routes';
 import documentRoutes from "./routes/document.routes";
 import messageRoutes from "./routes/message.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ app.use('/api/lawyers', lawyerRoutes);
 
 app.use("/api/documents", documentRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/notifications", notificationRoutes);
 const startServer = async () => {
   try {
     await pool.query("SELECT 1");

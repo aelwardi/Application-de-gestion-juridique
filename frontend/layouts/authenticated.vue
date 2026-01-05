@@ -103,12 +103,12 @@
                         <div
                           v-for="notif in filteredNotifications"
                           :key="notif.id"
-                          @click="goToNotificationJournal"
+                          @click="handleNotificationClick(notif)"
                           class="p-4 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition group"
                         >
                           <div class="flex items-start gap-3">
                             <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
-                              {{ notif.type === 'message' ? '💬' : '📅' }}
+                              {{ getNotificationIcon(notif.type) }}
                             </div>
                             <div class="flex-1">
                               <p class="text-[10px] font-black uppercase text-blue-500 mb-1">{{ notif.category }}</p>
@@ -292,6 +292,41 @@ const markAllAsRead = () => {
   notificationStore.markAllAsRead()
 }
 
+const getNotificationIcon = (type: string) => {
+  const icons: Record<string, string> = {
+    'message_received': '💬',
+    'document_uploaded': '📄',
+    'appointment_reminder': '📅',
+    'case_update': '⚖️',
+    'offer': '📋'
+  }
+  return icons[type] || '🔔'
+}
+
+const handleNotificationClick = (notif: any) => {
+  showNotifications.value = false
+  notificationStore.markAsRead(notif.id)
+
+  // Redirection selon le type de notification
+  if (notif.type === 'message_received') {
+    // Extraire l'ID de la conversation depuis data
+    const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
+    if (data && data.conversation_id) {
+      router.push(`/messages?conversationId=${data.conversation_id}`)
+    } else {
+      router.push('/messages')
+    }
+  } else if (notif.type === 'document_uploaded') {
+    const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
+    if (data && data.case_id) {
+      router.push(`/cases/${data.case_id}`)
+    }
+  } else {
+    // Par défaut, aller au journal des notifications
+    goToNotificationJournal()
+  }
+}
+
 const handleLogout = async () => {
   await authStore.logout()
 }
@@ -343,4 +378,3 @@ onBeforeUnmount(() => {
   background: #555;
 }
 </style>
-
