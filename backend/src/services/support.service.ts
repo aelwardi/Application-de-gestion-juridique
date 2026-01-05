@@ -16,10 +16,23 @@ export const getAllTickets = async (
 };
 
 /**
- * Get user's tickets
+ * Get user's tickets with messages
  */
 export const getUserTickets = async (userId: string) => {
-  return await supportQueries.getUserTickets(userId);
+  const tickets = await supportQueries.getUserTickets(userId);
+
+  // Pour chaque ticket, récupérer les messages
+  const ticketsWithMessages = await Promise.all(
+    tickets.map(async (ticket) => {
+      const messages = await supportQueries.getTicketMessages(ticket.id, false);
+      return {
+        ...ticket,
+        messages
+      };
+    })
+  );
+
+  return ticketsWithMessages;
 };
 
 /**

@@ -131,7 +131,8 @@ export const getTicketMessages = async (ticketId: string, includeInternal: boole
     SELECT 
       sm.*,
       CONCAT(u.first_name, ' ', u.last_name) as user_name,
-      u.role as user_role
+      u.role as user_role,
+      CASE WHEN u.role = 'admin' THEN true ELSE false END as is_admin
     FROM support_messages sm
     LEFT JOIN users u ON sm.user_id = u.id
     WHERE sm.ticket_id = $1
