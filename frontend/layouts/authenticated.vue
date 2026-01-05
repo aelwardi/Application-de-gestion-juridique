@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-100 flex flex-col">
     <nav v-if="authStore.isAdmin" class="bg-gradient-to-r from-purple-700 to-indigo-800 shadow-lg">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -236,6 +236,7 @@
                         <span class="font-medium">Contacter le Support</span>
                       </NuxtLink>
 
+
                       <button
                         @click="handleLogout"
                         class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 font-bold border-t transition group"
@@ -255,7 +256,10 @@
       </div>
     </nav>
 
-    <main><slot /></main>
+    <main class="flex-1"><slot /></main>
+
+    <!-- Footer -->
+    <Footer />
   </div>
 </template>
 
@@ -264,6 +268,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useNotificationStore } from '~/stores/notifications'
 import { useRouter } from 'vue-router'
+import Footer from '~/components/Footer.vue'
 
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
