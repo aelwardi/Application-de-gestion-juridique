@@ -30,25 +30,28 @@
           <div 
             v-for="notification in notifications" 
             :key="notification.id"
-            class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-            :class="{ 'bg-blue-50': !notification.read }"
+            class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+            :class="{ 'bg-blue-50': !notification.is_read }"
             @click="markAsRead(notification.id)"
           >
             <div class="flex items-start">
               <div class="flex-shrink-0">
-                <div :class="getIconClass(notification.type)" class="w-8 h-8 rounded-full flex items-center justify-center">
+                <div :class="getIconClass(notification.notification_type)" class="w-8 h-8 rounded-full flex items-center justify-center">
                   <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path v-if="notification.type === 'info'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    <path v-else-if="notification.type === 'success'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    <path v-else-if="notification.type === 'warning'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path v-if="notification.notification_type.includes('appointment')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path v-else-if="notification.notification_type.includes('case')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path v-else-if="notification.notification_type.includes('message')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
               <div class="ml-3 flex-1">
                 <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
                 <p class="text-sm text-gray-600 mt-1">{{ notification.message }}</p>
-                <p class="text-xs text-gray-500 mt-1">{{ formatTimeAgo(notification.createdAt) }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ formatTimeAgo(notification.created_at) }}</p>
+              </div>
+              <div v-if="!notification.is_read" class="ml-2">
+                <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
               </div>
             </div>
           </div>
@@ -75,53 +78,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-
-interface Notification {
-  id: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  title: string
-  message: string
-  read: boolean
-  createdAt: Date
-}
+import { ref, computed, onMounted, watch } from 'vue'
+import type { Notification } from '~/composables/useNotifications'
 
 const isOpen = ref(false)
+const notifications = ref<Notification[]>([])
+const authStore = useAuthStore()
+const { getUnreadNotifications, markAsRead: markNotificationAsRead, markAllAsRead: markAllNotificationsAsRead } = useNotifications()
 
-// Mock notifications - à remplacer par de vraies données
-const notifications = ref<Notification[]>([
-  {
-    id: '1',
-    type: 'info',
-    title: 'Nouveau dossier',
-    message: 'Un nouveau dossier vous a été assigné',
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30) // 30 minutes ago
-  },
-  {
-    id: '2',
-    type: 'warning',
-    title: 'Audience à venir',
-    message: 'Audience prévue demain à 14h00',
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2) // 2 hours ago
-  },
-  {
-    id: '3',
-    type: 'success',
-    title: 'Dossier clôturé',
-    message: 'Le dossier CASE-123 a été clôturé avec succès',
-    read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24) // 1 day ago
+// Charger les notifications au montage et toutes les 30 secondes
+const loadNotifications = async () => {
+  if (!authStore.user?.id) return
+
+  try {
+    const data = await getUnreadNotifications(authStore.user.id)
+    notifications.value = data
+  } catch (error) {
+    console.error('Erreur lors du chargement des notifications:', error)
   }
-])
+}
+
+onMounted(() => {
+  loadNotifications()
+  // Rafraîchir toutes les 30 secondes
+  setInterval(loadNotifications, 30000)
+})
+
+// Recharger quand l'utilisateur change
+watch(() => authStore.user?.id, () => {
+  loadNotifications()
+})
 
 const unreadCount = computed(() => {
-  return notifications.value.filter(n => !n.read).length
+  return notifications.value.filter(n => !n.is_read).length
 })
 
 const getIconClass = (type: string) => {
   const classes: Record<string, string> = {
+    appointment_created: 'bg-blue-500',
+    appointment_updated: 'bg-blue-500',
+    appointment_cancelled: 'bg-red-500',
+    appointment_reminder: 'bg-yellow-500',
+    case_created: 'bg-green-500',
+    case_updated: 'bg-blue-500',
+    message_received: 'bg-purple-500',
+    document_uploaded: 'bg-indigo-500',
     info: 'bg-blue-500',
     success: 'bg-green-500',
     warning: 'bg-yellow-500',
@@ -130,7 +131,8 @@ const getIconClass = (type: string) => {
   return classes[type] || 'bg-gray-500'
 }
 
-const formatTimeAgo = (date: Date) => {
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString)
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
   
   if (seconds < 60) return 'À l\'instant'
@@ -141,15 +143,34 @@ const formatTimeAgo = (date: Date) => {
   return date.toLocaleDateString('fr-FR')
 }
 
-const markAsRead = (id: string) => {
-  const notification = notifications.value.find(n => n.id === id)
-  if (notification) {
-    notification.read = true
+const markAsRead = async (id: string) => {
+  try {
+    await markNotificationAsRead(id)
+    const notification = notifications.value.find(n => n.id === id)
+    if (notification) {
+      notification.is_read = true
+    }
+
+    // Si la notification a un lien, naviguer
+    const notif = notifications.value.find(n => n.id === id)
+    if (notif?.data?.appointment_id) {
+      navigateTo(`/appointments/${notif.data.appointment_id}`)
+      isOpen.value = false
+    }
+  } catch (error) {
+    console.error('Erreur lors du marquage de la notification:', error)
   }
 }
 
-const markAllAsRead = () => {
-  notifications.value.forEach(n => n.read = true)
-  isOpen.value = false
+const markAllAsRead = async () => {
+  if (!authStore.user?.id) return
+
+  try {
+    await markAllNotificationsAsRead(authStore.user.id)
+    notifications.value.forEach(n => n.is_read = true)
+    isOpen.value = false
+  } catch (error) {
+    console.error('Erreur lors du marquage des notifications:', error)
+  }
 }
 </script>

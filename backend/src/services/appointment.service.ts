@@ -7,12 +7,74 @@ import type {
   AppointmentWithDetails,
   AppointmentStats
 } from '../types/appointment.types';
+import { NotificationService } from './notification.service';
+import { sendAppointmentEmail } from './email.service';
+import { pool } from '../config/database.config';
+
+const notificationService = new NotificationService();
 
 /**
- * Créer un nouveau rendez-vous
+ * Créer un nouveau rendez-vous avec notifications
  */
 export const createAppointment = async (data: CreateAppointmentDTO): Promise<Appointment> => {
-  return await appointmentQueries.createAppointment(data);
+  const appointment = await appointmentQueries.createAppointment(data);
+
+  // Envoyer les notifications au client
+  try {
+    // Récupérer les informations du client et de l'avocat
+    const clientQuery = await pool.query(
+      'SELECT first_name, last_name, email FROM users WHERE id = $1',
+      [data.client_id]
+    );
+
+    const lawyerQuery = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [data.lawyer_id]
+    );
+
+    if (clientQuery.rows.length > 0 && lawyerQuery.rows.length > 0) {
+      const client = clientQuery.rows[0];
+      const lawyer = lawyerQuery.rows[0];
+      const lawyerName = `${lawyer.first_name} ${lawyer.last_name}`;
+
+      // Créer une notification dans l'application
+      await notificationService.createNotification({
+        user_id: data.client_id,
+        notification_type: 'appointment_created',
+        title: 'Nouveau rendez-vous',
+        message: `Un rendez-vous a été programmé avec ${lawyerName} le ${new Date(data.start_time).toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}`,
+        data: {
+          appointment_id: appointment.id,
+          lawyer_id: data.lawyer_id,
+          lawyer_name: lawyerName,
+          start_time: data.start_time,
+          appointment_type: data.appointment_type
+        }
+      });
+
+      // Envoyer un email de notification
+      await sendAppointmentEmail({
+        email: client.email,
+        firstName: client.first_name,
+        appointmentDate: new Date(data.start_time),
+        lawyerName: lawyerName,
+        appointmentType: data.appointment_type
+      });
+
+      console.log(`✅ Notifications envoyées au client ${client.email}`);
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'envoi des notifications:', error);
+    // Ne pas bloquer la création du rendez-vous si les notifications échouent
+  }
+
+  return appointment;
 };
 
 /**
