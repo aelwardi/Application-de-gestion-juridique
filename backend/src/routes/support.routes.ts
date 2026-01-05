@@ -8,6 +8,29 @@ const router = Router();
 router.use(authenticate);
 
 /**
+ * GET /api/support/my-tickets
+ * Get current user's tickets
+ */
+router.get('/my-tickets', async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+
+    const result = await supportService.getUserTickets(userId);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error('Get user tickets error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch tickets',
+    });
+  }
+});
+
+/**
  * GET /api/support/tickets
  * Get all tickets (admin only)
  */

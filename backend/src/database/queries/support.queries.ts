@@ -87,6 +87,24 @@ export const getAllTickets = async (
 };
 
 /**
+ * Get user's tickets
+ */
+export const getUserTickets = async (userId: string): Promise<SupportTicket[]> => {
+  const query = `
+    SELECT 
+      st.*,
+      CONCAT(a.first_name, ' ', a.last_name) as admin_name
+    FROM support_tickets st
+    LEFT JOIN users a ON st.assigned_admin_id = a.id
+    WHERE st.user_id = $1
+    ORDER BY st.created_at DESC
+  `;
+
+  const result: QueryResult<SupportTicket> = await pool.query(query, [userId]);
+  return result.rows;
+};
+
+/**
  * Get ticket by ID with messages
  */
 export const getTicketById = async (ticketId: string): Promise<SupportTicket | null> => {

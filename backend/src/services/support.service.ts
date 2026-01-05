@@ -16,6 +16,13 @@ export const getAllTickets = async (
 };
 
 /**
+ * Get user's tickets
+ */
+export const getUserTickets = async (userId: string) => {
+  return await supportQueries.getUserTickets(userId);
+};
+
+/**
  * Get ticket details with messages
  */
 export const getTicketDetails = async (ticketId: string, isAdmin: boolean) => {
