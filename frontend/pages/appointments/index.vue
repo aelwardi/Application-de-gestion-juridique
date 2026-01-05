@@ -455,6 +455,11 @@ const { getAllCases } = useCase();
 const { geocodeAddress } = useGeolocation();
 const config = useRuntimeConfig();
 
+// Redirection automatique pour les clients vers leur interface dédiée
+if (process.client && authStore.user?.role === 'client') {
+  navigateTo('/clients/appointments');
+}
+
 const appointments = ref<any[]>([]);
 const cases = ref<any[]>([]);
 const clients = ref<any[]>([]);

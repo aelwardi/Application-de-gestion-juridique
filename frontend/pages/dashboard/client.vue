@@ -184,7 +184,7 @@
                 Prochains RDV
               </h2>
               <NuxtLink 
-                to="/appointments" 
+                to="/clients/appointments"
                 class="text-purple-600 hover:text-purple-700 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all"
               >
                 Voir tous
