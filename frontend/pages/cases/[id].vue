@@ -77,15 +77,15 @@
                   Programmer un RDV
                 </button>
 
-                <NuxtLink 
-                  :to="`/messages?clientId=${caseData.client_id}`"
+                <button
+                  @click="contactOtherParty"
                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  Contacter le client
-                </NuxtLink>
+                  {{ authStore.user?.role === 'avocat' ? 'Contacter le client' : 'Contacter mon avocat' }}
+                </button>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -506,6 +506,33 @@ const scheduleAppointment = () => {
       create: 'true',
       caseId: caseData.value.id,
       clientId: caseData.value.client_id
+    }
+  })
+}
+
+const contactOtherParty = () => {
+  if (!caseData.value) return
+
+  // Déterminer qui contacter selon le rôle
+  let recipientId: string
+  let recipientName: string
+
+  if (authStore.user?.role === 'avocat') {
+    // Avocat contacte le client
+    recipientId = caseData.value.client_id
+    recipientName = `${caseData.value.client_first_name} ${caseData.value.client_last_name}`
+  } else {
+    // Client contacte l'avocat
+    recipientId = caseData.value.lawyer_id || ''
+    recipientName = `${caseData.value.lawyer_first_name || ''} ${caseData.value.lawyer_last_name || ''}`.trim()
+  }
+
+  router.push({
+    path: '/messages',
+    query: {
+      recipientId,
+      recipientName: encodeURIComponent(recipientName),
+      caseId: caseData.value.id
     }
   })
 }
