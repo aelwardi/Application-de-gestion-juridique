@@ -4,51 +4,42 @@
 
     <!-- No markers message -->
     <div v-if="!loading && props.appointments.length > 0 && markers.length === 0" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-95 rounded-lg z-50">
-      <div class="text-center p-8 max-w-2xl">
+      <div class="text-center p-8 max-w-lg">
         <svg class="w-20 h-20 text-blue-400 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
         <h3 class="text-2xl font-bold text-gray-900 mb-3">Aucun rendez-vous géolocalisé</h3>
         <p class="text-gray-600 mb-6">
-          Vous avez <strong>{{ props.appointments.length }}</strong> rendez-vous, mais aucun n'a de coordonnées GPS pour s'afficher sur la carte.
+          Les rendez-vous doivent avoir une adresse géolocalisée pour apparaître sur la carte.
         </p>
 
-        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 text-left mb-6">
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 text-left">
           <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
             <span class="text-xl">💡</span>
-            Comment ajouter des coordonnées ?
+            Pour ajouter une adresse géolocalisée :
           </h4>
           <ol class="space-y-2 text-sm text-blue-800">
             <li class="flex items-start gap-2">
               <span class="font-bold min-w-[24px]">1.</span>
-              <span>Cliquez sur un rendez-vous et sélectionnez <strong>"Modifier"</strong></span>
+              <span>Éditez un rendez-vous existant</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="font-bold min-w-[24px]">2.</span>
-              <span>Dans le champ <strong>"Adresse du rendez-vous"</strong>, tapez une adresse (ex: "10 rue de la Paix, Paris")</span>
+              <span>Tapez une adresse dans le champ prévu</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="font-bold min-w-[24px]">3.</span>
-              <span>Attendez que les suggestions apparaissent et <strong>sélectionnez</strong> une adresse dans la liste</span>
+              <span><strong>Sélectionnez une suggestion</strong> dans la liste déroulante</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="font-bold min-w-[24px]">4.</span>
-              <span>Vous devriez voir un encadré vert <strong>"✓ Adresse géolocalisée"</strong> avec les coordonnées</span>
+              <span>Vérifiez que l'encadré vert <strong>"✓ Adresse géolocalisée"</strong> apparaît</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="font-bold min-w-[24px]">5.</span>
-              <span>Enregistrez le rendez-vous - il apparaîtra maintenant sur la carte !</span>
+              <span>Enregistrez le rendez-vous</span>
             </li>
           </ol>
-        </div>
-
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left text-sm">
-          <p class="text-amber-800">
-            <strong>🔧 Pour les développeurs :</strong> Vous pouvez géocoder automatiquement tous les rendez-vous existants en exécutant :
-          </p>
-          <code class="block bg-amber-100 text-amber-900 px-3 py-2 rounded mt-2 font-mono text-xs">
-            cd backend && npx tsx scripts/geocode-appointments.ts
-          </code>
         </div>
       </div>
     </div>
