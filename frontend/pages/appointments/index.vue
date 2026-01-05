@@ -170,7 +170,7 @@
           <ClientOnly>
             <AppointmentMap
               :appointments="appointments"
-              :selected-appointment-id="selectedAppointmentId"
+              :selected-appointment-id="selectedAppointmentId || undefined"
               @select-appointment="handleSelectAppointment"
             />
           </ClientOnly>
@@ -259,7 +259,7 @@
     <div v-if="showRouteOptimizer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <RouteOptimizer
         :lawyer-id="authStore.user?.id || ''"
-        :date="new Date().toISOString().split('T')[0]"
+        :date="new Date().toISOString().split('T')[0] || ''"
         @close="showRouteOptimizer = false"
       />
     </div>
@@ -276,9 +276,9 @@ definePageMeta({ middleware: 'auth', layout: 'authenticated' });
 
 const route = useRoute();
 const authStore = useAuthStore();
-const { getAllAppointments, createAppointment, updateAppointment, getAppointmentStats, getClients } = useAppointment();
+const { getAllAppointments, createAppointment, updateAppointment, getAppointmentStats } = useAppointment();
 const { getAllCases } = useCase();
-const { checkConflicts, getAvailableSlots } = useConflict();
+const config = useRuntimeConfig();
 
 const appointments = ref<any[]>([]);
 const cases = ref<any[]>([]);
@@ -310,6 +310,45 @@ const form = ref({
 
 onMounted(() => fetchInitialData());
 
+const getClients = async () => {
+  try {
+    const response = await $fetch<any>(`${config.public.apiBaseUrl}/clients-extended`, {
+      headers: authStore.getAuthHeaders()
+    });
+    return response.success ? response.data : [];
+  } catch (error) {
+    console.error('Erreur récupération clients:', error);
+    return [];
+  }
+};
+
+const checkConflicts = async (lawyerId: string, startTime: string, endTime: string, excludeId?: string | null) => {
+  try {
+    const response = await $fetch<any>(`${config.public.apiBaseUrl}/appointments/check-conflicts`, {
+      method: 'POST',
+      headers: authStore.getAuthHeaders(),
+      body: { lawyer_id: lawyerId, start_time: startTime, end_time: endTime, exclude_id: excludeId }
+    });
+    return response;
+  } catch (error) {
+    console.error('Erreur vérification conflits:', error);
+    return { success: false, conflicts: [], hasConflict: false };
+  }
+};
+
+const getAvailableSlots = async (lawyerId: string, date: string, duration: number = 60) => {
+  try {
+    const response = await $fetch<any>(
+      `${config.public.apiBaseUrl}/appointments/available-slots?lawyer_id=${lawyerId}&date=${date}&duration=${duration}`,
+      { headers: authStore.getAuthHeaders() }
+    );
+    return response;
+  } catch (error) {
+    console.error('Erreur récupération créneaux:', error);
+    return { success: false, slots: [] };
+  }
+};
+
 const fetchInitialData = async () => {
   loading.value = true;
   const userId = authStore.user?.id;
@@ -320,9 +359,9 @@ const fetchInitialData = async () => {
       getAllCases({ lawyer_id: userId }),
       getClients()
     ]);
-    if (aptRes.success) appointments.value = aptRes.data;
+    if (aptRes.success && aptRes.data) appointments.value = aptRes.data;
     if (statsRes.success) stats.value = statsRes.data;
-    if (casesRes.success) cases.value = casesRes.data;
+    if (casesRes.success && casesRes.data) cases.value = casesRes.data;
     clients.value = clientsRes;
 
     // LOGIQUE DE PRÉ-REMPLISSAGE AUTOMATIQUE
@@ -398,7 +437,7 @@ const handleSubmit = async () => {
 
   // Vérifier les conflits
   const conflictCheck = await checkConflicts(
-    form.value.lawyer_id || authStore.user?.id,
+    form.value.lawyer_id || authStore.user?.id || '',
     new Date(form.value.start_time).toISOString(),
     new Date(form.value.end_time).toISOString(),
     isEditing.value ? currentEditId.value : undefined
@@ -406,9 +445,9 @@ const handleSubmit = async () => {
 
   if (conflictCheck.hasConflict) {
     // Récupérer les créneaux disponibles
-    const dateStr = new Date(form.value.start_time).toISOString().split('T')[0];
+    const dateStr = new Date(form.value.start_time).toISOString().split('T')[0] || '';
     const slotsRes = await getAvailableSlots(
-      form.value.lawyer_id || authStore.user?.id,
+      form.value.lawyer_id || authStore.user?.id || '',
       dateStr,
       60
     );
@@ -427,11 +466,20 @@ const handleSubmit = async () => {
 const saveAppointment = async () => {
   submitting.value = true;
   try {
-    const payload = {
-      ...form.value,
+    const payload: any = {
+      title: form.value.title,
+      appointment_type: form.value.appointment_type,
+      location_type: form.value.location_type,
+      location_address: form.value.location_address,
+      meeting_url: form.value.meeting_url,
       start_time: new Date(form.value.start_time).toISOString(),
       end_time: new Date(form.value.end_time).toISOString(),
+      client_id: form.value.client_id,
+      lawyer_id: form.value.lawyer_id
     };
+    if (form.value.case_id) {
+      payload.case_id = form.value.case_id;
+    }
     const res = isEditing.value ? await updateAppointment(currentEditId.value!, payload) : await createAppointment(payload);
     if (res.success) {
       await fetchInitialData();

@@ -1,4 +1,4 @@
-import pool from '../config/database.config';
+import { pool } from '../config/database.config';
 
 /**
  * Vérifier les conflits de rendez-vous pour un avocat
@@ -83,7 +83,7 @@ export const findAvailableSlots = async (
       endOfDay.toISOString()
     ]);
 
-    const bookedSlots = result.rows.map(row => ({
+    const bookedSlots = result.rows.map((row: any) => ({
       start: new Date(row.start_time),
       end: new Date(row.end_time)
     }));
@@ -101,7 +101,7 @@ export const findAvailableSlots = async (
         slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
 
         // Vérifier si le créneau ne chevauche pas un rendez-vous existant
-        const hasConflict = bookedSlots.some(booked => {
+        const hasConflict = bookedSlots.some((booked: any) => {
           return (
             (slotStart >= booked.start && slotStart < booked.end) ||
             (slotEnd > booked.start && slotEnd <= booked.end) ||

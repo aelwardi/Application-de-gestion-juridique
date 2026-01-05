@@ -1,4 +1,4 @@
-import pool from '../config/database.config';
+import { pool } from '../config/database.config';
 
 interface Location {
   id: string;
@@ -104,7 +104,7 @@ export const optimizeRoute = async (
     }
 
     // Convertir en format Location
-    const locations: Location[] = result.rows.map(row => ({
+    const locations: Location[] = result.rows.map((row: any) => ({
       id: row.id,
       lat: parseFloat(row.location_latitude),
       lng: parseFloat(row.location_longitude),
