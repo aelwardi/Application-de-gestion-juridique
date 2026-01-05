@@ -635,6 +635,15 @@ const openEditModal = (apt: any) => {
     start_time: new Date(apt.start_time).toISOString().slice(0, 16),
     end_time: new Date(apt.end_time).toISOString().slice(0, 16),
   };
+
+  // Initialize locationData for AddressAutocomplete
+  locationData.value = {
+    address: apt.location_address || '',
+    latitude: apt.location_latitude || null,
+    longitude: apt.location_longitude || null,
+    formattedAddress: apt.location_address || ''
+  };
+
   showCreateModal.value = true;
 };
 
@@ -705,6 +714,8 @@ const saveAppointment = async () => {
       appointment_type: form.value.appointment_type,
       location_type: form.value.location_type,
       location_address: form.value.location_address,
+      location_latitude: form.value.location_latitude,
+      location_longitude: form.value.location_longitude,
       meeting_url: form.value.meeting_url,
       start_time: new Date(form.value.start_time).toISOString(),
       end_time: new Date(form.value.end_time).toISOString(),
@@ -761,6 +772,24 @@ const handleSelectAppointment = (id: string) => {
   // Optionnel: naviguer vers les détails
   // navigateTo(`/appointments/${id}`);
 };
+
+// Watcher pour debug quand on passe en mode carte
+watch(viewMode, (newMode) => {
+  if (newMode === 'map') {
+    console.log('🗺️ Passage en mode carte');
+    console.log(`📊 Nombre de rendez-vous à afficher: ${appointments.value.length}`);
+    appointments.value.forEach(apt => {
+      console.log(`📍 RDV: "${apt.title}"`, {
+        id: apt.id,
+        address: apt.location_address,
+        lat: apt.location_latitude,
+        lng: apt.location_longitude,
+        type: apt.appointment_type,
+        hasCoords: !!(apt.location_latitude && apt.location_longitude)
+      });
+    });
+  }
+});
 </script>
 
 <style scoped>

@@ -1,6 +1,57 @@
 <template>
-  <div class="h-full w-full">
+  <div class="h-full w-full relative">
     <div id="appointment-map" class="h-full w-full rounded-lg shadow-lg"></div>
+
+    <!-- No markers message -->
+    <div v-if="!loading && props.appointments.length > 0 && markers.length === 0" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-95 rounded-lg z-50">
+      <div class="text-center p-8 max-w-2xl">
+        <svg class="w-20 h-20 text-blue-400 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+        <h3 class="text-2xl font-bold text-gray-900 mb-3">Aucun rendez-vous géolocalisé</h3>
+        <p class="text-gray-600 mb-6">
+          Vous avez <strong>{{ props.appointments.length }}</strong> rendez-vous, mais aucun n'a de coordonnées GPS pour s'afficher sur la carte.
+        </p>
+
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 text-left mb-6">
+          <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
+            <span class="text-xl">💡</span>
+            Comment ajouter des coordonnées ?
+          </h4>
+          <ol class="space-y-2 text-sm text-blue-800">
+            <li class="flex items-start gap-2">
+              <span class="font-bold min-w-[24px]">1.</span>
+              <span>Cliquez sur un rendez-vous et sélectionnez <strong>"Modifier"</strong></span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-bold min-w-[24px]">2.</span>
+              <span>Dans le champ <strong>"Adresse du rendez-vous"</strong>, tapez une adresse (ex: "10 rue de la Paix, Paris")</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-bold min-w-[24px]">3.</span>
+              <span>Attendez que les suggestions apparaissent et <strong>sélectionnez</strong> une adresse dans la liste</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-bold min-w-[24px]">4.</span>
+              <span>Vous devriez voir un encadré vert <strong>"✓ Adresse géolocalisée"</strong> avec les coordonnées</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-bold min-w-[24px]">5.</span>
+              <span>Enregistrez le rendez-vous - il apparaîtra maintenant sur la carte !</span>
+            </li>
+          </ol>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left text-sm">
+          <p class="text-amber-800">
+            <strong>🔧 Pour les développeurs :</strong> Vous pouvez géocoder automatiquement tous les rendez-vous existants en exécutant :
+          </p>
+          <code class="block bg-amber-100 text-amber-900 px-3 py-2 rounded mt-2 font-mono text-xs">
+            cd backend && npx tsx scripts/geocode-appointments.ts
+          </code>
+        </div>
+      </div>
+    </div>
 
     <!-- Loading overlay -->
     <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
@@ -11,7 +62,7 @@
     </div>
 
     <!-- Map controls -->
-    <div class="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 space-y-2">
+    <div class="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 space-y-2 z-[1000]">
       <button
         @click="centerOnUser"
         class="w-full px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
@@ -34,7 +85,7 @@
     </div>
 
     <!-- Legend -->
-    <div class="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4">
+    <div class="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-[1000]">
       <h4 class="font-semibold text-gray-900 mb-2 text-sm">Légende</h4>
       <div class="space-y-1 text-xs">
         <div class="flex items-center gap-2">
@@ -47,11 +98,15 @@
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-green-600"></div>
-          <span>Client</span>
+          <span>Réunion</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-purple-600"></div>
-          <span>Téléconférence</span>
+          <span>Téléphone</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-orange-600"></div>
+          <span>Visioconférence</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-gray-600"></div>
@@ -66,6 +121,15 @@
 import { ref, onMounted, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+
+// Fix pour les icônes par défaut de Leaflet
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
 
 const props = defineProps<{
   appointments: any[]
@@ -96,21 +160,37 @@ watch(() => props.selectedAppointmentId, (newId) => {
 
 const initMap = () => {
   try {
+    console.log('🗺️ Initialisation de la carte Leaflet...');
+    console.log('📦 Leaflet version:', L.version);
+
+    const mapElement = document.getElementById('appointment-map');
+    if (!mapElement) {
+      console.error('❌ Élément #appointment-map introuvable !');
+      loading.value = false;
+      return;
+    }
+
+    console.log('✅ Élément DOM trouvé:', mapElement);
+
     // Initialiser la carte centrée sur Paris par défaut
     map = L.map('appointment-map').setView([48.8566, 2.3522], 12)
+    console.log('✅ Carte initialisée');
 
     // Ajouter le layer OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19
     }).addTo(map)
+    console.log('✅ Tuiles OSM ajoutées');
 
     // Ajouter les marqueurs
+    console.log(`🎯 Ajout des marqueurs pour ${props.appointments.length} rendez-vous`);
     updateMarkers()
 
     loading.value = false
+    console.log('✅ Carte chargée avec succès');
   } catch (error) {
-    console.error('Erreur lors de l\'initialisation de la carte:', error)
+    console.error('❌ Erreur lors de l\'initialisation de la carte:', error)
     loading.value = false
   }
 }
@@ -118,17 +198,46 @@ const initMap = () => {
 const updateMarkers = () => {
   if (!map) return
 
+  console.log('🗺️ Updating markers with appointments:', props.appointments)
+  console.log(`📊 Total appointments received: ${props.appointments.length}`)
+
   // Supprimer les anciens marqueurs
   markers.forEach(marker => marker.remove())
   markers.length = 0
 
   // Ajouter les nouveaux marqueurs
+  let appointmentsWithCoords = 0
   props.appointments.forEach(appointment => {
-    if (appointment.location_latitude && appointment.location_longitude) {
+    const hasCoords = !!(appointment.location_latitude && appointment.location_longitude)
+
+    console.log(`📍 Appointment "${appointment.title}":`, {
+      id: appointment.id,
+      address: appointment.location_address || 'Pas d\'adresse',
+      lat: appointment.location_latitude,
+      lng: appointment.location_longitude,
+      hasCoords: hasCoords,
+      type: appointment.appointment_type,
+      locationType: appointment.location_type
+    })
+
+    if (hasCoords) {
+      appointmentsWithCoords++
       const marker = createMarker(appointment)
       markers.push(marker)
     }
   })
+
+  console.log(`✅ Created ${appointmentsWithCoords} markers out of ${props.appointments.length} appointments`)
+
+  if (appointmentsWithCoords === 0 && props.appointments.length > 0) {
+    console.warn('⚠️ No markers to display - no appointments have coordinates')
+    console.info('💡 To fix this:')
+    console.info('   1. Edit an existing appointment')
+    console.info('   2. In the address field, type an address and SELECT a suggestion from the dropdown')
+    console.info('   3. You should see "✓ Adresse géolocalisée" with coordinates')
+    console.info('   4. Save the appointment')
+    console.info('   5. The marker should now appear on the map')
+  }
 
   // Ajuster la vue pour afficher tous les marqueurs
   if (markers.length > 0) {
@@ -156,7 +265,7 @@ const createMarker = (appointment: any) => {
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         display: flex;
         align-items: center;
-        justify-center: center;
+        justify-content: center;
         color: white;
         font-weight: bold;
         font-size: 14px;
@@ -204,25 +313,25 @@ const createPopupContent = (appointment: any) => {
 const getAppointmentColor = (type: string): string => {
   const colors: Record<string, string> = {
     consultation: '#2563eb', // blue-600
-    tribunal: '#dc2626', // red-600
-    client_meeting: '#16a34a', // green-600
-    teleconference: '#9333ea', // purple-600
-    expertise: '#ea580c', // orange-600
+    court: '#dc2626', // red-600 (tribunal)
+    meeting: '#16a34a', // green-600 (réunion)
+    phone: '#9333ea', // purple-600 (téléphone)
+    video: '#ea580c', // orange-600 (visioconférence)
     other: '#4b5563' // gray-600
   }
-  return colors[type] || colors.other
+  return type in colors ? colors[type]! : colors.other!
 }
 
 const getAppointmentIcon = (type: string): string => {
   const icons: Record<string, string> = {
     consultation: '📋',
-    tribunal: '⚖️',
-    client_meeting: '👤',
-    teleconference: '💻',
-    expertise: '🔍',
+    court: '⚖️',
+    meeting: '👤',
+    phone: '📞',
+    video: '💻',
     other: '📌'
   }
-  return icons[type] || icons.other
+  return type in icons ? icons[type]! : icons.other!
 }
 
 const highlightMarker = (appointmentId: string) => {
@@ -320,4 +429,3 @@ if (process.client) {
   border: none !important;
 }
 </style>
-

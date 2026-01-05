@@ -12,7 +12,8 @@ export default defineNuxtConfig({
 
   css: [
     '~/assets/css/main.css',
-    '~/assets/css/admin.css'
+    '~/assets/css/admin.css',
+    'leaflet/dist/leaflet.css'
   ],
 
   dir: {
