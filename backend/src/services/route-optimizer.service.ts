@@ -61,13 +61,23 @@ export const optimizeRoute = async (
   date: string
 ): Promise<any> => {
   try {
+    // Retourner un message temporaire car les colonnes de géolocalisation n'existent pas encore
+    return {
+      success: false,
+      message: 'La fonctionnalité d\'optimisation d\'itinéraire nécessite l\'ajout de colonnes de géolocalisation à la base de données.',
+      appointments: [],
+      optimizedRoute: [],
+      totalDistance: 0,
+      estimatedTime: 0
+    };
+
+    /* Code original commenté temporairement
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Récupérer les rendez-vous du jour avec géolocalisation
     const query = `
       SELECT 
         id,
@@ -86,73 +96,23 @@ export const optimizeRoute = async (
       ORDER BY start_time
     `;
 
-    const result = await pool.query(query, [
-      lawyerId,
-      startOfDay.toISOString(),
-      endOfDay.toISOString()
-    ]);
-
-    if (result.rows.length === 0) {
-      return {
-        success: true,
-        appointments: [],
-        optimizedRoute: [],
-        totalDistance: 0,
-        estimatedTime: 0,
-        message: 'Aucun rendez-vous géolocalisé ce jour'
-      };
-    }
-
-    // Convertir en format Location
-    const locations: Location[] = result.rows.map((row: any) => ({
-      id: row.id,
-      lat: parseFloat(row.location_latitude),
-      lng: parseFloat(row.location_longitude),
-      address: row.location_address,
-      title: row.title,
-      time: row.start_time
-    }));
-
-    // Optimiser l'itinéraire
-    const optimizedRoute = optimizeRouteGreedy(locations);
-
-    // Calculer distance totale et temps estimé
-    let totalDistance = 0;
-    for (let i = 0; i < optimizedRoute.length - 1; i++) {
-      const dist = calculateDistance(
-        optimizedRoute[i].lat,
-        optimizedRoute[i].lng,
-        optimizedRoute[i + 1].lat,
-        optimizedRoute[i + 1].lng
-      );
-      totalDistance += dist;
-    }
-
-    // Estimer le temps (50 km/h en moyenne en ville)
-    const estimatedTime = Math.ceil((totalDistance / 50) * 60); // en minutes
-
-    return {
-      success: true,
-      appointments: result.rows,
-      optimizedRoute: optimizedRoute.map((loc, index) => ({
-        ...loc,
-        order: index + 1,
-        distanceFromPrevious: index > 0
-          ? calculateDistance(
-              optimizedRoute[index - 1].lat,
-              optimizedRoute[index - 1].lng,
-              loc.lat,
-              loc.lng
-            ).toFixed(2)
-          : 0
-      })),
-      totalDistance: totalDistance.toFixed(2),
-      estimatedTime,
-      savings: calculateSavings(locations, optimizedRoute)
     };
+
+    /* Code original commenté temporairement - nécessite colonnes de géolocalisation
+    const startOfDay = new Date(date);
+    ...
+    Code désactivé jusqu'à l'ajout des colonnes location_*
+    */
   } catch (error) {
     console.error('Erreur lors de l\'optimisation de l\'itinéraire:', error);
-    throw error;
+    return {
+      success: false,
+      message: 'Erreur lors de l\'optimisation de l\'itinéraire',
+      appointments: [],
+      optimizedRoute: [],
+      totalDistance: 0,
+      estimatedTime: 0
+    };
   }
 };
 

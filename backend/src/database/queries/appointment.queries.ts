@@ -15,29 +15,21 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
   const query = `
     INSERT INTO appointments (
       case_id, lawyer_id, client_id, appointment_type, title, description,
-      start_time, end_time, location, location_type, location_address, 
-      location_latitude, location_longitude, meeting_url, status, notes
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      start_time, end_time, status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *
   `;
 
   const values = [
     data.case_id || null,
-    data.lawyer_id, // Directement users.id
+    data.lawyer_id,
     data.client_id,
     data.appointment_type,
     data.title,
     data.description || null,
     data.start_time,
     data.end_time,
-    data.location || null,
-    data.location_type || null,
-    data.location_address || null,
-    data.location_latitude || null,
-    data.location_longitude || null,
-    data.meeting_url || null,
-    data.status || 'scheduled',
-    data.notes || null
+    data.status || 'scheduled'
   ];
 
   const result = await pool.query(query, values);

@@ -217,10 +217,15 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Client *</label>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">
+                Client *
+                <span class="text-xs text-gray-500">({{ clients.length }} disponible(s))</span>
+              </label>
               <select v-model="form.client_id" required class="w-full px-4 py-2 border rounded-lg">
                 <option value="" disabled>Sélectionner un client</option>
-                <option v-for="cl in clients" :key="cl.id" :value="cl.id">{{ cl.first_name }} {{ cl.last_name }}</option>
+                <option v-for="cl in clients" :key="cl.id" :value="cl.id">
+                  {{ cl.first_name }} {{ cl.last_name }}
+                </option>
               </select>
             </div>
           </div>
@@ -312,10 +317,29 @@ onMounted(() => fetchInitialData());
 
 const getClients = async () => {
   try {
-    const response = await $fetch<any>(`${config.public.apiBaseUrl}/clients-extended`, {
+    const userId = authStore.user?.id;
+    const userRole = authStore.user?.role;
+
+    // Si avocat, récupérer ses clients
+    let endpoint = `${config.public.apiBaseUrl}/clients`;
+    if (userRole === 'avocat') {
+      endpoint = `${config.public.apiBaseUrl}/clients/lawyer/${userId}`;
+    }
+
+    const response = await $fetch<any>(endpoint, {
       headers: authStore.getAuthHeaders()
     });
-    return response.success ? response.data : [];
+
+    console.log('Response clients API:', response);
+
+    // Gérer les deux formats de réponse possibles
+    if (response.success && response.data) {
+      return response.data;
+    } else if (Array.isArray(response)) {
+      return response;
+    }
+
+    return [];
   } catch (error) {
     console.error('Erreur récupération clients:', error);
     return [];
@@ -359,10 +383,17 @@ const fetchInitialData = async () => {
       getAllCases({ lawyer_id: userId }),
       getClients()
     ]);
+
+    console.log('Clients reçus:', clientsRes);
+
     if (aptRes.success && aptRes.data) appointments.value = aptRes.data;
     if (statsRes.success) stats.value = statsRes.data;
     if (casesRes.success && casesRes.data) cases.value = casesRes.data;
-    clients.value = clientsRes;
+
+    // Assigner les clients correctement
+    clients.value = Array.isArray(clientsRes) ? clientsRes : [];
+
+    console.log('Clients assignés:', clients.value);
 
     // LOGIQUE DE PRÉ-REMPLISSAGE AUTOMATIQUE
     if (route.query.create === 'true') {

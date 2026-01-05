@@ -3,6 +3,7 @@ import { appointmentController } from '../controllers/appointment.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import * as conflictService from '../services/conflict.service';
 import * as routeOptimizerService from '../services/route-optimizer.service';
+import * as recurrenceService from '../services/recurrence.service';
 
 const router = Router();
 
@@ -47,6 +48,46 @@ router.get('/optimize-route', async (req: Request, res: Response) => {
     res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, message: 'Erreur lors de l\'optimisation de l\'itinéraire' });
+  }
+});
+
+// Routes de récurrence
+router.post('/recurring', async (req: Request, res: Response) => {
+  try {
+    const result = await recurrenceService.createRecurringAppointments(req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la création de rendez-vous récurrents' });
+  }
+});
+
+router.put('/recurring/:seriesId', async (req: Request, res: Response) => {
+  try {
+    const { seriesId } = req.params;
+    const result = await recurrenceService.updateRecurringSeries(seriesId, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour de la série' });
+  }
+});
+
+router.delete('/recurring/:seriesId', async (req: Request, res: Response) => {
+  try {
+    const { seriesId } = req.params;
+    const result = await recurrenceService.deleteRecurringSeries(seriesId);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la suppression de la série' });
+  }
+});
+
+router.get('/recurring/:seriesId', async (req: Request, res: Response) => {
+  try {
+    const { seriesId } = req.params;
+    const appointments = await recurrenceService.getSeriesAppointments(seriesId);
+    res.json({ success: true, data: appointments });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la récupération de la série' });
   }
 });
 

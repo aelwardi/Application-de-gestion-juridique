@@ -16,7 +16,6 @@ export const checkConflicts = async (
         a.title,
         a.start_time,
         a.end_time,
-        a.location_address,
         CONCAT(c.first_name, ' ', c.last_name) as client_name
       FROM appointments a
       LEFT JOIN users c ON a.client_id = c.id
