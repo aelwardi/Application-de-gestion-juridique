@@ -196,17 +196,43 @@
                 <option value="consultation">Consultation</option>
                 <option value="court">Tribunal</option>
                 <option value="meeting">Réunion</option>
+                <option value="phone">Téléphone</option>
                 <option value="video">Visioconférence</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Lieu *</label>
-              <select v-model="form.location_type" required class="w-full px-4 py-2 border rounded-lg">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Type de lieu *</label>
+              <select v-model="form.location_type" required class="w-full px-4 py-2 border rounded-lg" @change="onLocationTypeChange">
                 <option value="office">Cabinet</option>
-                <option value="online">En ligne</option>
                 <option value="court">Tribunal</option>
+                <option value="client_location">Chez le client</option>
+                <option value="online">En ligne</option>
+                <option value="other">Autre</option>
               </select>
             </div>
+          </div>
+
+          <!-- Adresse (si pas en ligne) -->
+          <div v-if="form.location_type !== 'online'">
+            <AddressAutocomplete
+              v-model="locationData"
+              label="Adresse du rendez-vous"
+              placeholder="Entrez une adresse..."
+              :required="form.location_type !== 'online'"
+              :show-current-location-button="form.location_type === 'client_location'"
+            />
+          </div>
+
+          <!-- URL de réunion (si en ligne) -->
+          <div v-if="form.location_type === 'online'">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Lien de la réunion en ligne</label>
+            <input
+              v-model="form.meeting_url"
+              type="url"
+              placeholder="https://zoom.us/j/..."
+              class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+            <p class="text-xs text-gray-500 mt-1">Zoom, Google Meet, Teams, etc.</p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -276,6 +302,8 @@ import { nextTick } from 'vue'
 import AppointmentMap from '~/components/appointments/AppointmentMap.vue'
 import ConflictModal from '~/components/appointments/ConflictModal.vue'
 import RouteOptimizer from '~/components/appointments/RouteOptimizer.vue'
+import AddressAutocomplete from '~/components/common/AddressAutocomplete.vue'
+import { useGeolocation } from '~/composables/useGeolocation'
 
 definePageMeta({ middleware: 'auth', layout: 'authenticated' });
 
@@ -283,6 +311,7 @@ const route = useRoute();
 const authStore = useAuthStore();
 const { getAllAppointments, createAppointment, updateAppointment, getAppointmentStats } = useAppointment();
 const { getAllCases } = useCase();
+const { geocodeAddress } = useGeolocation();
 const config = useRuntimeConfig();
 
 const appointments = ref<any[]>([]);
@@ -300,11 +329,24 @@ const showConflictModal = ref(false);
 const conflictData = ref<any>(null);
 const showRouteOptimizer = ref(false);
 
+const locationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
 const form = ref({
   title: '',
   appointment_type: 'consultation',
   location_type: 'office',
   location_address: '',
+  location_latitude: null as number | null,
+  location_longitude: null as number | null,
   meeting_url: '',
   start_time: '',
   end_time: '',
@@ -314,6 +356,25 @@ const form = ref({
 });
 
 onMounted(() => fetchInitialData());
+
+// Watcher pour synchroniser locationData avec le formulaire
+watch(locationData, (newValue) => {
+  form.value.location_address = newValue.address
+  form.value.location_latitude = newValue.latitude
+  form.value.location_longitude = newValue.longitude
+}, { deep: true });
+
+const onLocationTypeChange = () => {
+  // Réinitialiser les champs de localisation lors du changement de type
+  if (form.value.location_type === 'online') {
+    locationData.value = { address: '', latitude: null, longitude: null }
+    form.value.location_address = ''
+    form.value.location_latitude = null
+    form.value.location_longitude = null
+  } else {
+    form.value.meeting_url = ''
+  }
+};
 
 const getClients = async () => {
   try {
