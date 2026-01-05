@@ -20,6 +20,7 @@ import lawyerRoutes from './routes/lawyer.routes';
 import documentRoutes from "./routes/document.routes";
 import messageRoutes from "./routes/message.routes";
 import notificationRoutes from "./routes/notification.routes";
+import { startReminderJobs } from "./jobs/appointment-reminders.job";
 
 dotenv.config();
 
@@ -76,6 +77,9 @@ const startServer = async () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Health check: http://localhost:${PORT}/health`);
       console.log(`DB Test: http://localhost:${PORT}/db-test`);
+
+      // Démarrer les jobs de rappels automatiques
+      startReminderJobs();
     });
   } catch (error) {
     console.error("Database connection failed:", error);
