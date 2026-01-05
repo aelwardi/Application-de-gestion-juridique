@@ -6,15 +6,26 @@
           <h1 class="text-3xl font-bold text-gray-900">Mes Rendez-vous</h1>
           <p class="text-gray-600 mt-2">Gérez vos rendez-vous et consultations</p>
         </div>
-        <button
-          @click="openCreateModal"
-          class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm transition-all"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Nouveau rendez-vous
-        </button>
+        <div class="flex gap-3">
+          <button
+            @click="openRouteOptimizer"
+            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 shadow-sm transition-all"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            Optimiser
+          </button>
+          <button
+            @click="openCreateModal"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm transition-all"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nouveau rendez-vous
+          </button>
+        </div>
       </div>
 
       <div class="bg-white rounded-lg shadow p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -32,6 +43,13 @@
           >
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             Calendrier
+          </button>
+          <button
+            @click="viewMode = 'map'"
+            :class="[viewMode === 'map' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200', 'px-4 py-2 rounded-lg transition-colors flex items-center']"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+            Carte
           </button>
         </div>
       </div>
@@ -60,6 +78,7 @@
       </div>
 
       <div v-else>
+        <!-- Vue Liste -->
         <div v-if="viewMode === 'list'" class="bg-white rounded-lg shadow overflow-hidden">
           <div v-if="appointments.length === 0" class="text-center py-20 text-gray-500">
             Aucun rendez-vous trouvé.
@@ -104,7 +123,8 @@
           </div>
         </div>
 
-        <div v-else class="space-y-6">
+        <!-- Vue Calendrier -->
+        <div v-else-if="viewMode === 'calendar'" class="space-y-6">
           <div v-if="appointments.length === 0" class="bg-white rounded-lg shadow p-12 text-center text-gray-500">
             Aucun rendez-vous à afficher dans l'agenda.
           </div>
@@ -143,6 +163,17 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Vue Carte -->
+        <div v-else-if="viewMode === 'map'" class="h-[600px] bg-white rounded-lg shadow overflow-hidden">
+          <ClientOnly>
+            <AppointmentMap
+              :appointments="appointments"
+              :selected-appointment-id="selectedAppointmentId"
+              @select-appointment="handleSelectAppointment"
+            />
+          </ClientOnly>
         </div>
       </div>
     </div>
@@ -212,11 +243,34 @@
         </form>
       </div>
     </div>
+
+    <!-- Conflict Modal -->
+    <ConflictModal
+      :is-open="showConflictModal"
+      :conflicts="conflictData?.conflicts || []"
+      :available-slots="conflictData?.availableSlots || []"
+      :allow-force="true"
+      @close="showConflictModal = false"
+      @select-slot="handleSelectSlot"
+      @force-create="handleForceCreate"
+    />
+
+    <!-- Route Optimizer Modal -->
+    <div v-if="showRouteOptimizer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <RouteOptimizer
+        :lawyer-id="authStore.user?.id || ''"
+        :date="new Date().toISOString().split('T')[0]"
+        @close="showRouteOptimizer = false"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { nextTick } from 'vue'
+import AppointmentMap from '~/components/appointments/AppointmentMap.vue'
+import ConflictModal from '~/components/appointments/ConflictModal.vue'
+import RouteOptimizer from '~/components/appointments/RouteOptimizer.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'authenticated' });
 
@@ -224,6 +278,7 @@ const route = useRoute();
 const authStore = useAuthStore();
 const { getAllAppointments, createAppointment, updateAppointment, getAppointmentStats, getClients } = useAppointment();
 const { getAllCases } = useCase();
+const { checkConflicts, getAvailableSlots } = useConflict();
 
 const appointments = ref<any[]>([]);
 const cases = ref<any[]>([]);
@@ -234,7 +289,11 @@ const submitting = ref(false);
 const showCreateModal = ref(false);
 const isEditing = ref(false);
 const currentEditId = ref<string | null>(null);
-const viewMode = ref<'list' | 'calendar'>('list');
+const viewMode = ref<'list' | 'calendar' | 'map'>('list');
+const selectedAppointmentId = ref<string | null>(null);
+const showConflictModal = ref(false);
+const conflictData = ref<any>(null);
+const showRouteOptimizer = ref(false);
 
 const form = ref({
   title: '',
@@ -337,6 +396,35 @@ const handleSubmit = async () => {
   if (end <= start) { alert("L'heure de fin doit être après l'heure de début."); return; }
   if (isEditing.value && isLocked(form.value.start_time)) { alert("Modification impossible à moins de 24h."); return; }
 
+  // Vérifier les conflits
+  const conflictCheck = await checkConflicts(
+    form.value.lawyer_id || authStore.user?.id,
+    new Date(form.value.start_time).toISOString(),
+    new Date(form.value.end_time).toISOString(),
+    isEditing.value ? currentEditId.value : undefined
+  );
+
+  if (conflictCheck.hasConflict) {
+    // Récupérer les créneaux disponibles
+    const dateStr = new Date(form.value.start_time).toISOString().split('T')[0];
+    const slotsRes = await getAvailableSlots(
+      form.value.lawyer_id || authStore.user?.id,
+      dateStr,
+      60
+    );
+
+    conflictData.value = {
+      conflicts: conflictCheck.conflicts,
+      availableSlots: slotsRes.success ? slotsRes.slots : []
+    };
+    showConflictModal.value = true;
+    return;
+  }
+
+  await saveAppointment();
+};
+
+const saveAppointment = async () => {
   submitting.value = true;
   try {
     const payload = {
@@ -355,6 +443,21 @@ const handleSubmit = async () => {
   }
 };
 
+const handleSelectSlot = (slot: any) => {
+  form.value.start_time = new Date(slot.start).toISOString().slice(0, 16);
+  form.value.end_time = new Date(slot.end).toISOString().slice(0, 16);
+  showConflictModal.value = false;
+};
+
+const handleForceCreate = async () => {
+  showConflictModal.value = false;
+  await saveAppointment();
+};
+
+const openRouteOptimizer = () => {
+  showRouteOptimizer.value = true;
+};
+
 const getDay = (d: any) => new Date(d).getDate();
 const getMonth = (d: any) => new Date(d).toLocaleDateString('fr-FR', { month: 'short' });
 const formatTime = (d: any) => new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -371,4 +474,9 @@ const getTypeLabel = (t: string) => {
   return map[t] || t;
 };
 const viewAppointment = (id: string) => navigateTo(`/appointments/${id}`);
+const handleSelectAppointment = (id: string) => {
+  selectedAppointmentId.value = id;
+  // Optionnel: naviguer vers les détails
+  // navigateTo(`/appointments/${id}`);
+};
 </script>
