@@ -68,9 +68,21 @@ CREATE TABLE IF NOT EXISTS appointments (
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
     location TEXT,
+    location_type VARCHAR(50) CHECK (location_type IN ('office', 'court', 'client_location', 'online', 'other')),
+    location_address TEXT,
+    location_latitude DECIMAL(10, 8),
+    location_longitude DECIMAL(11, 8),
+    meeting_url VARCHAR(500),
     status VARCHAR(50) DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'confirmed', 'cancelled', 'completed', 'no_show')),
     reminder_sent BOOLEAN DEFAULT FALSE,
+    reminder_24h_sent BOOLEAN DEFAULT FALSE,
+    reminder_24h_sent_at TIMESTAMP,
+    reminder_2h_sent BOOLEAN DEFAULT FALSE,
+    reminder_2h_sent_at TIMESTAMP,
     notes TEXT,
+    private_notes TEXT,
+    shared_notes TEXT,
+    series_id UUID,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -101,6 +113,12 @@ CREATE INDEX IF NOT EXISTS idx_cases_created_at ON cases(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_appointments_lawyer_id ON appointments(lawyer_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_client_id ON appointments(client_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_start_time ON appointments(start_time);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
+CREATE INDEX IF NOT EXISTS idx_appointments_location ON appointments(location_latitude, location_longitude) WHERE location_latitude IS NOT NULL AND location_longitude IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_appointments_location_type ON appointments(location_type) WHERE location_type IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_appointments_series_id ON appointments(series_id) WHERE series_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_appointments_reminder_24h ON appointments(start_time, reminder_24h_sent) WHERE status IN ('scheduled', 'confirmed');
+CREATE INDEX IF NOT EXISTS idx_appointments_reminder_2h ON appointments(start_time, reminder_2h_sent) WHERE status IN ('scheduled', 'confirmed');
 CREATE INDEX IF NOT EXISTS idx_reviews_lawyer_id ON reviews(lawyer_id);
 
 -- =====================================================
@@ -110,3 +128,15 @@ CREATE INDEX IF NOT EXISTS idx_reviews_lawyer_id ON reviews(lawyer_id);
 COMMENT ON TABLE cases IS 'Legal cases managed by lawyers for clients';
 COMMENT ON TABLE appointments IS 'Scheduled appointments between lawyers and clients';
 COMMENT ON TABLE reviews IS 'Client reviews for lawyers';
+
+-- Commentaires sur les colonnes de localisation
+COMMENT ON COLUMN appointments.location_type IS 'Type de lieu du rendez-vous (office, court, client_location, online, other)';
+COMMENT ON COLUMN appointments.location_address IS 'Adresse complète du rendez-vous';
+COMMENT ON COLUMN appointments.location_latitude IS 'Latitude pour géolocalisation';
+COMMENT ON COLUMN appointments.location_longitude IS 'Longitude pour géolocalisation';
+COMMENT ON COLUMN appointments.meeting_url IS 'URL pour rendez-vous en ligne (Zoom, Teams, Google Meet, etc.)';
+COMMENT ON COLUMN appointments.private_notes IS 'Notes privées visibles uniquement par l''avocat';
+COMMENT ON COLUMN appointments.shared_notes IS 'Notes partagées visibles par le client';
+COMMENT ON COLUMN appointments.series_id IS 'ID de la série si le rendez-vous fait partie d''une récurrence';
+COMMENT ON COLUMN appointments.reminder_24h_sent IS 'Indique si le rappel 24h avant a été envoyé';
+COMMENT ON COLUMN appointments.reminder_2h_sent IS 'Indique si le rappel 2h avant a été envoyé';

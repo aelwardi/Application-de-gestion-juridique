@@ -61,13 +61,16 @@ export const createRecurringAppointments = async (data: CreateRecurringAppointme
 
       const result = await client.query(`
         INSERT INTO appointments (
-          title, appointment_type, start_time, end_time, 
-          case_id, client_id, lawyer_id, series_id, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scheduled')
+          title, appointment_type, location_type, location_address, meeting_url,
+          start_time, end_time, case_id, client_id, lawyer_id, series_id, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'scheduled')
         RETURNING *
       `, [
         data.title,
         data.appointment_type,
+        data.location_type,
+        data.location_address,
+        data.meeting_url,
         date.toISOString(),
         endTime.toISOString(),
         data.case_id || null,
@@ -148,14 +151,20 @@ export const updateRecurringSeries = async (seriesId: string, updates: any) => {
       UPDATE appointments
       SET 
         title = COALESCE($1, title),
-        appointment_type = COALESCE($2, appointment_type)
-      WHERE series_id = $3
+        appointment_type = COALESCE($2, appointment_type),
+        location_type = COALESCE($3, location_type),
+        location_address = COALESCE($4, location_address),
+        meeting_url = COALESCE($5, meeting_url)
+      WHERE series_id = $6 
         AND start_time >= NOW()
         AND status IN ('scheduled', 'confirmed')
       RETURNING *
     `, [
       updates.title,
       updates.appointment_type,
+      updates.location_type,
+      updates.location_address,
+      updates.meeting_url,
       seriesId
     ]);
 

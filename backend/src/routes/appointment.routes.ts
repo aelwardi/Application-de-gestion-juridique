@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { appointmentController } from '../controllers/appointment.controller';
+import { appointmentController, uploadMiddleware } from '../controllers/appointment.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import * as conflictService from '../services/conflict.service';
 import * as routeOptimizerService from '../services/route-optimizer.service';
@@ -107,5 +107,14 @@ router.delete('/:id', appointmentController.deleteAppointment);
 router.post('/:id/cancel', appointmentController.cancelAppointment);
 router.post('/:id/confirm', appointmentController.confirmAppointment);
 router.post('/:id/complete', appointmentController.completeAppointment);
+
+// Routes pour les documents
+router.post('/:id/documents', uploadMiddleware, appointmentController.uploadAppointmentDocument);
+router.get('/:id/documents', appointmentController.getAppointmentDocuments);
+router.delete('/:id/documents/:docId', appointmentController.deleteAppointmentDocument);
+
+// Routes pour les notes
+router.get('/:id/notes', appointmentController.getAppointmentNotes);
+router.put('/:id/notes', appointmentController.updateAppointmentNotes);
 
 export default router;

@@ -1,6 +1,41 @@
 import { Request, Response } from 'express';
 import * as appointmentService from '../services/appointment.service';
+import * as appointmentDocumentsService from '../services/appointment-documents.service';
 import type { CreateAppointmentDTO, UpdateAppointmentDTO, AppointmentFilters } from '../types/appointment.types';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs/promises';
+
+// Configuration de Multer pour l'upload de documents
+const storage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadPath = path.join(process.cwd(), 'uploads', 'appointments');
+    await fs.mkdir(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|txt|jpg|jpeg|png|xls|xlsx/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Type de fichier non autorisé'));
+    }
+  }
+});
+
+export const uploadMiddleware = upload.single('file');
 
 /**
  * Créer un nouveau rendez-vous
@@ -412,6 +447,168 @@ export const completeAppointment = async (req: Request, res: Response): Promise<
   }
 };
 
+/**
+ * Upload un document pour un rendez-vous
+ * POST /api/appointments/:id/documents
+ */
+export const uploadAppointmentDocument = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id: appointmentId } = req.params;
+    const file = req.file;
+    const { title, description, document_type, is_private } = req.body;
+    const user = (req as any).user;
+
+    if (!file) {
+      res.status(400).json({
+        success: false,
+        message: 'Aucun fichier fourni'
+      });
+      return;
+    }
+
+    const fileUrl = `/api/storage/appointments/${file.filename}`;
+
+    const document = await appointmentDocumentsService.createAppointmentDocument({
+      appointment_id: appointmentId,
+      uploaded_by: user.userId,
+      document_type: document_type || 'other',
+      title: title || file.originalname,
+      description,
+      file_name: file.originalname,
+      file_size: file.size,
+      file_type: file.mimetype,
+      file_url: fileUrl,
+      is_private: is_private === 'true' || is_private === true
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Document uploadé avec succès',
+      data: document
+    });
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'upload du document',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+/**
+ * Récupérer les documents d'un rendez-vous
+ * GET /api/appointments/:id/documents
+ */
+export const getAppointmentDocuments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id: appointmentId } = req.params;
+    const user = (req as any).user;
+
+    const documents = await appointmentDocumentsService.getAppointmentDocuments(
+      appointmentId,
+      user.userId,
+      user.role
+    );
+
+    res.status(200).json({
+      success: true,
+      data: documents
+    });
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des documents',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+/**
+ * Supprimer un document
+ * DELETE /api/appointments/:id/documents/:docId
+ */
+export const deleteAppointmentDocument = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { docId } = req.params;
+    const user = (req as any).user;
+
+    await appointmentDocumentsService.deleteAppointmentDocument(docId, user.userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Document supprimé avec succès'
+    });
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression du document',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+/**
+ * Mettre à jour les notes d'un rendez-vous
+ * PUT /api/appointments/:id/notes
+ */
+export const updateAppointmentNotes = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id: appointmentId } = req.params;
+    const { private_notes, shared_notes } = req.body;
+
+    const notes = await appointmentDocumentsService.updateAppointmentNotes(
+      appointmentId,
+      private_notes,
+      shared_notes
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Notes mises à jour avec succès',
+      data: notes
+    });
+  } catch (error) {
+    console.error('Error updating notes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la mise à jour des notes',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+/**
+ * Récupérer les notes d'un rendez-vous
+ * GET /api/appointments/:id/notes
+ */
+export const getAppointmentNotes = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id: appointmentId } = req.params;
+    const user = (req as any).user;
+
+    const notes = await appointmentDocumentsService.getAppointmentNotes(
+      appointmentId,
+      user.userId,
+      user.role
+    );
+
+    res.status(200).json({
+      success: true,
+      data: notes
+    });
+  } catch (error) {
+    console.error('Error fetching notes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des notes',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
 export const appointmentController = {
   createAppointment,
   getAllAppointments,
@@ -426,5 +623,10 @@ export const appointmentController = {
   getAppointmentStats,
   cancelAppointment,
   confirmAppointment,
-  completeAppointment
+  completeAppointment,
+  uploadAppointmentDocument,
+  getAppointmentDocuments,
+  deleteAppointmentDocument,
+  updateAppointmentNotes,
+  getAppointmentNotes
 };
