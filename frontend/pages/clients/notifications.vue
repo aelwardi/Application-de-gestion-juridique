@@ -66,29 +66,48 @@
                 </p>
 
                 <div class="mt-4 flex gap-2">
-                  <template v-if="notif.type === 'offer' || notif.type === 'acceptance'">
-                    <button 
-                      @click="router.push('/appointments')"
+                  <template v-if="notif.type === 'case_update'">
+                    <button
+                      @click="handleNotificationClick(notif)"
                       class="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-blue-700 transition shadow-md active:scale-95"
                     >
-                      Choisir un créneau 📅
+                      Voir le dossier 📂
                     </button>
                   </template>
                   
-                  <template v-else-if="notif.type === 'message'">
-                    <button 
-                      @click="router.push('/messages')"
+                  <template v-else-if="notif.type === 'message_received'">
+                    <button
+                      @click="handleNotificationClick(notif)"
                       class="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-blue-700 transition shadow-md"
                     >
                       Répondre 💬
                     </button>
                   </template>
 
+                  <template v-else-if="notif.type === 'document_uploaded'">
+                    <button
+                      @click="handleNotificationClick(notif)"
+                      class="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-blue-700 transition shadow-md"
+                    >
+                      Voir le document 📄
+                    </button>
+                  </template>
+
+                  <template v-else-if="notif.type === 'offer'">
+                    <button
+                      @click="router.push('/clients/requests')"
+                      class="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-blue-700 transition shadow-md active:scale-95"
+                    >
+                      Voir les demandes 📋
+                    </button>
+                  </template>
+
                   <button 
-                    @click="goToDetails(notif)"
+                    v-if="!notif.is_read"
+                    @click="markAsRead(notif.id)"
                     class="px-4 py-2 border border-gray-200 text-gray-500 text-[10px] font-black uppercase rounded-lg hover:bg-gray-100 transition active:scale-95"
                   >
-                    Détails
+                    Marquer lu ✓
                   </button>
                 </div>
               </div>
@@ -113,8 +132,9 @@ const router = useRouter()
 const activeFilter = ref('toutes')
 const tabs = [
   { id: 'toutes', label: 'Toutes' },
-  { id: 'offer', label: 'Dossiers' },
-  { id: 'message', label: 'Messages' }
+  { id: 'case_update', label: 'Dossiers' },
+  { id: 'message_received', label: 'Messages' },
+  { id: 'document_uploaded', label: 'Documents' }
 ]
 
 // On récupère les notifications directement depuis le STORE
@@ -130,17 +150,47 @@ const getCount = (tabId: string) => {
 }
 
 const getIcon = (type: string) => {
-  const icons: any = { acceptance: '✅', offer: '⚖️', message: '💬', document: '📄' }
+  const icons: any = {
+    case_update: '⚖️',
+    message_received: '💬',
+    document_uploaded: '📄',
+    appointment_reminder: '📅',
+    offer: '📋'
+  }
   return icons[type] || '🔔'
 }
 
-const goToDetails = (notif: any) => {
-  if (notif.type === 'offer' || notif.type === 'acceptance') {
-    router.push('/clients/requests')
-  } else if (notif.type === 'message') {
-    router.push('/messages')
+const handleNotificationClick = async (notif: any) => {
+  // Marquer comme lu
+  await notificationStore.markAsRead(notif.id)
+
+  // Extraire les données
+  const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
+
+  // Redirection selon le type
+  if (notif.type === 'message_received') {
+    if (data && data.conversation_id) {
+      router.push(`/messages?conversationId=${data.conversation_id}`)
+    } else {
+      router.push('/messages')
+    }
+  } else if (notif.type === 'case_update') {
+    if (data && data.case_id) {
+      router.push(`/cases/${data.case_id}`)
+    } else {
+      router.push('/cases')
+    }
+  } else if (notif.type === 'document_uploaded') {
+    if (data && data.case_id) {
+      router.push(`/cases/${data.case_id}`)
+    }
   }
 }
+
+const markAsRead = async (id: string) => {
+  await notificationStore.markAsRead(id)
+}
+
 
 onMounted(() => {
   // On demande au store de rafraîchir les données

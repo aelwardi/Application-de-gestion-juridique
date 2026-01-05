@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { acceptOfferQuery, declineOfferQuery } from '../database/queries/case.queries'; // Importation propre
+import { acceptOfferQuery, declineOfferQuery } from '../database/queries/case.queries';
 import { pool } from '../config/database.config';
 
 const router = Router();
@@ -41,6 +41,40 @@ router.post('/:id/accept', async (req, res) => {
     try {
         console.log(`[BACKEND] Tentative d'acceptation de l'offre : ${req.params.id}`);
         const result = await acceptOfferQuery(req.params.id);
+
+        // Créer une notification pour le client
+        if (result.success && result.caseId) {
+            try {
+                // Récupérer les infos du dossier créé
+                const caseQuery = await pool.query(
+                    'SELECT id, client_id, title FROM cases WHERE id = $1',
+                    [result.caseId]
+                );
+
+                if (caseQuery.rows.length > 0) {
+                    const caseData = caseQuery.rows[0];
+                    await pool.query(
+                        `INSERT INTO notifications (user_id, notification_type, title, message, data)
+                         VALUES ($1, $2, $3, $4, $5)`,
+                        [
+                            caseData.client_id,
+                            'case_update',
+                            'Offre acceptée ✅',
+                            `Votre demande "${caseData.title}" a été acceptée par l'avocat. Votre dossier est maintenant actif.`,
+                            JSON.stringify({
+                                case_id: caseData.id,
+                                offer_id: req.params.id,
+                                case_title: caseData.title
+                            })
+                        ]
+                    );
+                    console.log('[BACKEND] Notification créée pour le client');
+                }
+            } catch (notifError) {
+                console.error('[BACKEND] Erreur création notification:', notifError);
+            }
+        }
+
         res.json(result);
     } catch (error: any) {
         console.error('[BACKEND] Erreur Accept Offer:', error.message);
@@ -54,9 +88,38 @@ router.post('/:id/accept', async (req, res) => {
 router.post('/:id/decline', async (req, res) => {
     try {
         console.log(`[BACKEND] Tentative de refus de l'offre : ${req.params.id}`);
+
+        // Récupérer les infos de l'offre avant de la refuser
+        const offerQuery = await pool.query(
+            'SELECT client_id, title FROM cases WHERE id = $1',
+            [req.params.id]
+        );
+
         const success = await declineOfferQuery(req.params.id);
         
-        if (success) {
+        if (success && offerQuery.rows.length > 0) {
+            // Créer une notification pour le client
+            try {
+                const offerData = offerQuery.rows[0];
+                await pool.query(
+                    `INSERT INTO notifications (user_id, notification_type, title, message, data)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                        offerData.client_id,
+                        'case_update',
+                        'Offre refusée ❌',
+                        `Votre demande "${offerData.title}" n'a pas été retenue par l'avocat. Vous pouvez contacter d'autres avocats.`,
+                        JSON.stringify({
+                            offer_id: req.params.id,
+                            case_title: offerData.title
+                        })
+                    ]
+                );
+                console.log('[BACKEND] Notification créée pour le client');
+            } catch (notifError) {
+                console.error('[BACKEND] Erreur création notification:', notifError);
+            }
+
             res.json({ success: true, message: "Offre déclinée" });
         } else {
             res.status(404).json({ error: "Offre non trouvée" });
