@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: gestion_juridique_postgres_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - juridique_network_prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: gestion_juridique_backend_prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_ACCESS_TOKEN_EXPIRY=${JWT_ACCESS_TOKEN_EXPIRY:-15m}
+      - JWT_REFRESH_TOKEN_EXPIRY=${JWT_REFRESH_TOKEN_EXPIRY:-7d}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - COOKIE_SECURE=true
+      - COOKIE_SAME_SITE=strict
+      - GMAIL_APP_USERNAME=${GMAIL_APP_USERNAME}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - GMAIL_USERNAME=${GMAIL_USERNAME}
+    expose:
+      - "3000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    networks:
+      - juridique_network_prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Frontend Nuxt
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: gestion_juridique_frontend_prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL}
+      - HOST=0.0.0.0
+      - PORT=3001
+    expose:
+      - "3001"
+    networks:
+      - juridique_network_prod
+    depends_on:
+      - backend
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: gestion_juridique_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - juridique_network_prod
+    depends_on:
+      - backend
+      - frontend
+
+networks:
+  juridique_network_prod:
+    driver: bridge
+
+volumes:
+  postgres_data_prod:
+    driver: local
