@@ -173,7 +173,7 @@
                 <div class="bg-gradient-to-br from-purple-50 to-purple-100 border-l-4 border-purple-500 p-5 rounded-r-xl shadow-sm">
                   <div class="flex items-center gap-3 mb-3">
                     <span class="px-3 py-1 bg-white/80 backdrop-blur-sm text-purple-700 rounded-full text-xs font-bold shadow-sm">
-                      {{ isUpcoming ? '📅 À venir' : '🕒 Dernier RDV' }}
+                      {{ isUpcoming ? 'À venir' : 'Dernier RDV' }}
                     </span>
                   </div>
                   <p class="text-xs text-purple-600 font-medium mb-2 flex items-center gap-2">
@@ -385,11 +385,11 @@ const getCaseStatusClass = (status: string) => {
 
 const getCaseStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    pending: '⏳ En attente',
-    in_progress: '🔄 En cours',
-    on_hold: '⏸️ En pause',
-    closed: '✅ Fermé',
-    open: '📂 Ouvert'
+    pending: 'En attente',
+    in_progress: 'En cours',
+    on_hold: 'En pause',
+    closed: 'Fermé',
+    open: 'Ouvert'
   }
   return labels[status] || status
 }

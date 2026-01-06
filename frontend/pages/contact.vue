@@ -25,7 +25,7 @@
                 : 'text-gray-600 hover:text-gray-900'
             ]"
           >
-            📧 Nous contacter
+            Nous contacter
           </button>
           <button
             @click="activeTab = 'feedback'"
@@ -430,11 +430,11 @@ const submitFeedback = async () => {
 
 const getRatingText = (rating: number) => {
   if (rating === 0) return ''
-  if (rating <= 3) return 'Mécontent 😞'
-  if (rating <= 5) return 'Peu satisfait 😐'
-  if (rating <= 7) return 'Satisfait 🙂'
-  if (rating <= 9) return 'Très satisfait 😊'
-  return 'Excellent ! 🎉'
+  if (rating <= 3) return 'Mécontent'
+  if (rating <= 5) return 'Peu satisfait'
+  if (rating <= 7) return 'Satisfait'
+  if (rating <= 9) return 'Très satisfait'
+  return 'Excellent !'
 }
 
 const getRatingColor = (rating: number) => {

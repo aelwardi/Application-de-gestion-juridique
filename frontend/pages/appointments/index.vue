@@ -781,10 +781,10 @@ const handleSelectAppointment = (id: string) => {
 // Watcher pour debug quand on passe en mode carte
 watch(viewMode, (newMode) => {
   if (newMode === 'map') {
-    console.log('🗺️ Passage en mode carte');
-    console.log(`📊 Nombre de rendez-vous à afficher: ${appointments.value.length}`);
+    console.log('Passage en mode carte');
+    console.log(`Nombre de rendez-vous à afficher: ${appointments.value.length}`);
     appointments.value.forEach(apt => {
-      console.log(`📍 RDV: "${apt.title}"`, {
+      console.log(`RDV: "${apt.title}"`, {
         id: apt.id,
         address: apt.location_address,
         lat: apt.location_latitude,

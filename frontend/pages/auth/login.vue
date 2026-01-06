@@ -189,7 +189,7 @@
 
           <!-- Sign Up Link -->
           <div class="text-center">
-            <button @click="showRegisterModal = true" class="btn-secondary w-full">
+            <button type="button" @click="showRegisterModal = true" class="btn-secondary w-full">
               Créer un compte
             </button>
           </div>
@@ -208,7 +208,7 @@
     </div>
 
     <!-- Register Modal -->
-    <RegisterModal v-model="showRegisterModal" />
+    <AuthRegisterModal v-model="showRegisterModal" />
   </div>
 </template>
 
@@ -231,6 +231,11 @@ const errorMessage = ref('');
 const showPassword = ref(false);
 const rememberMe = ref(false);
 const showRegisterModal = ref(false);
+
+// Debug: Log when modal state changes
+watch(showRegisterModal, (newVal) => {
+  console.log('Register modal state:', newVal);
+});
 
 const handleLogin = async () => {
   isLoading.value = true;

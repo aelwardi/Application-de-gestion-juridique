@@ -82,7 +82,7 @@
         <div class="flex-1">
           <p class="text-green-800 font-medium">Adresse géolocalisée</p>
           <p class="text-green-600 text-xs mt-0.5">
-            📍 {{ modelValue.latitude.toFixed(6) }}, {{ modelValue.longitude.toFixed(6) }}
+            Coordonnées : {{ modelValue.latitude.toFixed(6) }}, {{ modelValue.longitude.toFixed(6) }}
           </p>
         </div>
       </div>

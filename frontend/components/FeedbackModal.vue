@@ -75,14 +75,14 @@
                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900 bg-white"
               >
                 <option value="">Sélectionner une catégorie...</option>
-                <option value="interface">🎨 Interface et design</option>
-                <option value="usability">👆 Facilité d'utilisation</option>
-                <option value="features">⚡ Fonctionnalités</option>
-                <option value="lawyers">⚖️ Qualité des avocats</option>
-                <option value="support">💬 Support client</option>
-                <option value="security">🔒 Sécurité</option>
-                <option value="pricing">💰 Tarifs</option>
-                <option value="other">📝 Autre</option>
+                <option value="interface">Interface et design</option>
+                <option value="usability">Facilité d'utilisation</option>
+                <option value="features">Fonctionnalités</option>
+                <option value="lawyers">Qualité des avocats</option>
+                <option value="support">Support client</option>
+                <option value="security">Sécurité</option>
+                <option value="pricing">Tarifs</option>
+                <option value="other">Autre</option>
               </select>
             </div>
 
@@ -224,11 +224,11 @@ const submitFeedback = async () => {
 
 const getRatingText = (rating: number) => {
   if (rating === 0) return ''
-  if (rating <= 3) return '😞 Très insatisfait'
-  if (rating <= 5) return '😐 Peu satisfait'
-  if (rating <= 7) return '🙂 Satisfait'
-  if (rating <= 9) return '😊 Très satisfait'
-  return '🎉 Excellent !'
+  if (rating <= 3) return 'Très insatisfait'
+  if (rating <= 5) return 'Peu satisfait'
+  if (rating <= 7) return 'Satisfait'
+  if (rating <= 9) return 'Très satisfait'
+  return 'Excellent !'
 }
 
 const getRatingColor = (rating: number) => {

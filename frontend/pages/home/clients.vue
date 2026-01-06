@@ -46,7 +46,7 @@
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <div class="inline-block px-4 py-2 bg-secondary-100 text-secondary-700 rounded-full text-sm font-semibold mb-6">
-              👥 Pour les Particuliers et Entreprises
+              Pour les Particuliers et Entreprises
             </div>
             <h1 class="text-display-md font-heading text-neutral-900 mb-6 leading-tight">
               Trouvez l'avocat parfait
@@ -187,7 +187,7 @@
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div class="inline-block px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm font-semibold mb-4">
-                🔍 Recherche avancée
+                Recherche avancée
               </div>
               <h3 class="text-3xl font-heading font-bold text-neutral-900 mb-4">
                 Trouvez le bon avocat facilement
@@ -229,7 +229,7 @@
             </div>
             <div class="order-1 lg:order-2">
               <div class="inline-block px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">
-                📊 Suivi transparent
+                Suivi transparent
               </div>
               <h3 class="text-3xl font-heading font-bold text-neutral-900 mb-4">
                 Suivez votre dossier en temps réel
@@ -265,7 +265,7 @@
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div class="inline-block px-3 py-1 bg-success-100 text-success-700 rounded-full text-sm font-semibold mb-4">
-                💬 Communication
+                Communication
               </div>
               <h3 class="text-3xl font-heading font-bold text-neutral-900 mb-4">
                 Communiquez facilement avec votre avocat

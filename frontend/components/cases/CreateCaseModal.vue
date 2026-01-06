@@ -128,19 +128,19 @@
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
                       <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="low">🟢 Faible</option>
-                        <option value="medium" selected>🟡 Moyenne</option>
-                        <option value="high">🟠 Élevée</option>
-                        <option value="urgent">🔴 Urgente</option>
+                        <option value="low">Faible</option>
+                        <option value="medium" selected>Moyenne</option>
+                        <option value="high">Élevée</option>
+                        <option value="urgent">Urgente</option>
                       </select>
                     </div>
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
                       <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="pending">⏳ En attente</option>
-                        <option value="in_progress" selected>🔄 En cours</option>
-                        <option value="on_hold">⏸️ En pause</option>
-                        <option value="closed">✅ Fermé</option>
+                        <option value="pending">En attente</option>
+                        <option value="in_progress" selected>En cours</option>
+                        <option value="on_hold">En pause</option>
+                        <option value="closed">Fermé</option>
                       </select>
                     </div>
                   </div>

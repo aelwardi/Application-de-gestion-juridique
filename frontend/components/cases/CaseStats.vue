@@ -80,7 +80,9 @@
             >
               <div class="flex items-center justify-between mb-1.5">
                 <div class="flex items-center gap-2">
-                  <span class="text-lg">{{ priority.emoji }}</span>
+                  <svg class="w-4 h-4" :class="priority.bgColor.replace('bg-', 'text-')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="priority.icon" />
+                  </svg>
                   <span class="text-sm font-medium text-gray-700">{{ priority.label }}</span>
                 </div>
                 <span class="text-sm font-bold text-gray-900">
@@ -149,10 +151,10 @@ const statusStats = computed(() => {
 const priorityStats = computed(() => {
   const total = props.cases.length || 1;
   const priorities = [
-    { key: 'urgent', label: 'Urgente', emoji: '🔴', bgColor: 'bg-red-500' },
-    { key: 'high', label: 'Élevée', emoji: '🟠', bgColor: 'bg-orange-500' },
-    { key: 'medium', label: 'Moyenne', emoji: '🟡', bgColor: 'bg-yellow-500' },
-    { key: 'low', label: 'Faible', emoji: '🟢', bgColor: 'bg-green-500' },
+    { key: 'urgent', label: 'Urgente', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', bgColor: 'bg-red-500' },
+    { key: 'high', label: 'Élevée', icon: 'M13 10V3L4 14h7v7l9-11h-7z', bgColor: 'bg-orange-500' },
+    { key: 'medium', label: 'Moyenne', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', bgColor: 'bg-yellow-500' },
+    { key: 'low', label: 'Faible', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', bgColor: 'bg-green-500' },
   ];
 
   return priorities.map(priority => {
