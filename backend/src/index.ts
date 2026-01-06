@@ -21,6 +21,7 @@ import documentRoutes from "./routes/document.routes";
 import messageRoutes from "./routes/message.routes";
 import notificationRoutes from "./routes/notification.routes";
 import appointmentSuggestionRoutes from "./routes/appointment-suggestion.routes";
+import jobsRoutes from "./routes/jobs.routes";
 import { startReminderJobs } from "./jobs/appointment-reminders.job";
 
 dotenv.config();
@@ -69,6 +70,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/appointment-suggestions", appointmentSuggestionRoutes);
+app.use("/api/jobs", jobsRoutes);
 const startServer = async () => {
   try {
     await pool.query("SELECT 1");

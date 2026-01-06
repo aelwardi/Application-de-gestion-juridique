@@ -34,13 +34,6 @@
                 Confirmer
               </button>
               <button
-                v-if="appointment.status !== 'completed' && appointment.status !== 'cancelled'"
-                @click="handleAction('complete')"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold"
-              >
-                Terminer
-              </button>
-              <button
                 v-if="appointment.status !== 'cancelled' && appointment.status !== 'completed'"
                 @click="handleAction('cancel')"
                 class="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 text-sm font-semibold"
@@ -247,7 +240,7 @@ import type { AppointmentSuggestion } from '~/types/suggestion';
 
 const route = useRoute();
 const authStore = useAuthStore();
-const { getAppointmentById, confirmAppointment, cancelAppointment, completeAppointment } = useAppointment();
+const { getAppointmentById, confirmAppointment, cancelAppointment } = useAppointment();
 const { getAppointmentSuggestions, acceptSuggestion, rejectSuggestion } = useSuggestion();
 
 const appointment = ref<any>(null);
@@ -269,26 +262,23 @@ const loadData = async () => {
   }
 };
 
-const handleAction = async (action: 'confirm' | 'cancel' | 'complete') => {
+const handleAction = async (action: 'confirm' | 'cancel') => {
   if (!appointment.value) return;
   
   if (action === 'cancel' && !confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) return;
   if (action === 'confirm' && !confirm('Confirmer ce rendez-vous ?')) return;
-  if (action === 'complete' && !confirm('Marquer ce rendez-vous comme terminé ?')) return;
 
   try {
     let res;
 
     if (action === 'confirm') res = await confirmAppointment(appointment.value.id);
     if (action === 'cancel') res = await cancelAppointment(appointment.value.id);
-    if (action === 'complete') res = await completeAppointment(appointment.value.id);
-    
+
     if (res?.success) {
       await loadData();
       const messages: Record<string, string> = {
         confirm: '✅ Rendez-vous confirmé avec succès',
-        cancel: '❌ Rendez-vous annulé',
-        complete: '✔️ Rendez-vous marqué comme terminé'
+        cancel: '❌ Rendez-vous annulé'
       };
       alert(messages[action]);
     }

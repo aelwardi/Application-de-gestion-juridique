@@ -1,11 +1,13 @@
 import cron from 'node-cron';
 import { sendDailyReminders, sendHourlyReminders } from '../services/reminder.service';
+import { autoCompleteAppointments } from './auto-complete-appointments.job';
 
 /**
- * Job Cron pour les rappels de rendez-vous
+ * Job Cron pour les rappels de rendez-vous et la complétion automatique
  *
  * Rappels 24h: Tous les jours à 8h00
  * Rappels 2h: Toutes les 30 minutes
+ * Auto-complétion: Toutes les heures
  */
 
 export const startReminderJobs = () => {
@@ -37,10 +39,25 @@ export const startReminderJobs = () => {
     timezone: 'Europe/Paris'
   });
 
-  console.log('✅ Jobs de rappels configurés et en attente d\'exécution');
+  // Job toutes les heures pour marquer les rendez-vous passés comme terminés
+  cron.schedule('0 * * * *', async () => {
+    console.log('⏰ Exécution du job de complétion automatique des rendez-vous...');
+    try {
+      const count = await autoCompleteAppointments();
+      if (count > 0) {
+        console.log(`✅ Job de complétion terminé: ${count} rendez-vous marqué(s) comme terminé(s)`);
+      }
+    } catch (error) {
+      console.error('❌ Erreur dans le job de complétion automatique:', error);
+    }
+  }, {
+    timezone: 'Europe/Paris'
+  });
+
+  console.log('✅ Jobs de rappels et complétion configurés et en attente d\'exécution');
   console.log('   - Rappels 24h: tous les jours à 8h00');
   console.log('   - Rappels 2h: toutes les 30 minutes');
+  console.log('   - Auto-complétion: toutes les heures');
 };
 
 export default { startReminderJobs };
-
