@@ -26,20 +26,29 @@
             </div>
             
             <div class="flex gap-2">
+              <!-- Boutons d'action cachés si le rendez-vous est expiré -->
               <button
-                v-if="appointment.status === 'scheduled' && authStore.user?.role === 'client'"
+                v-if="!isAppointmentExpired && appointment.status === 'scheduled' && authStore.user?.role === 'client'"
                 @click="handleAction('confirm')"
                 class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-semibold"
               >
                 Confirmer
               </button>
               <button
-                v-if="appointment.status !== 'cancelled' && appointment.status !== 'completed'"
+                v-if="!isAppointmentExpired && appointment.status !== 'cancelled' && appointment.status !== 'completed'"
                 @click="handleAction('cancel')"
                 class="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 text-sm font-semibold"
               >
                 Annuler
               </button>
+
+              <!-- Message si rendez-vous expiré -->
+              <div v-if="isAppointmentExpired && appointment.status !== 'completed' && appointment.status !== 'cancelled'" class="flex items-center gap-2 text-orange-600 italic">
+                <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-sm font-medium">Rendez-vous expiré - actions bloquées</span>
+              </div>
 
               <!-- Message si rendez-vous terminé ou annulé -->
               <div v-if="appointment.status === 'completed'" class="flex items-center gap-2 text-gray-600 italic">
@@ -70,6 +79,22 @@
             <div>
               <p class="text-xs text-gray-400 uppercase font-bold mb-1">Durée</p>
               <p class="font-semibold text-gray-900">{{ getDuration(appointment.start_time, appointment.end_time) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Avertissement si le rendez-vous est passé mais pas encore marqué comme terminé -->
+        <div v-if="isAppointmentExpired && appointment.status !== 'completed' && appointment.status !== 'cancelled'" class="bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500 rounded-xl p-6 mb-6">
+          <div class="flex items-center gap-3">
+            <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="text-orange-900 font-bold text-lg">⚠️ Rendez-vous expiré</p>
+              <p class="text-orange-700 text-sm">
+                Ce rendez-vous est déjà passé. Il sera automatiquement marqué comme terminé.
+                Vous ne pouvez plus modifier son statut.
+              </p>
             </div>
           </div>
         </div>
@@ -247,6 +272,14 @@ const appointment = ref<any>(null);
 const suggestions = ref<AppointmentSuggestion[]>([]);
 const loading = ref(true);
 
+// Vérifier si le rendez-vous est expiré
+const isAppointmentExpired = computed(() => {
+  if (!appointment.value?.end_time) return false;
+  const endTime = new Date(appointment.value.end_time);
+  const now = new Date();
+  return endTime < now;
+});
+
 const loadData = async () => {
   loading.value = true;
   try {
@@ -265,6 +298,20 @@ const loadData = async () => {
 const handleAction = async (action: 'confirm' | 'cancel') => {
   if (!appointment.value) return;
   
+  // Vérifier si le rendez-vous est déjà passé
+  const endTime = new Date(appointment.value.end_time);
+  const now = new Date();
+
+  if (endTime < now) {
+    // Le rendez-vous est passé, le marquer comme terminé
+    alert('⚠️ Ce rendez-vous est déjà passé et a été automatiquement marqué comme terminé.\n\nVous ne pouvez plus modifier son statut.');
+
+    // Recharger les données pour mettre à jour l'affichage
+    // (le job automatique l'aura marqué comme completed)
+    await loadData();
+    return;
+  }
+
   if (action === 'cancel' && !confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) return;
   if (action === 'confirm' && !confirm('Confirmer ce rendez-vous ?')) return;
 
@@ -289,6 +336,18 @@ const handleAction = async (action: 'confirm' | 'cancel') => {
 };
 
 const acceptSuggestionAction = async (suggestionId: string) => {
+  // Vérifier si le rendez-vous est déjà passé
+  if (appointment.value) {
+    const endTime = new Date(appointment.value.end_time);
+    const now = new Date();
+
+    if (endTime < now) {
+      alert('⚠️ Ce rendez-vous est déjà passé.\n\nVous ne pouvez plus accepter de propositions pour ce rendez-vous.');
+      await loadData();
+      return;
+    }
+  }
+
   if (!confirm('Accepter cette proposition ? Cela modifiera la date du rendez-vous.')) return;
 
   try {
