@@ -27,7 +27,8 @@ import { startReminderJobs } from "./jobs/appointment-reminders.job";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
+const HOST = process.env.HOST || '0.0.0.0';
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
@@ -77,10 +78,10 @@ const startServer = async () => {
 
     await testEmailConfiguration();
 
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-      console.log(`Health check: http://localhost:${PORT}/health`);
-      console.log(`DB Test: http://localhost:${PORT}/db-test`);
+    app.listen(PORT, HOST, () => {
+      console.log(`Server running on http://${HOST}:${PORT}`);
+      console.log(`Health check: http://${HOST}:${PORT}/health`);
+      console.log(`DB Test: http://${HOST}:${PORT}/db-test`);
 
       // Démarrer les jobs de rappels automatiques
       startReminderJobs();
