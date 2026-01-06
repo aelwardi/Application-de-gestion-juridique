@@ -21,7 +21,9 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
                     <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                      <span class="text-3xl">⚖️</span>
+                      <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1zm-5 8.274l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L5 10.274zm10 0l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L15 10.274z" clip-rule="evenodd" />
+                      </svg>
                     </div>
                     <div>
                       <h2 class="text-2xl font-black text-white uppercase tracking-tight">
@@ -49,7 +51,7 @@
               <!-- Titre du dossier -->
               <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border-l-4 border-blue-500">
                 <label class="text-xs font-black text-blue-600 uppercase tracking-widest mb-2 block">
-                  📋 Titre du dossier
+                  Titre du dossier
                 </label>
                 <h3 class="text-2xl font-black text-gray-900">
                   {{ offer.title || 'Sans titre' }}
@@ -58,8 +60,8 @@
 
               <!-- Description -->
               <div>
-                <label class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 block flex items-center gap-2">
-                  <span>📝</span> Description complète
+                <label class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  Description complète
                 </label>
                 <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
                   <p class="text-gray-700 leading-relaxed whitespace-pre-line">
@@ -73,7 +75,9 @@
                 <!-- Type de demande -->
                 <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
                   <div class="flex items-center gap-2 mb-2">
-                    <span class="text-2xl">📌</span>
+                    <svg class="w-6 h-6 text-purple-700" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
+                    </svg>
                     <label class="text-xs font-black text-purple-700 uppercase tracking-wider">
                       Type de demande
                     </label>
@@ -86,7 +90,9 @@
                 <!-- Catégorie -->
                 <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
                   <div class="flex items-center gap-2 mb-2">
-                    <span class="text-2xl">⚖️</span>
+                    <svg class="w-6 h-6 text-blue-700" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1zm-5 8.274l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L5 10.274zm10 0l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L15 10.274z" clip-rule="evenodd" />
+                    </svg>
                     <label class="text-xs font-black text-blue-700 uppercase tracking-wider">
                       Catégorie juridique
                     </label>
@@ -115,7 +121,9 @@
                 <!-- Date de création -->
                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
                   <div class="flex items-center gap-2 mb-2">
-                    <span class="text-2xl">📅</span>
+                    <svg class="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                     <label class="text-xs font-black text-green-700 uppercase tracking-wider">
                       Date de création
                     </label>
@@ -132,7 +140,9 @@
                 class="bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-xl p-5 border-2 border-amber-300"
               >
                 <div class="flex items-center gap-2 mb-3">
-                  <span class="text-3xl">💰</span>
+                  <svg class="w-8 h-8 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   <label class="text-sm font-black text-amber-800 uppercase tracking-wider">
                     Budget Estimé par le Client
                   </label>
@@ -156,7 +166,9 @@
                 class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200"
               >
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="text-2xl">🗓️</span>
+                  <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
                   <label class="text-xs font-black text-indigo-700 uppercase tracking-wider">
                     Date souhaitée pour consultation
                   </label>
@@ -168,8 +180,8 @@
 
               <!-- Informations client -->
               <div class="border-t-2 border-dashed border-gray-300 pt-6">
-                <label class="text-sm font-black text-gray-700 uppercase tracking-widest mb-4 block flex items-center gap-2">
-                  <span>👤</span> Informations du Client
+                <label class="text-sm font-black text-gray-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  Informations du Client
                 </label>
                 <div class="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-5 space-y-3">
                   <div
@@ -190,7 +202,9 @@
                   </div>
 
                   <div v-if="offer.client_email" class="flex items-start gap-3 py-2">
-                    <span class="text-2xl">📧</span>
+                    <svg class="w-6 h-6 text-gray-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
                     <div>
                       <p class="text-sm text-gray-500 font-medium">Email</p>
                       <a
@@ -203,7 +217,9 @@
                   </div>
 
                   <div v-if="offer.client_phone" class="flex items-start gap-3 py-2">
-                    <span class="text-2xl">📞</span>
+                    <svg class="w-6 h-6 text-gray-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
                     <div>
                       <p class="text-sm text-gray-500 font-medium">Téléphone</p>
                       <a
@@ -313,10 +329,10 @@ const handleReject = async () => {
 
 const getRequestTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    consultation: '📋 Consultation',
-    new_case: '📁 Nouveau dossier',
-    second_opinion: '🔍 Second avis',
-    urgent: '🚨 Urgent',
+    consultation: 'Consultation',
+    new_case: 'Nouveau dossier',
+    second_opinion: 'Second avis',
+    urgent: 'Urgent',
   };
   return labels[type] || type || 'Non spécifié';
 };
@@ -334,11 +350,11 @@ const getUrgencyLabel = (urgency: string) => {
 
 const getUrgencyIcon = (urgency: string) => {
   const icons: Record<string, string> = {
-    low: '🟢',
-    normal: '🟡',
-    medium: '🟡',
-    high: '🟠',
-    urgent: '🔴',
+    low: '●',
+    normal: '●',
+    medium: '●',
+    high: '●',
+    urgent: '●',
   };
   return icons[urgency] || '⚪';
 };

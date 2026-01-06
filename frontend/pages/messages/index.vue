@@ -71,7 +71,9 @@
                       {{ getConversationName(conv) }}
                     </p>
                     <span v-if="conv.case_info" class="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700 font-bold flex-shrink-0 shadow-sm">
-                      📁
+                      <svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                      </svg>
                     </span>
                     <span v-if="conv.unread_count > 0" class="px-2 py-1 text-xs font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full flex-shrink-0 shadow-md animate-pulse">
                       {{ conv.unread_count }}
@@ -278,7 +280,7 @@
                 </div>
                 <span class="px-3 py-1 text-xs rounded-full font-bold shadow-sm"
                   :class="user.role === 'avocat' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'">
-                  {{ user.role === 'avocat' ? '👨‍⚖️ Avocat' : '👤 Client' }}
+                  {{ user.role === 'avocat' ? 'Avocat' : 'Client' }}
                 </span>
               </div>
             </div>
@@ -429,7 +431,7 @@ const searchUsers = () => {
         params.role = roleToSearch
       }
 
-      console.log('🔍 Recherche utilisateurs:', {
+      console.log('Recherche utilisateurs:', {
         query: searchQuery.value,
         userRole: authStore.user?.role,
         filterByRole: filterByRole.value,
@@ -445,14 +447,14 @@ const searchUsers = () => {
         params
       })
 
-      console.log('✅ Réponse API:', response)
+      console.log('Réponse API:', response)
 
       if (response.success) {
         searchResults.value = response.data || []
-        console.log('📋 Résultats:', searchResults.value.length, 'utilisateur(s) trouvé(s)')
+        console.log('Résultats:', searchResults.value.length, 'utilisateur(s) trouvé(s)')
       }
     } catch (error: any) {
-      console.error('❌ Error searching users:', error)
+      console.error('Error searching users:', error)
       console.error('Détails erreur:', error.data || error.message)
       searchResults.value = []
     } finally {

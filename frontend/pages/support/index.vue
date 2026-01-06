@@ -230,12 +230,12 @@
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="">Sélectionner...</option>
-              <option value="technical">🔧 Problème technique</option>
-              <option value="account">👤 Compte & Profil</option>
-              <option value="payment">💳 Paiement</option>
-              <option value="feature">✨ Fonctionnalité</option>
-              <option value="bug">🐛 Bug</option>
-              <option value="other">❓ Autre</option>
+              <option value="technical">Problème technique</option>
+              <option value="account">Compte & Profil</option>
+              <option value="payment">Paiement</option>
+              <option value="feature">Fonctionnalité</option>
+              <option value="bug">Bug</option>
+              <option value="other">Autre</option>
             </select>
           </div>
 

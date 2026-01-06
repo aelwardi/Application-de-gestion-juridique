@@ -6,7 +6,7 @@
 export default defineNuxtPlugin(() => {
   // Leaflet doit être chargé uniquement côté client
   if (process.client) {
-    console.log('🗺️ Plugin Leaflet chargé côté client');
+    console.log('Plugin Leaflet chargé côté client');
   }
 });
 

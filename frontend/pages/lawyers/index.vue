@@ -40,22 +40,31 @@
             </span>
 
             <!-- Statut de disponibilité -->
-            <span class="px-2 py-1 rounded-full text-xs font-bold" :class="{
+            <span class="px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1" :class="{
               'bg-green-500 text-white': lawyer.availability_status === 'available',
               'bg-yellow-500 text-white': lawyer.availability_status === 'busy',
               'bg-red-500 text-white': lawyer.availability_status === 'unavailable'
             }">
-              {{ lawyer.availability_status === 'available' ? '🟢 Disponible' : lawyer.availability_status === 'busy' ? '🟡 Occupé' : '🔴 Indisponible' }}
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="8" />
+              </svg>
+              {{ lawyer.availability_status === 'available' ? 'Disponible' : lawyer.availability_status === 'busy' ? 'Occupé' : 'Indisponible' }}
             </span>
           </div>
 
           <!-- Badge IS ACTIVE -->
           <div class="absolute bottom-3 left-3">
-            <span v-if="lawyer.is_active" class="px-2 py-1 bg-white/20 backdrop-blur-sm text-white rounded-lg text-xs font-bold">
-              ✅ Compte actif
+            <span v-if="lawyer.is_active" class="px-2 py-1 bg-white/20 backdrop-blur-sm text-white rounded-lg text-xs font-bold flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Compte actif
             </span>
-            <span v-else class="px-2 py-1 bg-red-500/80 backdrop-blur-sm text-white rounded-lg text-xs font-bold">
-              ⛔ Compte inactif
+            <span v-else class="px-2 py-1 bg-red-500/80 backdrop-blur-sm text-white rounded-lg text-xs font-bold flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              Compte inactif
             </span>
           </div>
         </div>
@@ -90,17 +99,23 @@
           <!-- Stats en 3 colonnes -->
           <div class="grid grid-cols-3 gap-2 mb-3">
             <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-2 text-center border border-yellow-100">
-              <div class="text-lg">⭐</div>
+              <svg class="w-5 h-5 mx-auto text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
               <p class="text-lg font-black text-gray-900">{{ lawyer.rating?.toFixed(1) || '5.0' }}</p>
               <p class="text-xs text-gray-600">{{ lawyer.total_reviews || 0 }} avis</p>
             </div>
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2 text-center border border-blue-100">
-              <div class="text-lg">💼</div>
+              <svg class="w-5 h-5 mx-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
               <p class="text-lg font-black text-gray-900">{{ lawyer.experience_years || 0 }}</p>
               <p class="text-xs text-gray-600">ans</p>
             </div>
             <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-2 text-center border border-purple-100">
-              <div class="text-lg">📁</div>
+              <svg class="w-5 h-5 mx-auto text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
               <p class="text-lg font-black text-gray-900">{{ lawyer.total_cases || 0 }}</p>
               <p class="text-xs text-gray-600">dossiers</p>
             </div>
@@ -108,7 +123,12 @@
 
           <!-- Spécialités -->
           <div class="mb-3">
-            <p class="text-xs font-bold text-gray-500 uppercase mb-2">⚖️ Spécialités</p>
+            <p class="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
+              Spécialités
+            </p>
             <div class="flex flex-wrap gap-2">
               <span
                 v-for="spec in formatSpecs(lawyer.specialties).slice(0, 3)"
@@ -133,7 +153,9 @@
                 <p class="text-xs text-green-700 font-bold uppercase">Tarif horaire</p>
                 <p class="text-xl font-black text-green-700">{{ lawyer.hourly_rate }}€<span class="text-sm">/h</span></p>
               </div>
-              <div class="text-2xl">💰</div>
+              <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
           </div>
 
@@ -162,7 +184,10 @@
             <!-- Langues -->
             <div v-if="lawyer.languages && formatSpecs(lawyer.languages).length > 0" class="bg-purple-50 rounded-lg p-3 border border-purple-100">
               <p class="text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-2">
-                <span>🌍</span> Langues parlées
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+                Langues parlées
               </p>
               <div class="flex flex-wrap gap-2">
                 <span
@@ -178,7 +203,10 @@
             <!-- Description complète -->
             <div v-if="lawyer.description" class="bg-blue-50 rounded-lg p-3 border border-blue-100">
               <p class="text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-2">
-                <span>📝</span> Présentation
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Présentation
               </p>
               <p class="text-sm text-gray-700 italic">
                 "{{ lawyer.description }}"
@@ -188,7 +216,10 @@
             <!-- Contact -->
             <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
               <p class="text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-2">
-                <span>📞</span> Coordonnées complètes
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                Coordonnées complètes
               </p>
               <div class="space-y-2">
                 <div class="flex items-center gap-2 text-xs">
@@ -220,7 +251,11 @@
                   <p class="text-xs text-indigo-700 font-bold uppercase">Dossiers en cours</p>
                   <p class="text-lg font-black text-indigo-700">{{ lawyer.active_cases }} actifs</p>
                 </div>
-                <div class="text-2xl">📂</div>
+                <div class="text-2xl">
+                  <svg class="w-8 h-8 text-indigo-700" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                  </svg>
+                </div>
               </div>
             </div>
 
@@ -320,11 +355,19 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <div class="text-lg">📧</div>
+              <div class="text-lg">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
               <p class="text-sm font-bold text-gray-800 break-all">{{ lawyerDetails.email }}</p>
             </div>
             <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <div class="text-lg">📞</div>
+              <div class="text-lg">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+              </div>
               <p class="text-sm font-bold text-gray-800">{{ lawyerDetails.phone || 'Non renseigné' }}</p>
             </div>
           </div>

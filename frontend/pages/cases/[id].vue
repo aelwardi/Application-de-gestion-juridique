@@ -71,11 +71,11 @@
                     class="block w-full pl-4 pr-10 py-2.5 text-sm font-bold border-none rounded-lg cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
                     :class="getStatusClass(caseData.status)"
                   >
-                    <option value="pending">⏳ En attente</option>
-                    <option value="in_progress">🔄 En cours</option>
-                    <option value="on_hold">⏸️ En pause</option>
-                    <option value="closed">✅ Fermé</option>
-                    <option value="archived">📦 Archivé</option>
+                    <option value="pending">En attente</option>
+                    <option value="in_progress">En cours</option>
+                    <option value="on_hold">En pause</option>
+                    <option value="closed">Fermé</option>
+                    <option value="archived">Archivé</option>
                   </select>
                   <div v-if="statusUpdating" class="absolute -right-8 top-1/2 -translate-y-1/2">
                     <div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
@@ -382,7 +382,7 @@
                           class="px-3 py-1 text-xs font-bold rounded-full w-fit"
                           :class="doc.is_confidential ? 'bg-gray-100 text-gray-700' : 'bg-green-100 text-green-700'"
                         >
-                          {{ doc.is_confidential ? '🔒 Privé' : '👁️ Partagé' }}
+                          {{ doc.is_confidential ? 'Privé' : 'Partagé' }}
                         </span>
                       </div>
                     </td>
@@ -461,11 +461,11 @@
           <div>
             <label class="block text-xs font-black text-gray-500 uppercase mb-1">Type de document</label>
             <select v-model="uploadForm.document_type" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none font-medium">
-              <option value="contract">📜 Contrat</option>
-              <option value="evidence">🔍 Preuve</option>
-              <option value="court_decision">⚖️ Décision</option>
-              <option value="letter">📧 Courrier</option>
-              <option value="other">📁 Autre</option>
+              <option value="contract">Contrat</option>
+              <option value="evidence">Preuve</option>
+              <option value="court_decision">Décision de justice</option>
+              <option value="letter">Courrier</option>
+              <option value="other">Autre</option>
             </select>
           </div>
 
@@ -477,8 +477,13 @@
           >
             <div class="flex items-center gap-3">
                <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="uploadForm.is_confidential ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-600'">
-                    <span v-if="uploadForm.is_confidential">🔒</span>
-                    <span v-else>👁️</span>
+                    <svg v-if="uploadForm.is_confidential" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
                </div>
                <div>
                   <p class="text-sm font-black" :class="uploadForm.is_confidential ? 'text-gray-700' : 'text-green-800'">
@@ -787,10 +792,10 @@ const getPriorityClass = (priority: string) => {
 
 const getPriorityLabel = (priority: string) => {
   const labels: Record<string, string> = {
-    low: '🟢 Faible',
-    medium: '🟡 Moyenne',
-    high: '🟠 Haute',
-    urgent: '🔴 Urgente'
+    low: 'Faible',
+    medium: 'Moyenne',
+    high: 'Haute',
+    urgent: 'Urgente'
   }
   return labels[priority] || priority
 }

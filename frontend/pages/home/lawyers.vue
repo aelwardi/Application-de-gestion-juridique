@@ -46,7 +46,7 @@
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <div class="inline-block px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-6">
-              🎓 Pour les Professionnels du Droit
+              Pour les Professionnels du Droit
             </div>
             <h1 class="text-display-md font-heading text-neutral-900 mb-6 leading-tight">
               Optimisez votre pratique juridique
@@ -221,7 +221,7 @@
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div class="inline-block px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">
-                📅 Calendrier
+                Calendrier
               </div>
               <h3 class="text-3xl font-heading font-bold text-neutral-900 mb-4">
                 Calendrier interactif et intelligent
@@ -263,7 +263,7 @@
             </div>
             <div class="order-1 lg:order-2">
               <div class="inline-block px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm font-semibold mb-4">
-                📁 Dossiers
+                Dossiers
               </div>
               <h3 class="text-3xl font-heading font-bold text-neutral-900 mb-4">
                 Gestion complète des dossiers
@@ -299,7 +299,7 @@
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div class="inline-block px-3 py-1 bg-success-100 text-success-700 rounded-full text-sm font-semibold mb-4">
-                🗺️ Cartographie
+                Cartographie
               </div>
               <h3 class="text-3xl font-heading font-bold text-neutral-900 mb-4">
                 Carte interactive des rendez-vous
