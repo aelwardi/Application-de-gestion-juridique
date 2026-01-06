@@ -137,6 +137,22 @@ export const useSuggestion = () => {
     }
   };
 
+  /**
+   * Récupérer les suggestions liées à un rendez-vous
+   */
+  const getAppointmentSuggestions = async (appointmentId: string): Promise<{ success: boolean; data: AppointmentSuggestion[] }> => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/appointment-suggestions/appointment/${appointmentId}`, {
+        method: 'GET',
+        headers: getHeaders()
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching appointment suggestions:', error);
+      throw error;
+    }
+  };
+
   return {
     createSuggestion,
     getSentSuggestions,
@@ -144,7 +160,7 @@ export const useSuggestion = () => {
     acceptSuggestion,
     rejectSuggestion,
     counterSuggestion,
-    getAvailableSlots
+    getAvailableSlots,
+    getAppointmentSuggestions
   };
 };
-

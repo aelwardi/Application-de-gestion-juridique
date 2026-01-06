@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import * as suggestionService from '../services/appointment-suggestion.service';
 import * as conflictService from '../services/conflict.service';
+import { pool } from '../config/database.config';
 
 const router = Router();
 
@@ -218,5 +219,41 @@ router.get('/available-slots/:lawyerId', async (req: Request, res: Response) => 
   }
 });
 
-export default router;
+/**
+ * Récupérer les suggestions liées à un rendez-vous spécifique
+ * GET /api/appointment-suggestions/appointment/:appointmentId
+ */
+router.get('/appointment/:appointmentId', async (req: Request, res: Response) => {
+  try {
+    const { appointmentId } = req.params;
 
+    const query = `
+      SELECT s.*,
+        u1.first_name as suggested_by_first_name,
+        u1.last_name as suggested_by_last_name,
+        u2.first_name as suggested_to_first_name,
+        u2.last_name as suggested_to_last_name
+      FROM appointment_suggestions s
+      LEFT JOIN users u1 ON s.suggested_by_user_id = u1.id
+      LEFT JOIN users u2 ON s.suggested_to_user_id = u2.id
+      WHERE s.appointment_id = $1
+      ORDER BY s.created_at DESC
+    `;
+
+    const result = await pool.query(query, [appointmentId]);
+
+    res.status(200).json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching appointment suggestions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des suggestions',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+export default router;
