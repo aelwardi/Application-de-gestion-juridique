@@ -156,7 +156,7 @@
                   Annuler
                 </button>
                 <button
-                  v-if="apt.lawyer_id"
+                  v-if="apt.lawyer_id && apt.status === 'scheduled'"
                   @click="openSuggestionModal(apt.lawyer_id, apt.id)"
                   class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold text-sm flex items-center gap-1"
                   title="Proposer un autre créneau"
@@ -211,7 +211,7 @@
                     {{ getTypeLabel(apt.appointment_type) }}
                   </span>
                   <button
-                    v-if="apt.lawyer_id"
+                    v-if="apt.lawyer_id && apt.status === 'scheduled'"
                     @click="openSuggestionModal(apt.lawyer_id, apt.id)"
                     class="p-2 hover:bg-green-100 rounded-xl transition-all text-green-600"
                     title="Proposer un autre créneau"
