@@ -55,12 +55,10 @@ export const findAvailableSlots = async (
   duration: number = 60 // en minutes
 ): Promise<any[]> => {
   try {
-    // Horaires de travail par défaut: 9h-18h
     const workStart = 9;
     const workEnd = 18;
     const slotDuration = duration;
 
-    // Récupérer tous les rendez-vous du jour
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -88,7 +86,6 @@ export const findAvailableSlots = async (
       end: new Date(row.end_time)
     }));
 
-    // Générer les créneaux disponibles
     const availableSlots: any[] = [];
     const baseDate = new Date(date);
 
@@ -100,7 +97,6 @@ export const findAvailableSlots = async (
         const slotEnd = new Date(slotStart);
         slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
 
-        // Vérifier si le créneau ne chevauche pas un rendez-vous existant
         const hasConflict = bookedSlots.some((booked: any) => {
           return (
             (slotStart >= booked.start && slotStart < booked.end) ||

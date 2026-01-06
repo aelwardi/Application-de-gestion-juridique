@@ -7,15 +7,12 @@ import * as recurrenceService from '../services/recurrence.service';
 
 const router = Router();
 
-// Toutes les routes nécessitent une authentification
 router.use(authenticate);
 
-// Routes statistiques et spéciales (avant les routes avec :id)
 router.get('/stats', appointmentController.getAppointmentStats);
 router.get('/upcoming', appointmentController.getUpcomingAppointments);
 router.get('/today', appointmentController.getTodayAppointments);
 
-// Routes de conflits et disponibilités
 router.post('/check-conflicts', async (req: Request, res: Response) => {
   try {
     const { lawyer_id, start_time, end_time, exclude_id } = req.body;
@@ -40,7 +37,6 @@ router.get('/available-slots', async (req: Request, res: Response) => {
   }
 });
 
-// Route d'optimisation d'itinéraire
 router.get('/optimize-route', async (req: Request, res: Response) => {
   try {
     const { lawyer_id, date } = req.query;
@@ -51,7 +47,6 @@ router.get('/optimize-route', async (req: Request, res: Response) => {
   }
 });
 
-// Routes de récurrence
 router.post('/recurring', async (req: Request, res: Response) => {
   try {
     const result = await recurrenceService.createRecurringAppointments(req.body);
@@ -91,29 +86,24 @@ router.get('/recurring/:seriesId', async (req: Request, res: Response) => {
   }
 });
 
-// Routes avec paramètres spécifiques
 router.get('/lawyer/:lawyerId', appointmentController.getAppointmentsByLawyer);
 router.get('/client/:clientId', appointmentController.getAppointmentsByClient);
 router.get('/case/:caseId', appointmentController.getAppointmentsByCase);
 
-// Routes CRUD pour les rendez-vous
 router.post('/', appointmentController.createAppointment);
 router.get('/', appointmentController.getAllAppointments);
 router.get('/:id', appointmentController.getAppointmentById);
 router.put('/:id', appointmentController.updateAppointment);
 router.delete('/:id', appointmentController.deleteAppointment);
 
-// Routes d'actions spécifiques
 router.post('/:id/cancel', appointmentController.cancelAppointment);
 router.post('/:id/confirm', appointmentController.confirmAppointment);
 router.post('/:id/complete', appointmentController.completeAppointment);
 
-// Routes pour les documents
 router.post('/:id/documents', uploadMiddleware, appointmentController.uploadAppointmentDocument);
 router.get('/:id/documents', appointmentController.getAppointmentDocuments);
 router.delete('/:id/documents/:docId', appointmentController.deleteAppointmentDocument);
 
-// Routes pour les notes
 router.get('/:id/notes', appointmentController.getAppointmentNotes);
 router.put('/:id/notes', appointmentController.updateAppointmentNotes);
 

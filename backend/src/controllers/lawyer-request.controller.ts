@@ -25,7 +25,6 @@ export const createLawyerRequest = async (req: Request, res: Response): Promise<
       message: 'Lawyer request created successfully',
     });
   } catch (error: any) {
-    console.error('Create lawyer request error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create lawyer request',
@@ -56,7 +55,6 @@ export const getLawyerRequestById = async (req: Request, res: Response): Promise
       data: lawyerRequest,
     });
   } catch (error: any) {
-    console.error('Get lawyer request error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch lawyer request',
@@ -93,7 +91,6 @@ export const getClientRequests = async (req: Request, res: Response): Promise<vo
       },
     });
   } catch (error: any) {
-    console.error('Get client requests error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch client requests',
@@ -130,7 +127,6 @@ export const getLawyerRequests = async (req: Request, res: Response): Promise<vo
       },
     });
   } catch (error: any) {
-    console.error('Get lawyer requests error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch lawyer requests',
@@ -154,8 +150,6 @@ export const acceptRequest = async (req: Request, res: Response): Promise<void> 
       message: 'Request accepted successfully',
     });
   } catch (error: any) {
-    console.error('Accept request error:', error);
-
     if (error.message === 'Request not found') {
       res.status(404).json({
         success: false,
@@ -187,8 +181,6 @@ export const rejectRequest = async (req: Request, res: Response): Promise<void> 
       message: 'Request rejected successfully',
     });
   } catch (error: any) {
-    console.error('Reject request error:', error);
-
     if (error.message === 'Request not found') {
       res.status(404).json({
         success: false,
@@ -230,8 +222,6 @@ export const cancelRequest = async (req: Request, res: Response): Promise<void> 
       message: 'Request cancelled successfully',
     });
   } catch (error: any) {
-    console.error('Cancel request error:', error);
-
     if (error.message === 'Request not found or cannot be cancelled') {
       res.status(404).json({
         success: false,
@@ -262,7 +252,6 @@ export const getClientRequestStats = async (req: Request, res: Response): Promis
       data: stats,
     });
   } catch (error: any) {
-    console.error('Get client stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch client stats',
@@ -285,7 +274,6 @@ export const getLawyerRequestStats = async (req: Request, res: Response): Promis
       data: stats,
     });
   } catch (error: any) {
-    console.error('Get lawyer stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch lawyer stats',
@@ -316,7 +304,6 @@ export const deleteLawyerRequest = async (req: Request, res: Response): Promise<
       message: 'Request deleted successfully',
     });
   } catch (error: any) {
-    console.error('Delete request error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete request',

@@ -21,4 +21,3 @@ COMMENT ON COLUMN activity_logs.action IS 'Type of action performed (e.g., USER_
 COMMENT ON COLUMN activity_logs.entity_type IS 'Type of entity affected (e.g., user, case, appointment)';
 COMMENT ON COLUMN activity_logs.entity_id IS 'ID of the affected entity';
 COMMENT ON COLUMN activity_logs.metadata IS 'Additional contextual data in JSON format';
-

@@ -26,7 +26,6 @@ export const getLawyers = async (req: Request, res: Response): Promise<void> => 
       },
     });
   } catch (error) {
-    console.error('Get lawyers error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch lawyers',
@@ -56,7 +55,6 @@ export const getLawyerDetails = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    console.error('Get lawyer details error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch lawyer details',
@@ -88,7 +86,6 @@ export const verifyLawyer = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    console.error('Verify lawyer error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to verify lawyer',
@@ -110,7 +107,6 @@ export const getComprehensiveStats = async (req: Request, res: Response): Promis
       data: stats,
     });
   } catch (error) {
-    console.error('Get comprehensive stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch comprehensive statistics',
@@ -140,7 +136,6 @@ export const getPendingReviews = async (req: Request, res: Response): Promise<vo
       },
     });
   } catch (error) {
-    console.error('Get pending reviews error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch pending reviews',
@@ -164,7 +159,6 @@ export const approveReview = async (req: Request, res: Response): Promise<void> 
       message: 'Review approved successfully',
     });
   } catch (error) {
-    console.error('Approve review error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to approve review',
@@ -188,7 +182,6 @@ export const rejectReview = async (req: Request, res: Response): Promise<void> =
       message: 'Review rejected successfully',
     });
   } catch (error) {
-    console.error('Reject review error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to reject review',
@@ -209,7 +202,6 @@ export const getSpecialties = async (req: Request, res: Response): Promise<void>
       data: specialties,
     });
   } catch (error) {
-    console.error('Get specialties error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch specialties',

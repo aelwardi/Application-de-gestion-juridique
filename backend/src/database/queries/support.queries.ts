@@ -72,12 +72,10 @@ export const getAllTickets = async (
     paramIndex++;
   }
 
-  // Get total count
   const countQuery = query.replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM').replace(/LEFT JOIN.*admin_name/, '');
   const countResult = await pool.query(countQuery, params);
   const total = parseInt(countResult.rows[0].count);
 
-  // Get paginated results
   query += ` ORDER BY st.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
   params.push(limit, (page - 1) * limit);
 
@@ -196,7 +194,6 @@ export const addTicketMessage = async (
     attachments ? JSON.stringify(attachments) : null,
   ]);
 
-  // Update ticket updated_at
   await pool.query('UPDATE support_tickets SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [ticketId]);
 
   return result.rows[0];

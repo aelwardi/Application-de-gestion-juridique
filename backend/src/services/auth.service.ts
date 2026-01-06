@@ -35,8 +35,6 @@ export interface AuthResponse {
  * Note: Avec la table unifiée, l'ID user est suffisant (pas besoin de lawyerId/clientId séparés)
  */
 const formatUserResponse = (userResponse: UserResponse): UserResponse => {
-  // Avec la table unifiée, user.id est l'identifiant unique pour tous les rôles
-  // Pas besoin de lawyerId ou clientId séparés
   return userResponse;
 };
 
@@ -217,7 +215,7 @@ export const forgotPassword = async (email: string): Promise<void> => {
 
   await deleteUserTokens(user.id);
 
-  const resetToken = await createPasswordResetToken(user.id, 1); // 1 hour expiry
+  const resetToken = await createPasswordResetToken(user.id, 1);
 
   sendPasswordResetEmail(user.email, resetToken.token, user.first_name).catch(err => {
     console.error('Failed to send password reset email:', err);

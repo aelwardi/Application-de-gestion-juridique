@@ -1,14 +1,7 @@
-// =====================================================
-// Types pour les AVOCATS (référence users.types.ts)
-// Note: Lawyer est maintenant un type dans users.types.ts
-// =====================================================
-
 import { Lawyer, LawyerSearchFilters as BaseLawyerSearchFilters } from './users.types';
 
-// Ré-export pour compatibilité
 export type { Lawyer };
 
-// Avocat avec informations complètes
 export interface LawyerWithStats extends Lawyer {
   pending_cases?: number;
   completed_cases?: number;
@@ -17,14 +10,12 @@ export interface LawyerWithStats extends Lawyer {
   average_case_duration?: number;
 }
 
-// Ré-export des filtres
 export type LawyerSearchFilters = BaseLawyerSearchFilters;
 
-// Filtres géographiques pour recherche d'avocats
 export interface LawyerNearbySearchFilters {
   latitude: number;
   longitude: number;
-  radius_km?: number; // Par défaut 50km
+  radius_km?: number;
   verified_only?: boolean;
   specialty?: string;
   min_rating?: number;
@@ -32,7 +23,6 @@ export interface LawyerNearbySearchFilters {
   offset?: number;
 }
 
-// Statistiques détaillées de l'avocat
 export interface LawyerStats {
   total_cases: number;
   active_cases: number;
@@ -47,7 +37,6 @@ export interface LawyerStats {
   average_case_duration?: number;
 }
 
-// Response pour API
 export interface LawyerResponse {
   id: string;
   email: string;
@@ -77,7 +66,6 @@ export interface LawyerResponse {
   updated_at: Date;
 }
 
-// Spécialité juridique
 export interface LawyerSpecialty {
   id: string;
   name: string;
@@ -86,10 +74,8 @@ export interface LawyerSpecialty {
   created_at: Date;
 }
 
-// Input pour vérification d'avocat
 export interface VerifyLawyerInput {
   lawyer_id: string;
   admin_id: string;
   notes?: string;
 }
-

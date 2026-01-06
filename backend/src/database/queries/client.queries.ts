@@ -1,13 +1,4 @@
-// =====================================================
-// Requêtes pour les CLIENTS (role='client' dans users)
-// Note: La table clients n'existe plus, tout est dans users
-// =====================================================
-
 export const clientQueries = {
-  // ============================================
-  // CRÉATION ET RÉCUPÉRATION
-  // ============================================
-
   create: `
     INSERT INTO users (
       email, password_hash, role, first_name, last_name, phone,
@@ -35,10 +26,6 @@ export const clientQueries = {
     ORDER BY created_at DESC
     LIMIT $1 OFFSET $2
   `,
-
-  // ============================================
-  // RECHERCHE ET FILTRES
-  // ============================================
 
   search: (filters: string[]) => {
     let query = `
@@ -85,10 +72,6 @@ export const clientQueries = {
     LIMIT $2 OFFSET $3
   `,
 
-  // ============================================
-  // MISE À JOUR
-  // ============================================
-
   update: (fields: string[]) => {
     const setClause = fields.map((field, idx) => `${field} = $${idx + 1}`).join(', ');
     return `
@@ -108,19 +91,11 @@ export const clientQueries = {
     RETURNING *
   `,
 
-  // ============================================
-  // SUPPRESSION
-  // ============================================
-
   delete: `
     DELETE FROM users 
     WHERE id = $1 AND role = 'client'
     RETURNING *
   `,
-
-  // ============================================
-  // COMPTAGE
-  // ============================================
 
   count: `
     SELECT COUNT(*) FROM users WHERE role = 'client'
@@ -162,10 +137,6 @@ export const clientQueries = {
     return query;
   },
 
-  // ============================================
-  // STATISTIQUES
-  // ============================================
-
   getStats: `
     SELECT 
       u.total_cases,
@@ -201,10 +172,6 @@ export const clientQueries = {
     GROUP BY u.id
   `,
 
-  // ============================================
-  // RÉCUPÉRATION DE DONNÉES LIÉES
-  // ============================================
-
   getWithCases: `
     SELECT 
       u.*,
@@ -238,10 +205,6 @@ export const clientQueries = {
     WHERE u.id = $1 AND u.role = 'client'
     GROUP BY u.id
   `,
-
-  // ============================================
-  // NOTES DE SÉCURITÉ
-  // ============================================
 
   updateNotes: `
     UPDATE users

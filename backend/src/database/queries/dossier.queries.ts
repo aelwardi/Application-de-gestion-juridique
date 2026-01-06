@@ -2,7 +2,6 @@ import { pool } from '../../config/database.config';
 import { Case, CaseWithDetails, CreateCaseDTO, UpdateCaseDTO, CaseFilters, CaseStats } from '../../types/case.types';
 
 export const caseQueries = {
-  // Créer un nouveau dossier
   createCase: async (data: CreateCaseDTO): Promise<Case> => {
     const caseNumber = `CASE-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
@@ -22,7 +21,7 @@ export const caseQueries = {
       data.case_type,
       data.priority || 'medium',
       data.client_id,
-      data.lawyer_id, // Directement users.id
+      data.lawyer_id,
       data.court_name,
       data.judge_name,
       data.next_hearing_date,
@@ -33,7 +32,6 @@ export const caseQueries = {
     return result.rows[0];
   },
 
-  // Récupérer tous les dossiers avec filtres
   getAllCases: async (filters: CaseFilters = {}): Promise<CaseWithDetails[]> => {
     let query = `
       SELECT 
@@ -113,7 +111,6 @@ export const caseQueries = {
     return result.rows;
   },
 
-  // Récupérer un dossier par ID
   getCaseById: async (id: string): Promise<CaseWithDetails | null> => {
     const query = `
       SELECT 
@@ -136,14 +133,12 @@ export const caseQueries = {
     return result.rows[0] || null;
   },
 
-  // Récupérer un dossier par numéro
   getCaseByCaseNumber: async (caseNumber: string): Promise<Case | null> => {
     const query = 'SELECT * FROM cases WHERE case_number = $1';
     const result = await pool.query(query, [caseNumber]);
     return result.rows[0] || null;
   },
 
-  // Mettre à jour un dossier
   updateCase: async (id: string, data: UpdateCaseDTO): Promise<Case | null> => {
     const fields: string[] = [];
     const values: any[] = [];
@@ -181,7 +176,7 @@ export const caseQueries = {
     
     if (data.lawyer_id !== undefined) {
       fields.push(`lawyer_id = $${paramCount}`);
-      values.push(data.lawyer_id); // Directement users.id
+      values.push(data.lawyer_id);
       paramCount++;
     }
     
@@ -234,14 +229,12 @@ export const caseQueries = {
     return result.rows[0] || null;
   },
 
-  // Supprimer un dossier
   deleteCase: async (id: string): Promise<boolean> => {
     const query = 'DELETE FROM cases WHERE id = $1 RETURNING id';
     const result = await pool.query(query, [id]);
     return result.rowCount ? result.rowCount > 0 : false;
   },
 
-  // Assigner un avocat à un dossier
   assignLawyer: async (caseId: string, lawyerId: string): Promise<Case | null> => {
     const query = `
       UPDATE cases 
@@ -256,7 +249,6 @@ export const caseQueries = {
     return result.rows[0] || null;
   },
 
-  // Récupérer les statistiques des dossiers
   getCaseStats: async (lawyerId?: string): Promise<CaseStats> => {
     let query = `
       SELECT 
@@ -285,7 +277,6 @@ export const caseQueries = {
     const result = await pool.query(query, values);
     const row = result.rows[0];
     
-    // Récupérer les statistiques par type
     let typeQuery = 'SELECT case_type, COUNT(*) as count FROM cases';
     if (lawyerId) {
       typeQuery += ' WHERE lawyer_id = $1';
@@ -318,17 +309,14 @@ export const caseQueries = {
     };
   },
 
-  // Récupérer les dossiers d'un avocat
   getCasesByLawyer: async (lawyerId: string, filters: CaseFilters = {}): Promise<CaseWithDetails[]> => {
     return caseQueries.getAllCases({ ...filters, lawyer_id: lawyerId });
   },
 
-  // Récupérer les dossiers d'un client
   getCasesByClient: async (clientId: string, filters: CaseFilters = {}): Promise<CaseWithDetails[]> => {
     return caseQueries.getAllCases({ ...filters, client_id: clientId });
   },
 
-  // Récupérer les prochaines audiences
   getUpcomingHearings: async (lawyerId?: string): Promise<CaseWithDetails[]> => {
     let query = `
       SELECT 
@@ -359,7 +347,6 @@ export const caseQueries = {
     return result.rows;
   },
 
-  // Fermer un dossier
   closeCase: async (id: string): Promise<Case | null> => {
     const query = `
       UPDATE cases 
@@ -374,7 +361,6 @@ export const caseQueries = {
     return result.rows[0] || null;
   },
 
-  // Archiver un dossier
   archiveCase: async (id: string): Promise<Case | null> => {
     const query = `
       UPDATE cases 

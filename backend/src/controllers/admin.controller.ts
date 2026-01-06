@@ -51,7 +51,6 @@ export const createAdmin = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    console.error('Create admin error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create admin',
@@ -72,7 +71,6 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       data: stats,
     });
   } catch (error) {
-    console.error('Get dashboard stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch dashboard statistics',
@@ -105,7 +103,6 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    console.error('Get users error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
@@ -135,7 +132,6 @@ export const getUserDetails = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    console.error('Get user details error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user details',
@@ -168,7 +164,6 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
       message: result.message,
     });
   } catch (error) {
-    console.error('Toggle user status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update user status',
@@ -192,7 +187,6 @@ export const verifyUser = async (req: Request, res: Response): Promise<void> => 
       message: result.message,
     });
   } catch (error) {
-    console.error('Verify user error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to verify user',
@@ -232,7 +226,6 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    console.error('Delete user error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete user',
@@ -254,7 +247,6 @@ export const getUserGrowthStats = async (req: Request, res: Response): Promise<v
       data: stats,
     });
   } catch (error) {
-    console.error('Get growth stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch growth statistics',
@@ -285,7 +277,6 @@ export const getActivityLogs = async (req: Request, res: Response): Promise<void
       },
     });
   } catch (error) {
-    console.error('Get activity logs error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch activity logs',
@@ -318,7 +309,6 @@ export const sendBulkEmail = async (req: Request, res: Response): Promise<void> 
       data: { sent: result.sent },
     });
   } catch (error: any) {
-    console.error('Send bulk email error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to send bulk email',
@@ -344,7 +334,6 @@ export const exportUsers = async (req: Request, res: Response): Promise<void> =>
     res.setHeader('Content-Disposition', `attachment; filename=users-export-${Date.now()}.csv`);
     res.send(csv);
   } catch (error) {
-    console.error('Export users error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to export users data',

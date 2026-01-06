@@ -4,7 +4,6 @@ import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Récupérer les notifications de l'utilisateur connecté
 router.get('/', authenticate, async (req, res) => {
     try {
         const userId = (req as any).user?.userId;
@@ -26,7 +25,6 @@ router.get('/', authenticate, async (req, res) => {
 
         const result = await pool.query(query, [userId]);
 
-        // Formater les notifications pour le frontend
         const formattedNotifications = result.rows.map((notif: any) => {
             const now = new Date();
             const createdAt = new Date(notif.created_at);
@@ -38,23 +36,22 @@ router.get('/', authenticate, async (req, res) => {
             else if (diffInMinutes < 1440) timeText = `Il y a ${Math.floor(diffInMinutes / 60)} h`;
             else timeText = createdAt.toLocaleDateString('fr-FR');
 
-            // Déterminer la catégorie selon le type
             let category = '';
             switch (notif.type) {
                 case 'message_received':
-                    category = 'Communication 💬';
+                    category = 'Communication';
                     break;
                 case 'document_uploaded':
-                    category = 'Nouveau Document 📄';
+                    category = 'Nouveau Document';
                     break;
                 case 'appointment_reminder':
-                    category = 'Rendez-vous 📅';
+                    category = 'Rendez-vous';
                     break;
                 case 'case_update':
-                    category = 'Mise à jour Dossier ⚖️';
+                    category = 'Mise à jour Dossier';
                     break;
                 default:
-                    category = 'Notification 🔔';
+                    category = 'Notification';
             }
 
             return {
@@ -81,12 +78,10 @@ router.get('/', authenticate, async (req, res) => {
     }
 });
 
-// Marquer comme lu
 router.patch('/:id/read', authenticate, async (req, res) => {
     try {
         const userId = (req as any).user?.userId;
 
-        // Vérifier que la notification appartient bien à l'utilisateur
         await pool.query(
             'UPDATE notifications SET is_read = true, read_at = NOW() WHERE id = $1 AND user_id = $2',
             [req.params.id, userId]
@@ -99,7 +94,6 @@ router.patch('/:id/read', authenticate, async (req, res) => {
     }
 });
 
-// Marquer toutes comme lues
 router.patch('/mark-all-read', authenticate, async (req, res) => {
     try {
         const userId = (req as any).user?.userId;

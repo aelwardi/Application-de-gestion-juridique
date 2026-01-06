@@ -1,7 +1,3 @@
-// =====================================================
-// SERVICE AVOCATS - Utilise table users unifiée
-// =====================================================
-
 import * as lawyersQueries from '../database/queries/lawyers.queries';
 import { sendEmail } from '../utils/email.util';
 

@@ -1,7 +1,6 @@
 import { pool } from '../config/database.config';
 import nodemailer from 'nodemailer';
 
-// Configuration du transporteur email
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
@@ -17,7 +16,6 @@ const transporter = nodemailer.createTransport({
  */
 export const sendAppointmentReminder = async (appointmentId: string, reminderType: '24h' | '2h') => {
   try {
-    // Récupérer les détails du rendez-vous
     const query = `
       SELECT 
         a.*,
@@ -36,20 +34,16 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
     const result = await pool.query(query, [appointmentId]);
 
     if (result.rows.length === 0) {
-      console.log(`Rendez-vous ${appointmentId} non trouvé ou déjà annulé`);
       return false;
     }
 
     const appointment = result.rows[0];
 
-    // Vérifier si le rappel n'a pas déjà été envoyé
     if (reminderType === '24h' && appointment.reminder_24h_sent) {
-      console.log(`Rappel 24h déjà envoyé pour ${appointmentId}`);
       return false;
     }
 
     if (reminderType === '2h' && appointment.reminder_2h_sent) {
-      console.log(`Rappel 2h déjà envoyé pour ${appointmentId}`);
       return false;
     }
 
@@ -63,7 +57,6 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
       minute: '2-digit'
     });
 
-    // Contenu de l'email
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -84,7 +77,7 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
       <body>
         <div class="container">
           <div class="header">
-            <h1>⏰ Rappel de Rendez-vous</h1>
+            <h1>Rappel de Rendez-vous</h1>
             <p>Votre rendez-vous est prévu ${timeText}</p>
           </div>
           <div class="content">
@@ -92,7 +85,7 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
             <p>Ceci est un rappel concernant votre rendez-vous à venir.</p>
             
             <div class="appointment-details">
-              <h2>📅 Détails du rendez-vous</h2>
+              <h2>Détails du rendez-vous</h2>
               <div class="detail-row">
                 <span class="label">Sujet:</span> ${appointment.title}
               </div>
@@ -134,29 +127,24 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
       </html>
     `;
 
-    // Envoyer l'email à l'avocat
     if (appointment.lawyer_email) {
       await transporter.sendMail({
         from: `"Plateforme Juridique" <${process.env.SMTP_USER}>`,
         to: appointment.lawyer_email,
-        subject: `⏰ Rappel: Rendez-vous ${timeText} - ${appointment.title}`,
+        subject: `Rappel: Rendez-vous ${timeText} - ${appointment.title}`,
         html: emailHtml,
       });
-      console.log(`✅ Rappel envoyé à l'avocat: ${appointment.lawyer_email}`);
     }
 
-    // Envoyer l'email au client
     if (appointment.client_email) {
       await transporter.sendMail({
         from: `"Plateforme Juridique" <${process.env.SMTP_USER}>`,
         to: appointment.client_email,
-        subject: `⏰ Rappel: Rendez-vous ${timeText} - ${appointment.title}`,
+        subject: `Rappel: Rendez-vous ${timeText} - ${appointment.title}`,
         html: emailHtml,
       });
-      console.log(`✅ Rappel envoyé au client: ${appointment.client_email}`);
     }
 
-    // Marquer le rappel comme envoyé
     const updateField = reminderType === '24h' ? 'reminder_24h_sent' : 'reminder_2h_sent';
     await pool.query(
       `UPDATE appointments SET ${updateField} = true, ${updateField}_at = CURRENT_TIMESTAMP WHERE id = $1`,
@@ -175,9 +163,6 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
  */
 export const sendDailyReminders = async () => {
   try {
-    console.log('🔔 Début de l\'envoi des rappels 24h...');
-
-    // Trouver les rendez-vous dans 24h (±1h)
     const query = `
       SELECT id 
       FROM appointments 
@@ -188,15 +173,12 @@ export const sendDailyReminders = async () => {
     `;
 
     const result = await pool.query(query);
-    console.log(`📋 ${result.rows.length} rappel(s) 24h à envoyer`);
 
     for (const row of result.rows) {
       await sendAppointmentReminder(row.id, '24h');
-      // Attendre 1 seconde entre chaque email pour éviter le spam
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.log('✅ Rappels 24h terminés');
     return result.rows.length;
   } catch (error) {
     console.error('Erreur lors de l\'envoi des rappels quotidiens:', error);
@@ -209,9 +191,6 @@ export const sendDailyReminders = async () => {
  */
 export const sendHourlyReminders = async () => {
   try {
-    console.log('🔔 Début de l\'envoi des rappels 2h...');
-
-    // Trouver les rendez-vous dans 2h (±30min)
     const query = `
       SELECT id 
       FROM appointments 
@@ -226,11 +205,9 @@ export const sendHourlyReminders = async () => {
 
     for (const row of result.rows) {
       await sendAppointmentReminder(row.id, '2h');
-      // Attendre 1 seconde entre chaque email
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.log('✅ Rappels 2h terminés');
     return result.rows.length;
   } catch (error) {
     console.error('Erreur lors de l\'envoi des rappels horaires:', error);
@@ -258,4 +235,3 @@ export default {
   sendDailyReminders,
   sendHourlyReminders
 };
-

@@ -9,7 +9,6 @@ export class UserService {
   async createUser(data: CreateUserInput): Promise<User> {
     const { email, password, role, first_name, last_name, phone, profile_picture_url } = data;
 
-    // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const result = await pool.query(userQueries.create, [
@@ -31,14 +30,10 @@ export class UserService {
   }
 
   async getAllUsers(limit = 50, offset = 0): Promise<{ users: User[]; total: number }> {
-    // Récupère les utilisateurs de base
     const result = await pool.query(userQueries.getAll, [limit, offset]);
 
-    // Compte total
     const countResult = await pool.query(userQueries.count);
 
-    // Note: Avec la table unifiée, tous les champs sont déjà dans users
-    // Plus besoin de jointure avec lawyers ou clients
     const users = result.rows as User[];
 
     return {

@@ -2,7 +2,6 @@ import { caseQueries } from '../database/queries/dossier.queries';
 import { CreateCaseDTO, UpdateCaseDTO, CaseFilters } from '../types/case.types';
 
 export const dossierService = {
-  // Créer un nouveau dossier
   async createCase(data: CreateCaseDTO) {
     try {
       const newCase = await caseQueries.createCase(data);
@@ -17,7 +16,6 @@ export const dossierService = {
     }
   },
 
-  // Récupérer tous les dossiers
   async getAllCases(filters: CaseFilters) {
     try {
       const cases = await caseQueries.getAllCases(filters);
@@ -32,7 +30,6 @@ export const dossierService = {
     }
   },
 
-  // Récupérer un dossier par ID
   async getCaseById(id: string) {
     try {
       const caseData = await caseQueries.getCaseById(id);
@@ -54,10 +51,8 @@ export const dossierService = {
     }
   },
 
-  // Mettre à jour un dossier
   async updateCase(id: string, data: UpdateCaseDTO) {
     try {
-      // Vérifier si le dossier existe
       const existingCase = await caseQueries.getCaseById(id);
       if (!existingCase) {
         return {
@@ -66,12 +61,10 @@ export const dossierService = {
         };
       }
       
-      // AJUSTEMENT STATUT : Si on reçoit un nouveau statut, on l'applique
       if (data.status === 'closed' && !data.closing_date) {
         data.closing_date = new Date();
       }
       
-      // Appel de la query de mise à jour (inclut le statut)
       const updatedCase = await caseQueries.updateCase(id, data);
       
       return {
@@ -85,7 +78,6 @@ export const dossierService = {
     }
   },
 
-  // Supprimer un dossier
   async deleteCase(id: string) {
     try {
       const deleted = await caseQueries.deleteCase(id);
@@ -107,7 +99,6 @@ export const dossierService = {
     }
   },
 
-  // Assigner un avocat à un dossier
   async assignLawyer(caseId: string, lawyerId: string) {
     try {
       const updatedCase = await caseQueries.assignLawyer(caseId, lawyerId);
@@ -130,7 +121,6 @@ export const dossierService = {
     }
   },
 
-  // Récupérer les statistiques des dossiers
   async getCaseStats(lawyerId?: string) {
     try {
       const stats = await caseQueries.getCaseStats(lawyerId);
@@ -144,7 +134,6 @@ export const dossierService = {
     }
   },
 
-  // Récupérer les dossiers d'un avocat
   async getCasesByLawyer(lawyerId: string, filters: CaseFilters = {}) {
     try {
       const cases = await caseQueries.getCasesByLawyer(lawyerId, filters);
@@ -159,7 +148,6 @@ export const dossierService = {
     }
   },
 
-  // Récupérer les dossiers d'un client
   async getCasesByClient(clientId: string, filters: CaseFilters = {}) {
     try {
       const cases = await caseQueries.getCasesByClient(clientId, filters);
@@ -174,7 +162,6 @@ export const dossierService = {
     }
   },
 
-  // Récupérer les prochaines audiences
   async getUpcomingHearings(lawyerId?: string) {
     try {
       const hearings = await caseQueries.getUpcomingHearings(lawyerId);
@@ -189,7 +176,6 @@ export const dossierService = {
     }
   },
 
-  // Fermer un dossier
   async closeCase(id: string) {
     try {
       const closedCase = await caseQueries.closeCase(id);
@@ -212,7 +198,6 @@ export const dossierService = {
     }
   },
 
-  // Archiver un dossier
   async archiveCase(id: string) {
     try {
       const archivedCase = await caseQueries.archiveCase(id);

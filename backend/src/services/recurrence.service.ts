@@ -3,7 +3,7 @@ import { pool } from '../config/database.config';
 interface RecurrencePattern {
   frequency: 'daily' | 'weekly' | 'monthly';
   interval: number;
-  daysOfWeek?: number[]; // 0 = dimanche, 1 = lundi, etc.
+  daysOfWeek?: number[];
   endDate?: string;
   occurrences?: number;
 }
@@ -31,7 +31,6 @@ export const createRecurringAppointments = async (data: CreateRecurringAppointme
   try {
     await client.query('BEGIN');
 
-    // Créer l'entrée de série
     const seriesResult = await client.query(`
       INSERT INTO appointment_series (frequency, interval, days_of_week, end_date, occurrences, created_by)
       VALUES ($1, $2, $3, $4, $5, $6)
@@ -47,7 +46,6 @@ export const createRecurringAppointments = async (data: CreateRecurringAppointme
 
     const seriesId = seriesResult.rows[0].id;
 
-    // Générer les dates des rendez-vous
     const dates = generateRecurringDates(
       new Date(data.start_time),
       data.recurrence
@@ -55,7 +53,6 @@ export const createRecurringAppointments = async (data: CreateRecurringAppointme
 
     const createdAppointments = [];
 
-    // Créer chaque rendez-vous de la série
     for (const date of dates) {
       const endTime = new Date(date.getTime() + data.duration * 60000);
 
@@ -111,7 +108,6 @@ function generateRecurringDates(startDate: Date, pattern: RecurrencePattern): Da
   for (let i = 0; i < maxOccurrences; i++) {
     if (endDate && currentDate > endDate) break;
 
-    // Ajouter la date si elle correspond aux critères
     if (pattern.frequency === 'weekly' && pattern.daysOfWeek) {
       if (pattern.daysOfWeek.includes(currentDate.getDay())) {
         dates.push(new Date(currentDate));
@@ -120,7 +116,6 @@ function generateRecurringDates(startDate: Date, pattern: RecurrencePattern): Da
       dates.push(new Date(currentDate));
     }
 
-    // Calculer la prochaine date
     switch (pattern.frequency) {
       case 'daily':
         currentDate.setDate(currentDate.getDate() + pattern.interval);
@@ -146,7 +141,6 @@ export const updateRecurringSeries = async (seriesId: string, updates: any) => {
   try {
     await client.query('BEGIN');
 
-    // Mettre à jour tous les rendez-vous futurs de la série
     const result = await client.query(`
       UPDATE appointments
       SET 
@@ -193,7 +187,6 @@ export const deleteRecurringSeries = async (seriesId: string) => {
   try {
     await client.query('BEGIN');
 
-    // Annuler tous les rendez-vous futurs de la série
     const result = await client.query(`
       UPDATE appointments
       SET status = 'cancelled'

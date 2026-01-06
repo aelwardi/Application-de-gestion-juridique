@@ -52,7 +52,6 @@ export const createSuggestion = async (data: CreateSuggestionInput): Promise<App
   const result = await pool.query(query, values);
   const suggestion = result.rows[0];
 
-  // Envoyer notification et email à l'avocat
   try {
     const userQuery = await pool.query(
       'SELECT first_name, last_name, email FROM users WHERE id = $1',
@@ -68,7 +67,6 @@ export const createSuggestion = async (data: CreateSuggestionInput): Promise<App
       const lawyer = lawyerQuery.rows[0];
       const clientName = `${client.first_name} ${client.last_name}`;
 
-      // Créer notification
       await notificationService.createNotification({
         user_id: data.suggested_to_user_id,
         notification_type: 'appointment_suggestion',
@@ -82,13 +80,12 @@ export const createSuggestion = async (data: CreateSuggestionInput): Promise<App
         }
       });
 
-      // Envoyer email
       const html = `
         <p>Bonjour Me ${lawyer.first_name},</p>
         <p><strong>${clientName}</strong> vous propose un nouveau créneau pour un rendez-vous :</p>
         <div style="background-color: #eff6ff; padding: 20px; border-left: 4px solid #3b82f6; margin: 20px 0;">
-          <p><strong>📅 Date :</strong> ${new Date(data.suggested_start_time).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          <p><strong>🕐 Heure :</strong> ${new Date(data.suggested_start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${new Date(data.suggested_end_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+          <p><strong>Date :</strong> ${new Date(data.suggested_start_time).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          <p><strong> Heure :</strong> ${new Date(data.suggested_start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${new Date(data.suggested_end_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
           ${data.notes ? `<p><strong>📝 Note :</strong> ${data.notes}</p>` : ''}
         </div>
         <p>Connectez-vous à votre espace pour accepter, refuser ou proposer une alternative.</p>
@@ -141,7 +138,6 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
   try {
     await client.query('BEGIN');
 
-    // Marquer la suggestion comme acceptée
     const updateQuery = `
       UPDATE appointment_suggestions
       SET status = 'accepted', updated_at = CURRENT_TIMESTAMP
@@ -155,7 +151,6 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
       throw new Error('Suggestion not found or unauthorized');
     }
 
-    // Si la suggestion est liée à un RDV existant, mettre à jour le RDV
     let appointment = null;
     if (suggestion.appointment_id) {
       const updateAptQuery = `
@@ -171,7 +166,6 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
       ]);
       appointment = aptResult.rows[0];
     } else {
-      // Créer un nouveau rendez-vous
       const createAptQuery = `
         INSERT INTO appointments (
           lawyer_id, client_id, title, start_time, end_time, 
@@ -188,7 +182,6 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
       ]);
       appointment = aptResult.rows[0];
 
-      // Lier la suggestion au nouveau RDV
       await client.query(
         'UPDATE appointment_suggestions SET appointment_id = $1 WHERE id = $2',
         [appointment.id, suggestionId]
@@ -197,12 +190,11 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
 
     await client.query('COMMIT');
 
-    // Notifier le client
     try {
       await notificationService.createNotification({
         user_id: suggestion.suggested_by_user_id,
         notification_type: 'suggestion_accepted',
-        title: 'Créneau accepté ✅',
+        title: 'Créneau accepté',
         message: `Votre proposition de rendez-vous a été acceptée pour le ${new Date(suggestion.suggested_start_time).toLocaleString('fr-FR')}`,
         data: {
           suggestion_id: suggestionId,
@@ -240,7 +232,6 @@ export const rejectSuggestion = async (suggestionId: string, lawyerId: string, r
     throw new Error('Suggestion not found or unauthorized');
   }
 
-  // Notifier le client
   try {
     await notificationService.createNotification({
       user_id: suggestion.suggested_by_user_id,
@@ -273,13 +264,11 @@ export const counterSuggestion = async (
   try {
     await client.query('BEGIN');
 
-    // Marquer l'originale comme "countered"
     await client.query(
       'UPDATE appointment_suggestions SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
       ['countered', originalSuggestionId]
     );
 
-    // Récupérer l'originale pour avoir les infos
     const originalQuery = await client.query(
       'SELECT * FROM appointment_suggestions WHERE id = $1',
       [originalSuggestionId]
@@ -290,7 +279,6 @@ export const counterSuggestion = async (
       throw new Error('Original suggestion not found');
     }
 
-    // Créer une nouvelle suggestion (inverse)
     const createQuery = `
       INSERT INTO appointment_suggestions (
         id, appointment_id, suggested_by_user_id, suggested_to_user_id,
@@ -302,8 +290,8 @@ export const counterSuggestion = async (
     const values = [
       uuidv4(),
       original.appointment_id,
-      lawyerId, // L'avocat propose maintenant
-      original.suggested_by_user_id, // Au client
+      lawyerId,
+      original.suggested_by_user_id,
       newStartTime,
       newEndTime,
       notes || 'Contre-proposition de l\'avocat'
@@ -314,7 +302,6 @@ export const counterSuggestion = async (
 
     await client.query('COMMIT');
 
-    // Notifier le client
     try {
       await notificationService.createNotification({
         user_id: original.suggested_by_user_id,
@@ -338,4 +325,3 @@ export const counterSuggestion = async (
     client.release();
   }
 };
-

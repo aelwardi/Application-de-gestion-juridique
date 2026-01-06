@@ -19,9 +19,7 @@ const notificationService = new NotificationService();
 export const createAppointment = async (data: CreateAppointmentDTO): Promise<Appointment> => {
   const appointment = await appointmentQueries.createAppointment(data);
 
-  // Envoyer les notifications au client
   try {
-    // Récupérer les informations du client et de l'avocat
     const clientQuery = await pool.query(
       'SELECT first_name, last_name, email FROM users WHERE id = $1',
       [data.client_id]
@@ -37,7 +35,6 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
       const lawyer = lawyerQuery.rows[0];
       const lawyerName = `${lawyer.first_name} ${lawyer.last_name}`;
 
-      // Créer une notification dans l'application
       await notificationService.createNotification({
         user_id: data.client_id,
         notification_type: 'appointment_created',
@@ -58,7 +55,6 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
         }
       });
 
-      // Envoyer un email de notification
       await sendAppointmentEmail({
         email: client.email,
         firstName: client.first_name,
@@ -67,11 +63,10 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
         appointmentType: data.appointment_type
       });
 
-      console.log(`✅ Notifications envoyées au client ${client.email}`);
+      console.log(`Notifications envoyées au client ${client.email}`);
     }
   } catch (error) {
-    console.error('❌ Erreur lors de l\'envoi des notifications:', error);
-    // Ne pas bloquer la création du rendez-vous si les notifications échouent
+    console.error('Erreur lors de l\'envoi des notifications:', error);
   }
 
   return appointment;
@@ -177,13 +172,11 @@ export const cancelAppointment = async (id: string, suggestion?: { start_time?: 
     throw new Error('Appointment not found');
   }
 
-  // Récupérer les détails complets pour notifier l'avocat
   try {
     const appointment = await getAppointmentById(id);
     if (appointment && appointment.lawyer_id) {
       const clientName = `${appointment.client_first_name || ''} ${appointment.client_last_name || ''}`.trim();
 
-      // Créer notification pour l'avocat
       await notificationService.createNotification({
         user_id: appointment.lawyer_id,
         notification_type: 'appointment_cancelled',
@@ -196,7 +189,6 @@ export const cancelAppointment = async (id: string, suggestion?: { start_time?: 
         }
       });
 
-      // Préparer l'HTML de suggestion en toute sécurité
       let suggestionHtml = '';
       if (suggestion && suggestion.start_time && suggestion.end_time) {
         try {
@@ -206,7 +198,6 @@ export const cancelAppointment = async (id: string, suggestion?: { start_time?: 
         }
       }
 
-      // Envoyer un email à l'avocat
       const html = `
         <p>Bonjour ${appointment.lawyer_first_name || ''},</p>
         <p>Le client <strong>${clientName}</strong> a annulé le rendez-vous prévu le <strong>${new Date(appointment.start_time).toLocaleString('fr-FR')}</strong>.</p>
@@ -225,7 +216,6 @@ export const cancelAppointment = async (id: string, suggestion?: { start_time?: 
     }
   } catch (notifError) {
     console.error('Erreur lors de la notification après annulation:', notifError);
-    // Ne pas bloquer la réponse principale
   }
 
   return updated;
@@ -240,13 +230,11 @@ export const confirmAppointment = async (id: string, suggestion?: { start_time?:
     throw new Error('Appointment not found');
   }
 
-  // Récupérer les détails complets pour notifier l'avocat
   try {
     const appointment = await getAppointmentById(id);
     if (appointment && appointment.lawyer_id) {
       const clientName = `${appointment.client_first_name || ''} ${appointment.client_last_name || ''}`.trim();
 
-      // Créer notification pour l'avocat
       await notificationService.createNotification({
         user_id: appointment.lawyer_id,
         notification_type: 'appointment_confirmed',
@@ -259,7 +247,6 @@ export const confirmAppointment = async (id: string, suggestion?: { start_time?:
         }
       });
 
-      // Préparer l'HTML de suggestion en toute sécurité
       let suggestionHtml = '';
       if (suggestion && suggestion.start_time && suggestion.end_time) {
         try {
@@ -269,7 +256,6 @@ export const confirmAppointment = async (id: string, suggestion?: { start_time?:
         }
       }
 
-      // Envoyer un email à l'avocat
       const html = `
         <p>Bonjour ${appointment.lawyer_first_name || ''},</p>
         <p>Le client <strong>${clientName}</strong> a confirmé le rendez-vous prévu le <strong>${new Date(appointment.start_time).toLocaleString('fr-FR')}</strong>.</p>

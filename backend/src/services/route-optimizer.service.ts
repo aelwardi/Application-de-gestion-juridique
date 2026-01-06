@@ -67,7 +67,6 @@ export const optimizeRoute = async (
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Récupérer les rendez-vous du jour avec géolocalisation
     const query = `
       SELECT 
         id,
@@ -103,7 +102,6 @@ export const optimizeRoute = async (
       };
     }
 
-    // Convertir en format Location
     const locations: Location[] = result.rows.map((row: any) => ({
       id: row.id,
       lat: parseFloat(row.location_latitude),
@@ -113,10 +111,8 @@ export const optimizeRoute = async (
       time: row.start_time
     }));
 
-    // Optimiser l'itinéraire
     const optimizedRoute = optimizeRouteGreedy(locations);
 
-    // Calculer distance totale et temps estimé
     let totalDistance = 0;
     for (let i = 0; i < optimizedRoute.length - 1; i++) {
       const dist = calculateDistance(
@@ -128,7 +124,6 @@ export const optimizeRoute = async (
       totalDistance += dist;
     }
 
-    // Estimer le temps (50 km/h en moyenne en ville)
     const estimatedTime = Math.ceil((totalDistance / 50) * 60); // en minutes
 
     return {
@@ -213,4 +208,3 @@ export default {
   optimizeRoute,
   generateGoogleMapsUrl
 };
-

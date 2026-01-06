@@ -3,12 +3,10 @@ import { dossierService } from '../services/dossier.service';
 import { CreateCaseDTO, UpdateCaseDTO, CaseFilters } from '../types/case.types';
 
 export const dossierController = {
-  // Créer un nouveau dossier
   createCase: async (req: Request, res: Response) => {
     try {
       const caseData: CreateCaseDTO = req.body;
       
-      // Validation basique
       if (!caseData.title || !caseData.case_type || !caseData.client_id) {
         return res.status(400).json({
           success: false,
@@ -19,7 +17,6 @@ export const dossierController = {
       const result = await dossierService.createCase(caseData);
       return res.status(201).json(result);
     } catch (error: any) {
-      console.error('Erreur dans createCase:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la création du dossier'
@@ -27,7 +24,6 @@ export const dossierController = {
     }
   },
 
-  // Récupérer tous les dossiers avec filtres
   getAllCases: async (req: Request, res: Response) => {
     try {
       const filters: CaseFilters = {
@@ -44,7 +40,6 @@ export const dossierController = {
       const result = await dossierService.getAllCases(filters);
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans getAllCases:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la récupération des dossiers'
@@ -52,7 +47,6 @@ export const dossierController = {
     }
   },
 
-  // Récupérer un dossier par ID
   getCaseById: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -65,7 +59,6 @@ export const dossierController = {
       
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans getCaseById:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la récupération du dossier'
@@ -73,7 +66,6 @@ export const dossierController = {
     }
   },
 
-  // Mettre à jour un dossier
   updateCase: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -87,7 +79,6 @@ export const dossierController = {
       
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans updateCase:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la mise à jour du dossier'
@@ -95,7 +86,6 @@ export const dossierController = {
     }
   },
 
-  // Supprimer un dossier
   deleteCase: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -108,7 +98,6 @@ export const dossierController = {
       
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans deleteCase:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la suppression du dossier'
@@ -116,7 +105,6 @@ export const dossierController = {
     }
   },
 
-  // Assigner un avocat à un dossier
   assignLawyer: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -137,7 +125,6 @@ export const dossierController = {
       
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans assignLawyer:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de l\'assignation de l\'avocat'
@@ -145,7 +132,6 @@ export const dossierController = {
     }
   },
 
-  // Récupérer les statistiques des dossiers
   getCaseStats: async (req: Request, res: Response) => {
     try {
       const lawyerId = req.query.lawyer_id as string;
@@ -153,7 +139,6 @@ export const dossierController = {
       const result = await dossierService.getCaseStats(lawyerId);
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans getCaseStats:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la récupération des statistiques'
@@ -161,7 +146,6 @@ export const dossierController = {
     }
   },
 
-  // Récupérer les dossiers d'un avocat
   getCasesByLawyer: async (req: Request, res: Response) => {
     try {
       const { lawyerId } = req.params;
@@ -178,7 +162,6 @@ export const dossierController = {
       const result = await dossierService.getCasesByLawyer(lawyerId, filters);
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans getCasesByLawyer:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la récupération des dossiers'
@@ -186,7 +169,6 @@ export const dossierController = {
     }
   },
 
-  // Récupérer les dossiers d'un client
   getCasesByClient: async (req: Request, res: Response) => {
     try {
       const { clientId } = req.params;
@@ -203,7 +185,6 @@ export const dossierController = {
       const result = await dossierService.getCasesByClient(clientId, filters);
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans getCasesByClient:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la récupération des dossiers'
@@ -211,7 +192,6 @@ export const dossierController = {
     }
   },
 
-  // Récupérer les prochaines audiences
   getUpcomingHearings: async (req: Request, res: Response) => {
     try {
       const lawyerId = req.query.lawyer_id as string;
@@ -219,7 +199,6 @@ export const dossierController = {
       const result = await dossierService.getUpcomingHearings(lawyerId);
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans getUpcomingHearings:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la récupération des audiences'
@@ -227,7 +206,6 @@ export const dossierController = {
     }
   },
 
-  // Fermer un dossier
   closeCase: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -240,7 +218,6 @@ export const dossierController = {
       
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans closeCase:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de la fermeture du dossier'
@@ -248,7 +225,6 @@ export const dossierController = {
     }
   },
 
-  // Archiver un dossier
   archiveCase: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -261,7 +237,6 @@ export const dossierController = {
       
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error('Erreur dans archiveCase:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erreur lors de l\'archivage du dossier'

@@ -1,13 +1,4 @@
-// =====================================================
-// Requêtes pour la table USERS UNIFIÉE
-// Supporte: admin, avocat, client, collaborateur
-// =====================================================
-
 export const userQueries = {
-  // ============================================
-  // REQUÊTES GÉNÉRALES (tous les utilisateurs)
-  // ============================================
-
   create: `
     INSERT INTO users 
     (email, password_hash, role, first_name, last_name, phone, profile_picture_url)
@@ -78,10 +69,6 @@ export const userQueries = {
     WHERE id = $2
     RETURNING *
   `,
-
-  // ============================================
-  // REQUÊTES SPÉCIFIQUES AUX AVOCATS
-  // ============================================
 
   createLawyer: `
     INSERT INTO users (
@@ -228,10 +215,6 @@ export const userQueries = {
     WHERE role = 'avocat'
   `,
 
-  // ============================================
-  // REQUÊTES SPÉCIFIQUES AUX CLIENTS
-  // ============================================
-
   createClient: `
     INSERT INTO users (
       email, password_hash, role, first_name, last_name, phone,
@@ -329,10 +312,6 @@ export const userQueries = {
     GROUP BY u.id, u.total_cases, u.active_cases
   `,
 
-  // ============================================
-  // STATISTIQUES GLOBALES
-  // ============================================
-
   getUserStats: `
     SELECT 
       COUNT(*) as total_users,
@@ -352,5 +331,3 @@ export const userQueries = {
     LIMIT $1
   `,
 };
-
-

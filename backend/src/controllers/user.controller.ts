@@ -11,7 +11,6 @@ export class UserController {
       const user = await userService.createUser(data);
       res.status(201).json({ status: "SUCCESS", message: "Utilisateur créé", data: user });
     } catch (error: any) {
-      console.error(error);
       res.status(500).json({ status: "ERROR", message: "Erreur création utilisateur", error: error.message });
     }
   }
@@ -23,7 +22,6 @@ export class UserController {
       if (!user) return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
       res.json({ success: true, data: user });
     } catch (error: any) {
-      console.error(error);
       res.status(500).json({ success: false, message: "Erreur récupération utilisateur", error: error.message });
     }
   }
@@ -35,7 +33,6 @@ export class UserController {
       const { users, total } = await userService.getAllUsers(limit, offset);
       res.json({ success: true, data: users, pagination: { total, limit, offset, count: users.length } });
     } catch (error: any) {
-      console.error(error);
       res.status(500).json({ success: false, message: "Erreur récupération utilisateurs", error: error.message });
     }
   }
@@ -45,18 +42,13 @@ export class UserController {
       const { id } = req.params;
       const data: UpdateUserInput = req.body;
 
-      console.log('🔄 Mise à jour utilisateur:', { id, data });
-
       const updatedUser = await userService.updateUser(id, data);
       if (!updatedUser) {
         return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
       }
 
-      console.log('✅ Utilisateur mis à jour:', updatedUser);
-
       res.json({ success: true, message: "Utilisateur mis à jour", data: updatedUser });
     } catch (error: any) {
-      console.error('❌ Erreur mise à jour utilisateur:', error);
       res.status(500).json({ success: false, message: "Erreur mise à jour utilisateur", error: error.message });
     }
   }

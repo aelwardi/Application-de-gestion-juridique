@@ -19,12 +19,12 @@ export const autoCompleteAppointments = async (): Promise<number> => {
     const count = result.rowCount || 0;
 
     if (count > 0) {
-      console.log(`✅ ${count} rendez-vous marqués automatiquement comme terminés`);
+      console.log(`${count} rendez-vous marqués automatiquement comme terminés`);
     }
 
     return count;
   } catch (error) {
-    console.error('❌ Erreur lors du marquage automatique des rendez-vous:', error);
+    console.error('Erreur lors du marquage automatique des rendez-vous:', error);
     throw error;
   }
 };
@@ -55,7 +55,7 @@ export const getAppointmentsToComplete = async (): Promise<any[]> => {
     const result = await pool.query(query);
     return result.rows;
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des rendez-vous à compléter:', error);
+    console.error('Erreur lors de la récupération des rendez-vous à compléter:', error);
     throw error;
   }
 };

@@ -22,4 +22,3 @@ router.put('/me', authenticate, authController.updateMe);
 router.patch('/me/password', authenticate, authController.changePassword);
 
 export default router;
-

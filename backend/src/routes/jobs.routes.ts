@@ -4,7 +4,6 @@ import { autoCompleteAppointments, getAppointmentsToComplete } from '../jobs/aut
 
 const router = Router();
 
-// Protéger toutes les routes avec l'authentification
 router.use(authenticate);
 
 /**
@@ -16,7 +15,6 @@ router.post('/auto-complete-appointments', async (req: Request, res: Response) =
   try {
     const user = (req as any).user;
 
-    // Vérifier que l'utilisateur est admin
     if (user.role !== 'admin') {
       res.status(403).json({
         success: false,
@@ -25,7 +23,6 @@ router.post('/auto-complete-appointments', async (req: Request, res: Response) =
       return;
     }
 
-    console.log('🔄 Exécution manuelle du job de complétion automatique...');
     const count = await autoCompleteAppointments();
 
     res.status(200).json({
@@ -34,7 +31,6 @@ router.post('/auto-complete-appointments', async (req: Request, res: Response) =
       data: { count }
     });
   } catch (error) {
-    console.error('Error in auto-complete job:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'exécution du job',
@@ -51,7 +47,6 @@ router.get('/appointments-to-complete', async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
 
-    // Vérifier que l'utilisateur est admin
     if (user.role !== 'admin') {
       res.status(403).json({
         success: false,

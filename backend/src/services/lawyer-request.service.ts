@@ -55,7 +55,6 @@ export interface LawyerRequestStats {
  * Créer une nouvelle demande vers un avocat
  */
 export const createLawyerRequest = async (data: CreateLawyerRequestInput): Promise<LawyerRequest> => {
-  // lawyer_id est maintenant directement un users.id
   const query = `
     INSERT INTO client_requests (
       id, client_id, lawyer_id, request_type, title, description,
@@ -82,7 +81,6 @@ export const createLawyerRequest = async (data: CreateLawyerRequestInput): Promi
   const result = await pool.query(query, values);
   const createdRequest = result.rows[0];
 
-  // Récupérer les informations du client et de l'avocat pour l'email
   try {
     const userQuery = `
       SELECT 
@@ -102,7 +100,6 @@ export const createLawyerRequest = async (data: CreateLawyerRequestInput): Promi
       const userData = userResult.rows[0];
       const clientFullName = `${userData.client_first_name} ${userData.client_last_name}`;
 
-      // Envoyer l'email à l'avocat de manière asynchrone (ne pas bloquer la création)
       sendNewRequestToLawyer(
         userData.lawyer_email,
         userData.lawyer_first_name,
@@ -117,7 +114,6 @@ export const createLawyerRequest = async (data: CreateLawyerRequestInput): Promi
     }
   } catch (emailError) {
     console.error('Erreur lors de la récupération des données pour l\'email:', emailError);
-    // On ne fait pas échouer la création de la demande si l'email échoue
   }
 
   return createdRequest;
@@ -247,7 +243,6 @@ export const acceptLawyerRequest = async (requestId: string): Promise<LawyerRequ
 
   const acceptedRequest = result.rows[0];
 
-  // Récupérer les informations du client et de l'avocat pour l'email
   try {
     const userQuery = `
       SELECT 
@@ -268,7 +263,6 @@ export const acceptLawyerRequest = async (requestId: string): Promise<LawyerRequ
       const userData = userResult.rows[0];
       const lawyerFullName = `${userData.lawyer_first_name} ${userData.lawyer_last_name}`;
 
-      // Envoyer l'email au client de manière asynchrone
       sendRequestAcceptedToClient(
         userData.client_email,
         userData.client_first_name,
@@ -305,7 +299,6 @@ export const rejectLawyerRequest = async (requestId: string): Promise<LawyerRequ
 
   const rejectedRequest = result.rows[0];
 
-  // Récupérer les informations du client et de l'avocat pour l'email
   try {
     const userQuery = `
       SELECT 
@@ -326,7 +319,6 @@ export const rejectLawyerRequest = async (requestId: string): Promise<LawyerRequ
       const userData = userResult.rows[0];
       const lawyerFullName = `${userData.lawyer_first_name} ${userData.lawyer_last_name}`;
 
-      // Envoyer l'email au client de manière asynchrone
       sendRequestRejectedToClient(
         userData.client_email,
         userData.client_first_name,
@@ -338,7 +330,6 @@ export const rejectLawyerRequest = async (requestId: string): Promise<LawyerRequ
     }
   } catch (emailError) {
     console.error('Erreur lors de la récupération des données pour l\'email:', emailError);
-    // On ne fait pas échouer le refus si l'email échoue
   }
 
   return rejectedRequest;

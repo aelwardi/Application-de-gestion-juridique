@@ -1,7 +1,3 @@
-// =====================================================
-// SERVICE CLIENTS - Utilise table users unifiée
-// =====================================================
-
 import { pool } from '../config/database.config';
 import { clientQueries } from '../database/queries/client.queries';
 import { Client, ClientSearchFilters, ClientStats } from '../types/client.types';
@@ -101,7 +97,6 @@ export const getClientsByLawyer = async (
     offset,
   ]);
 
-  // Note: Avec table unifiée, pas besoin de jointure clients
   const countQuery = `
     SELECT COUNT(DISTINCT u.id)
     FROM users u
@@ -176,4 +171,3 @@ export const updateClientCaseStats = async (
 ): Promise<void> => {
   await pool.query(clientQueries.updateStats, [totalCases, activeCases, clientId]);
 };
-

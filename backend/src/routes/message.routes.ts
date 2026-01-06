@@ -86,7 +86,6 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
     const { id: conversationId } = req.params;
     const userId = (req as any).user?.userId;
 
-    // Vérifier que l'utilisateur fait partie de la conversation
     const convCheck = await pool.query(
       'SELECT * FROM conversations WHERE id = $1 AND $2 = ANY(participants)',
       [conversationId, userId]
@@ -119,7 +118,6 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
 
     const result = await pool.query(query, [conversationId]);
 
-    // Marquer les messages comme lus
     await pool.query(
       `UPDATE messages 
        SET is_read = true, read_at = CURRENT_TIMESTAMP 
@@ -158,7 +156,6 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
       });
     }
 
-    // Vérifier si une conversation existe déjà entre ces deux utilisateurs
     const existingConv = await pool.query(
       `SELECT * FROM conversations 
        WHERE conversation_type = 'direct' 
@@ -176,7 +173,6 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
       });
     }
 
-    // Créer une nouvelle conversation
     const query = `
       INSERT INTO conversations (
         case_id,
@@ -224,7 +220,6 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
       });
     }
 
-    // Vérifier que l'utilisateur fait partie de la conversation
     const convCheck = await pool.query(
       'SELECT * FROM conversations WHERE id = $1 AND $2 = ANY(participants)',
       [conversationId, userId]
@@ -237,7 +232,6 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
       });
     }
 
-    // Insérer le message
     const messageQuery = `
       INSERT INTO messages (
         conversation_id,
@@ -257,13 +251,11 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
       attachments ? JSON.stringify(attachments) : null
     ]);
 
-    // Mettre à jour last_message_at de la conversation
     await pool.query(
       'UPDATE conversations SET last_message_at = CURRENT_TIMESTAMP WHERE id = $1',
       [conversationId]
     );
 
-    // Créer des notifications pour les autres participants
     const conversation = convCheck.rows[0];
     const otherParticipants = conversation.participants.filter((id: string) => id !== userId);
 
@@ -331,4 +323,3 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
 });
 
 export default router;
-

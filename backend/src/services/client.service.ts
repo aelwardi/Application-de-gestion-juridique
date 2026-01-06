@@ -1,7 +1,3 @@
-// =====================================================
-// SERVICE CLIENTS - Utilise table users unifiée
-// =====================================================
-
 import { pool } from '../config/database.config';
 import { clientQueries } from '../database/queries/client.queries';
 import { Client, ClientSearchFilters, ClientStats } from '../types/client.types';
@@ -175,4 +171,3 @@ export const updateClientCaseStats = async (
 ): Promise<void> => {
   await pool.query(clientQueries.updateStats, [totalCases, activeCases, clientId]);
 };
-

@@ -49,10 +49,8 @@ app.get("/db-test", async (_req: Request, res: Response) => {
     res.status(500).json({ status: "ERROR", message: "Database connection failed", error });
   }
 });
-// Cette ligne est cruciale : elle lie l'URL /api/storage au dossier physique sur ton PC
 
 const uploadPath = path.resolve(process.cwd(), 'uploads/documents');
-console.log('📂 Dossier documents servi depuis :', uploadPath); // Pour vérifier au démarrage
 app.use('/api/storage', express.static(uploadPath));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -83,7 +81,6 @@ const startServer = async () => {
       console.log(`Health check: http://${HOST}:${PORT}/health`);
       console.log(`DB Test: http://${HOST}:${PORT}/db-test`);
 
-      // Démarrer les jobs de rappels automatiques
       startReminderJobs();
     });
   } catch (error) {
@@ -93,13 +90,11 @@ const startServer = async () => {
 };
 
 process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, shutting down...");
   await pool.end();
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
-  console.log("SIGINT received, shutting down...");
   await pool.end();
   process.exit(0);
 });

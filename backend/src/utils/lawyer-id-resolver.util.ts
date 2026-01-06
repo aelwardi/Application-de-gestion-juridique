@@ -1,10 +1,5 @@
 import { pool } from '../config/database.config';
 
-/**
- * Utilitaire pour résoudre les IDs d'avocats
- * Convertit automatiquement un ID de la table lawyers en user_id
- * ou valide qu'un user_id correspond bien à un avocat
- */
 
 export interface LawyerIdResolution {
   userId: string;
@@ -12,20 +7,11 @@ export interface LawyerIdResolution {
   isValid: boolean;
 }
 
-/**
- * Résout un lawyer_id pour obtenir le user_id correspondant
- * Accepte soit un user_id (d'un utilisateur avocat) soit un lawyer.id
- *
- * @param lawyerId - L'ID à résoudre (peut être users.id ou lawyers.id)
- * @returns Le user_id résolu et des infos sur la résolution
- * @throws Error si l'ID n'est pas valide ou ne correspond pas à un avocat
- */
 export async function resolveLawyerId(lawyerId: string): Promise<string> {
   if (!lawyerId) {
     throw new Error('Lawyer ID is required');
   }
 
-  // Étape 1 : Vérifier si c'est un user_id valide (utilisateur avec role='lawyer')
   const userCheck = await pool.query(
     'SELECT id, role FROM users WHERE id = $1',
     [lawyerId]
@@ -34,16 +20,14 @@ export async function resolveLawyerId(lawyerId: string): Promise<string> {
   if (userCheck.rows.length > 0) {
     const user = userCheck.rows[0];
 
-    // Vérifier que c'est bien un avocat
     if (user.role === 'lawyer' || user.role === 'avocat') {
       console.log(`[LAWYER_ID_RESOLVER] Valid user_id for lawyer: ${lawyerId}`);
-      return lawyerId; // C'est déjà un user_id valide
+      return lawyerId;
     } else {
       throw new Error(`User ${lawyerId} is not a lawyer (role: ${user.role})`);
     }
   }
 
-  // Étape 2 : Si pas trouvé comme user, chercher dans la table lawyers
   const lawyerCheck = await pool.query(
     'SELECT user_id FROM lawyers WHERE id = $1',
     [lawyerId]
@@ -55,7 +39,6 @@ export async function resolveLawyerId(lawyerId: string): Promise<string> {
     return resolvedUserId;
   }
 
-  // Étape 3 : Si toujours pas trouvé, erreur
   throw new Error(`Lawyer with ID ${lawyerId} not found in users or lawyers table`);
 }
 
@@ -120,4 +103,3 @@ export async function isLawyer(userId: string): Promise<boolean> {
   const role = result.rows[0].role;
   return role === 'lawyer' || role === 'avocat';
 }
-

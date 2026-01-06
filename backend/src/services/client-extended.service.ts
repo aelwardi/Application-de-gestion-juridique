@@ -36,7 +36,6 @@ export class ClientExtendedService {
       preferred_date,
     } = data;
 
-    // lawyer_id est maintenant directement un users.id (plus besoin de résolution)
     const result = await pool.query(clientRequestQueries.create, [
       client_id,
       lawyer_id,

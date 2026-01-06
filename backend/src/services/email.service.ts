@@ -34,4 +34,3 @@ export const sendAppointmentEmail = async (data: AppointmentEmailInput): Promise
     data.appointmentType
   );
 };
-

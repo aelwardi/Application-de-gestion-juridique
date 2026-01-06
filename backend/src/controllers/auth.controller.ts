@@ -14,14 +14,8 @@ import { ZodError } from 'zod';
  */
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('Backend: Register request received');
-    console.log('Backend: Request body:', req.body);
-
     const validatedData = registerSchema.parse(req.body);
-    console.log('Backend: Validation passed');
-
     const result = await authService.register(validatedData);
-    console.log('Backend: User registered successfully');
 
     res.status(201).json({
       success: true,
@@ -30,7 +24,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     if (error instanceof ZodError) {
-      console.error('Backend: Validation error:', error.errors);
       res.status(400).json({
         success: false,
         message: 'Validation error',
@@ -41,7 +34,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     if (error instanceof Error) {
       if (error.message.includes('already exists')) {
-        console.error('Backend: User already exists');
         res.status(409).json({
           success: false,
           message: error.message,
@@ -50,7 +42,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    console.error('Backend: Register error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to register user',
@@ -105,7 +96,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to login',
@@ -152,7 +142,6 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    console.error('Refresh token error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to refresh token',
@@ -173,7 +162,6 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       message: 'Logout successful',
     });
   } catch (error) {
-    console.error('Logout error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to logout',
@@ -243,7 +231,6 @@ export const updateMe = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    console.error('Update profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update profile',
@@ -293,7 +280,6 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
       }
     }
 
-    console.error('Change password error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to change password',
@@ -365,11 +351,9 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       }
     }
 
-    console.error('Reset password error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to reset password',
     });
   }
 };
-

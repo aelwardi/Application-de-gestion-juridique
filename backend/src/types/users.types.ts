@@ -1,8 +1,3 @@
-// =====================================================
-// Types pour la table USERS UNIFIÉE
-// Supporte: admin, avocat, client, collaborateur
-// =====================================================
-
 export type UserRole = "admin" | "avocat" | "client" | "collaborateur";
 
 export interface BaseUser {
@@ -21,7 +16,6 @@ export interface BaseUser {
   updated_at: Date;
 }
 
-// Champs spécifiques aux avocats
 export interface LawyerFields {
   bar_number: string;
   specialties?: string[];
@@ -43,7 +37,6 @@ export interface LawyerFields {
   active_cases?: number;
 }
 
-// Champs spécifiques aux clients
 export interface ClientFields {
   address?: string | null;
   city?: string | null;
@@ -55,9 +48,7 @@ export interface ClientFields {
   active_cases?: number;
 }
 
-// Type complet incluant tous les champs possibles
 export interface User extends BaseUser {
-  // Champs avocats (optionnels)
   bar_number?: string | null;
   specialties?: string[];
   experience_years?: number | null;
@@ -74,26 +65,20 @@ export interface User extends BaseUser {
   verified_at?: Date | null;
   rating?: number;
   total_reviews?: number;
-
-  // Champs clients (optionnels)
   address?: string | null;
   city?: string | null;
   postal_code?: string | null;
   emergency_contact_name?: string | null;
   emergency_contact_phone?: string | null;
   notes?: string | null;
-
-  // Statistiques (commun avocats/clients)
   total_cases?: number;
   active_cases?: number;
 }
 
-// Type pour les avocats (BaseUser + LawyerFields obligatoires)
 export interface Lawyer extends BaseUser, LawyerFields {
   role: 'avocat';
 }
 
-// Type pour les clients (BaseUser + ClientFields)
 export interface Client extends BaseUser {
   role: 'client';
   address?: string | null;
@@ -106,10 +91,9 @@ export interface Client extends BaseUser {
   active_cases?: number;
 }
 
-// Input pour créer un utilisateur de base
 export interface CreateUserInput {
   email: string;
-  password: string; // Sera hashé
+  password: string;
   role: UserRole;
   first_name: string;
   last_name: string;
@@ -117,7 +101,6 @@ export interface CreateUserInput {
   profile_picture_url?: string;
 }
 
-// Input pour créer un avocat
 export interface CreateLawyerInput extends CreateUserInput {
   role: 'avocat';
   bar_number: string;
@@ -133,7 +116,6 @@ export interface CreateLawyerInput extends CreateUserInput {
   languages?: string[];
 }
 
-// Input pour créer un client
 export interface CreateClientInput extends CreateUserInput {
   role: 'client';
   address?: string;
@@ -143,7 +125,6 @@ export interface CreateClientInput extends CreateUserInput {
   emergency_contact_phone?: string;
 }
 
-// Input pour mise à jour générale
 export interface UpdateUserInput {
   email?: string;
   first_name?: string;
@@ -154,7 +135,6 @@ export interface UpdateUserInput {
   is_verified?: boolean;
 }
 
-// Input pour mise à jour avocat
 export interface UpdateLawyerInput extends UpdateUserInput {
   bar_number?: string;
   specialties?: string[];
@@ -170,7 +150,6 @@ export interface UpdateLawyerInput extends UpdateUserInput {
   availability_status?: 'available' | 'busy' | 'unavailable';
 }
 
-// Input pour mise à jour client
 export interface UpdateClientInput extends UpdateUserInput {
   address?: string;
   city?: string;
@@ -180,7 +159,6 @@ export interface UpdateClientInput extends UpdateUserInput {
   notes?: string;
 }
 
-// Response publique (sans password_hash)
 export interface UserResponse {
   id: string;
   email: string;
@@ -194,22 +172,17 @@ export interface UserResponse {
   last_login_at?: Date | null;
   created_at: Date;
   updated_at: Date;
-
-  // Champs avocats (si applicable)
   bar_number?: string | null;
   specialties?: string[];
   office_city?: string | null;
   rating?: number;
   total_reviews?: number;
   verified_by_admin?: boolean;
-
-  // Champs clients (si applicable)
   city?: string | null;
   total_cases?: number;
   active_cases?: number;
 }
 
-// Filtres de recherche
 export interface UserSearchFilters {
   role?: UserRole;
   email?: string;

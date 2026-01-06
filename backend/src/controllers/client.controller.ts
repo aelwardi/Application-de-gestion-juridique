@@ -5,15 +5,11 @@ import { UpdateClientInput, ClientSearchFilters } from "../types/client.types";
 export class ClientController {
   async createClient(req: Request, res: Response): Promise<void> {
     try {
-      // Note: createClient n'existe plus, utiliser la création via auth.service
-      // Cette méthode devrait être supprimée ou redirigée vers auth/register
-
       res.status(501).json({
         success: false,
         message: "Utilisez /auth/register pour créer un client",
       });
     } catch (error: any) {
-      console.error("Error creating client:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la création du client",
@@ -40,7 +36,6 @@ export class ClientController {
         data: client,
       });
     } catch (error: any) {
-      console.error("Error getting client:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération du client",
@@ -67,7 +62,6 @@ export class ClientController {
         data: client,
       });
     } catch (error: any) {
-      console.error("Error getting client by user ID:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération du client",
@@ -94,7 +88,6 @@ export class ClientController {
         },
       });
     } catch (error: any) {
-      console.error("Error getting all clients:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des clients",
@@ -129,7 +122,6 @@ export class ClientController {
         },
       });
     } catch (error: any) {
-      console.error("Error searching clients:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la recherche des clients",
@@ -162,7 +154,6 @@ export class ClientController {
         },
       });
     } catch (error: any) {
-      console.error("Error getting clients by lawyer:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des clients de l'avocat",
@@ -192,7 +183,6 @@ export class ClientController {
         data: client,
       });
     } catch (error: any) {
-      console.error("Error updating client:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la mise à jour du client",
@@ -220,7 +210,6 @@ export class ClientController {
         message: "Client supprimé avec succès",
       });
     } catch (error: any) {
-      console.error("Error deleting client:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la suppression du client",
@@ -247,7 +236,6 @@ export class ClientController {
         data: stats,
       });
     } catch (error: any) {
-      console.error("Error getting client stats:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des statistiques",
@@ -256,8 +244,3 @@ export class ClientController {
     }
   }
 }
-
-// TODO: Implémenter ces méthodes dans client.service.ts puis les décommenter ici:
-// - getClientCases(userId)
-// - getClientAppointments(userId)
-// - getClientDocuments(userId)

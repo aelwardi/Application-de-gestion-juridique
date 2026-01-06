@@ -1,7 +1,3 @@
--- Migration: Update cases table
--- Description: Ajoute les colonnes manquantes et renomme category en case_type
-
--- Renommer category en case_type si la colonne existe
 DO $$
 BEGIN
   IF EXISTS (
@@ -12,7 +8,6 @@ BEGIN
   END IF;
 END $$;
 
--- Ajouter case_type si elle n'existe pas encore
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -23,7 +18,6 @@ BEGIN
   END IF;
 END $$;
 
--- Ajouter opening_date si elle n'existe pas
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -34,7 +28,6 @@ BEGIN
   END IF;
 END $$;
 
--- Ajouter closing_date si elle n'existe pas
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -45,7 +38,6 @@ BEGIN
   END IF;
 END $$;
 
--- Ajouter court_name si elle n'existe pas
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -56,7 +48,6 @@ BEGIN
   END IF;
 END $$;
 
--- Ajouter judge_name si elle n'existe pas
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -67,10 +58,8 @@ BEGIN
   END IF;
 END $$;
 
--- Mettre à jour les contraintes de statut pour correspondre à la nouvelle API
 DO $$
 BEGIN
-  -- Supprimer l'ancienne contrainte si elle existe
   IF EXISTS (
     SELECT 1 FROM pg_constraint 
     WHERE conname = 'cases_status_check'
@@ -78,21 +67,17 @@ BEGIN
     ALTER TABLE cases DROP CONSTRAINT cases_status_check;
   END IF;
   
-  -- Ajouter la nouvelle contrainte
-  ALTER TABLE cases ADD CONSTRAINT cases_status_check 
+  ALTER TABLE cases ADD CONSTRAINT cases_status_check
     CHECK (status IN ('pending', 'in_progress', 'on_hold', 'closed', 'archived'));
 END $$;
 
--- Mettre à jour case_number pour être plus long (accepter le nouveau format)
 DO $$
 BEGIN
   ALTER TABLE cases ALTER COLUMN case_number TYPE VARCHAR(100);
 END $$;
 
--- Créer l'index sur case_type s'il n'existe pas
 CREATE INDEX IF NOT EXISTS idx_cases_case_type ON cases(case_type);
 
--- Mettre à jour les commentaires
 COMMENT ON COLUMN cases.case_type IS 'Type de dossier (civil, pénal, commercial, familial, etc.)';
 COMMENT ON COLUMN cases.opening_date IS 'Date d''ouverture du dossier';
 COMMENT ON COLUMN cases.closing_date IS 'Date de clôture du dossier';

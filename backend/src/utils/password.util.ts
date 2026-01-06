@@ -42,4 +42,3 @@ export const validatePasswordStrength = (password: string): { valid: boolean; me
 
   return { valid: true };
 };
-

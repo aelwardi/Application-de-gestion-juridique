@@ -6,7 +6,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 
-// Configuration de Multer pour l'upload de documents
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const uploadPath = path.join(process.cwd(), 'uploads', 'appointments');
@@ -44,7 +43,6 @@ export const uploadMiddleware = upload.single('file');
 export const createAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const data: CreateAppointmentDTO = req.body;
-    // Le statut par défaut est 'scheduled' - le client devra confirmer
     const appointment = await appointmentService.createAppointment(data);
 
     res.status(201).json({
@@ -53,7 +51,6 @@ export const createAppointment = async (req: Request, res: Response): Promise<vo
       data: appointment
     });
   } catch (error) {
-    console.error('Error creating appointment:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create appointment',
@@ -89,7 +86,6 @@ export const getAllAppointments = async (req: Request, res: Response): Promise<v
       total: result.total
     });
   } catch (error) {
-    console.error('Error fetching appointments:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch appointments',
@@ -112,7 +108,6 @@ export const getAppointmentById = async (req: Request, res: Response): Promise<v
       data: appointment
     });
   } catch (error) {
-    console.error('Error fetching appointment:', error);
     if (error instanceof Error && error.message === 'Appointment not found') {
       res.status(404).json({
         success: false,
@@ -145,7 +140,6 @@ export const updateAppointment = async (req: Request, res: Response): Promise<vo
       data: appointment
     });
   } catch (error) {
-    console.error('Error updating appointment:', error);
     if (error instanceof Error && error.message === 'Appointment not found') {
       res.status(404).json({
         success: false,
@@ -176,7 +170,6 @@ export const deleteAppointment = async (req: Request, res: Response): Promise<vo
       message: 'Appointment deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting appointment:', error);
     if (error instanceof Error && error.message === 'Appointment not found') {
       res.status(404).json({
         success: false,
@@ -216,7 +209,6 @@ export const getAppointmentsByLawyer = async (req: Request, res: Response): Prom
       data: appointments
     });
   } catch (error) {
-    console.error('Error fetching lawyer appointments:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch appointments',
@@ -248,7 +240,6 @@ export const getAppointmentsByClient = async (req: Request, res: Response): Prom
       data: appointments
     });
   } catch (error) {
-    console.error('Error fetching client appointments:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch appointments',
@@ -271,7 +262,6 @@ export const getAppointmentsByCase = async (req: Request, res: Response): Promis
       data: appointments
     });
   } catch (error) {
-    console.error('Error fetching case appointments:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch appointments',
@@ -295,7 +285,6 @@ export const getUpcomingAppointments = async (req: Request, res: Response): Prom
       data: appointments
     });
   } catch (error) {
-    console.error('Error fetching upcoming appointments:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch upcoming appointments',
@@ -319,7 +308,6 @@ export const getTodayAppointments = async (req: Request, res: Response): Promise
       data: appointments
     });
   } catch (error) {
-    console.error('Error fetching today appointments:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch today appointments',
@@ -343,7 +331,6 @@ export const getAppointmentStats = async (req: Request, res: Response): Promise<
       data: stats
     });
   } catch (error) {
-    console.error('Error fetching appointment stats:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch appointment stats',
@@ -401,7 +388,6 @@ export const confirmAppointment = async (req: Request, res: Response): Promise<v
       data: appointment
     });
   } catch (error) {
-    console.error('Error confirming appointment:', error);
     if (error instanceof Error && error.message === 'Appointment not found') {
       res.status(404).json({
         success: false,
@@ -433,7 +419,6 @@ export const completeAppointment = async (req: Request, res: Response): Promise<
       data: appointment
     });
   } catch (error) {
-    console.error('Error completing appointment:', error);
     if (error instanceof Error && error.message === 'Appointment not found') {
       res.status(404).json({
         success: false,
@@ -490,7 +475,6 @@ export const uploadAppointmentDocument = async (req: Request, res: Response): Pr
       data: document
     });
   } catch (error) {
-    console.error('Error uploading document:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'upload du document',
@@ -519,7 +503,6 @@ export const getAppointmentDocuments = async (req: Request, res: Response): Prom
       data: documents
     });
   } catch (error) {
-    console.error('Error fetching documents:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des documents',
@@ -544,7 +527,6 @@ export const deleteAppointmentDocument = async (req: Request, res: Response): Pr
       message: 'Document supprimé avec succès'
     });
   } catch (error) {
-    console.error('Error deleting document:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression du document',
@@ -574,7 +556,6 @@ export const updateAppointmentNotes = async (req: Request, res: Response): Promi
       data: notes
     });
   } catch (error) {
-    console.error('Error updating notes:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour des notes',
@@ -603,7 +584,6 @@ export const getAppointmentNotes = async (req: Request, res: Response): Promise<
       data: notes
     });
   } catch (error) {
-    console.error('Error fetching notes:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des notes',

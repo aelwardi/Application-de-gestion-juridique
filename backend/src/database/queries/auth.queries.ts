@@ -62,8 +62,6 @@ export interface UserResponse {
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-
-  // Champs avocats (tous les champs de la table users pour role='avocat')
   barNumber?: string | null;
   specialties?: string[];
   experienceYears?: number;
@@ -80,16 +78,12 @@ export interface UserResponse {
   verifiedAt?: Date | null;
   rating?: number;
   totalReviews?: number;
-
-  // Champs clients (tous les champs de la table users pour role='client')
   address?: string | null;
   city?: string | null;
   postalCode?: string | null;
   emergencyContactName?: string | null;
   emergencyContactPhone?: string | null;
   notes?: string | null;
-
-  // Statistiques (commun aux avocats et clients)
   totalCases?: number;
   activeCases?: number;
 }
@@ -137,7 +131,6 @@ export const createUser = async (
   let values: any[] = [];
 
   if (role === 'avocat' && lawyerData) {
-    // Créer un avocat avec toutes ses données
     query = `
       INSERT INTO users (
         email, password_hash, role, first_name, last_name, phone,
@@ -168,7 +161,6 @@ export const createUser = async (
       lawyerData.languages || []
     ];
   } else if (role === 'client' && clientData) {
-    // Créer un client avec ses données
     query = `
       INSERT INTO users (
         email, password_hash, role, first_name, last_name, phone,
@@ -191,7 +183,6 @@ export const createUser = async (
       clientData.emergencyContactPhone || null
     ];
   } else {
-    // Créer un utilisateur basique (admin, collaborateur, ou sans données supplémentaires)
     query = `
       INSERT INTO users (email, password_hash, role, first_name, last_name, phone)
       VALUES ($1, $2, $3, $4, $5, $6)
@@ -320,7 +311,6 @@ export const userToResponse = (user: User): UserResponse => {
     updatedAt: user.updated_at,
   };
 
-  // Ajouter TOUS les champs avocats si applicable
   if (user.role === 'avocat') {
     response.barNumber = user.bar_number || null;
     response.specialties = user.specialties || [];
@@ -342,7 +332,6 @@ export const userToResponse = (user: User): UserResponse => {
     response.activeCases = user.active_cases || 0;
   }
 
-  // Ajouter TOUS les champs clients si applicable
   if (user.role === 'client') {
     response.address = user.address || null;
     response.city = user.city || null;

@@ -21,7 +21,6 @@ export const getAllTickets = async (
 export const getUserTickets = async (userId: string) => {
   const tickets = await supportQueries.getUserTickets(userId);
 
-  // Pour chaque ticket, récupérer les messages
   const ticketsWithMessages = await Promise.all(
     tickets.map(async (ticket) => {
       const messages = await supportQueries.getTicketMessages(ticket.id, false);

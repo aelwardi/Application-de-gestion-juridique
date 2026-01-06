@@ -24,7 +24,6 @@ export class ClientExtendedController {
         data: request,
       });
     } catch (error: any) {
-      console.error("Error creating client request:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la création de la demande",
@@ -56,7 +55,6 @@ export class ClientExtendedController {
         },
       });
     } catch (error: any) {
-      console.error("Error getting client requests:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des demandes",
@@ -88,7 +86,6 @@ export class ClientExtendedController {
         },
       });
     } catch (error: any) {
-      console.error("Error getting lawyer requests:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des demandes",
@@ -118,7 +115,6 @@ export class ClientExtendedController {
         data: request,
       });
     } catch (error: any) {
-      console.error("Error updating client request:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la mise à jour de la demande",
@@ -145,7 +141,6 @@ export class ClientExtendedController {
         message: "Demande supprimée avec succès",
       });
     } catch (error: any) {
-      console.error("Error deleting client request:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la suppression de la demande",
@@ -154,7 +149,6 @@ export class ClientExtendedController {
     }
   }
 
-  // ============ CLIENT NOTES ============
   async createClientNote(req: Request, res: Response): Promise<void> {
     try {
       const data: CreateClientNoteInput = req.body;
@@ -166,7 +160,6 @@ export class ClientExtendedController {
         data: note,
       });
     } catch (error: any) {
-      console.error("Error creating client note:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la création de la note",
@@ -198,7 +191,6 @@ export class ClientExtendedController {
         },
       });
     } catch (error: any) {
-      console.error("Error getting client notes:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des notes",
@@ -217,7 +209,6 @@ export class ClientExtendedController {
         data: reminders,
       });
     } catch (error: any) {
-      console.error("Error getting pending reminders:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des rappels",
@@ -247,7 +238,6 @@ export class ClientExtendedController {
         data: note,
       });
     } catch (error: any) {
-      console.error("Error updating client note:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la mise à jour de la note",
@@ -274,7 +264,6 @@ export class ClientExtendedController {
         message: "Note supprimée avec succès",
       });
     } catch (error: any) {
-      console.error("Error deleting client note:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la suppression de la note",
@@ -294,7 +283,6 @@ export class ClientExtendedController {
         data: payment,
       });
     } catch (error: any) {
-      console.error("Error creating client payment:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la création du paiement",
@@ -326,7 +314,6 @@ export class ClientExtendedController {
         },
       });
     } catch (error: any) {
-      console.error("Error getting client payments:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des paiements",
@@ -345,7 +332,6 @@ export class ClientExtendedController {
         data: summary,
       });
     } catch (error: any) {
-      console.error("Error getting financial summary:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération du résumé financier",
@@ -364,7 +350,6 @@ export class ClientExtendedController {
         data: payments,
       });
     } catch (error: any) {
-      console.error("Error getting overdue payments:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des paiements en retard",
@@ -394,7 +379,6 @@ export class ClientExtendedController {
         data: payment,
       });
     } catch (error: any) {
-      console.error("Error updating client payment:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la mise à jour du paiement",
@@ -421,7 +405,6 @@ export class ClientExtendedController {
         message: "Paiement supprimé avec succès",
       });
     } catch (error: any) {
-      console.error("Error deleting client payment:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la suppression du paiement",
@@ -441,7 +424,6 @@ export class ClientExtendedController {
         data: communication,
       });
     } catch (error: any) {
-      console.error("Error creating client communication:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de l'enregistrement de la communication",
@@ -474,7 +456,6 @@ export class ClientExtendedController {
         },
       });
     } catch (error: any) {
-      console.error("Error getting client communications:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des communications",
@@ -493,7 +474,6 @@ export class ClientExtendedController {
         data: summary,
       });
     } catch (error: any) {
-      console.error("Error getting activity summary:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération du résumé d'activité",
@@ -512,7 +492,6 @@ export class ClientExtendedController {
         data: followUps,
       });
     } catch (error: any) {
-      console.error("Error getting pending follow-ups:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la récupération des suivis",
@@ -539,7 +518,6 @@ export class ClientExtendedController {
         message: "Communication supprimée avec succès",
       });
     } catch (error: any) {
-      console.error("Error deleting client communication:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la suppression de la communication",

@@ -10,12 +10,9 @@ const userController = new UserController();
 router.post("/", validateCreateUser, (req, res) => userController.createUser(req, res));
 router.get("/", (req, res) => userController.getAllUsers(req, res));
 
-// Route de recherche d'utilisateurs - DOIT être AVANT /:id
 router.get("/search", authenticate, async (req, res) => {
   try {
     const { query, role, limit = 10 } = req.query;
-
-    console.log('🔍 Recherche utilisateurs:', { query, role, limit });
 
     if (!query) {
       return res.status(400).json({
@@ -63,15 +60,12 @@ router.get("/search", authenticate, async (req, res) => {
 
     const result = await pool.query(searchQuery, params);
 
-    console.log('✅ Résultats trouvés:', result.rows.length);
-    console.log('📋 Utilisateurs:', result.rows.map(u => `${u.first_name} ${u.last_name} (${u.role})`));
-
     res.json({
       success: true,
       data: result.rows
     });
   } catch (error: any) {
-    console.error('❌ Error searching users:', error);
+    console.error('Error searching users:', error);
     res.status(500).json({
       success: false,
       message: error.message

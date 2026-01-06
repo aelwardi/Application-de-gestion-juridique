@@ -77,7 +77,6 @@ export const getAppointmentDocuments = async (
 
     const params: any[] = [appointmentId];
 
-    // Si l'utilisateur n'est pas l'avocat, ne pas montrer les documents privés
     if (userRole !== 'avocat') {
       query += ` AND ad.is_private = false`;
     }
@@ -120,7 +119,6 @@ export const getAppointmentDocumentById = async (
 
     const document = result.rows[0];
 
-    // Vérifier les permissions
     if (document.is_private && userRole !== 'avocat' && document.lawyer_id !== userId) {
       throw new Error('Accès non autorisé à ce document');
     }
@@ -205,7 +203,6 @@ export const deleteAppointmentDocument = async (
   try {
     await client.query('BEGIN');
 
-    // Récupérer les infos du document
     const docResult = await client.query(
       'SELECT * FROM appointment_documents WHERE id = $1',
       [documentId]
@@ -217,7 +214,6 @@ export const deleteAppointmentDocument = async (
 
     const document = docResult.rows[0];
 
-    // Supprimer le fichier physique
     try {
       const filePath = path.join(process.cwd(), 'uploads', document.file_url.replace('/api/storage/', ''));
       await fs.unlink(filePath);
@@ -225,7 +221,6 @@ export const deleteAppointmentDocument = async (
       console.warn('Impossible de supprimer le fichier physique:', fileError);
     }
 
-    // Supprimer l'entrée en base
     await client.query('DELETE FROM appointment_documents WHERE id = $1', [documentId]);
 
     await client.query('COMMIT');
@@ -319,7 +314,6 @@ export const getAppointmentNotes = async (
 
     const notes = result.rows[0];
 
-    // Si l'utilisateur n'est pas l'avocat, ne pas retourner les notes privées
     if (userRole !== 'avocat' && notes.lawyer_id !== userId) {
       delete notes.private_notes;
     }

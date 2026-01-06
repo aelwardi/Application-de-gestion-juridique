@@ -17,11 +17,11 @@ const poolConfig: PoolConfig = {
 export const pool = new Pool(poolConfig);
 
 pool.on("connect", () => {
-  console.log("✅ Connexion PostgreSQL établie");
+  console.log("Connexion PostgreSQL établie");
 });
 
 pool.on("error", (err: Error) => {
-  console.error("❌ Erreur inattendue sur le client PostgreSQL", err);
+  console.error("Erreur inattendue sur le client PostgreSQL", err);
   process.exit(-1);
 });
 
@@ -29,16 +29,16 @@ export const testConnection = async (): Promise<boolean> => {
   try {
     const client = await pool.connect();
     const result = await client.query("SELECT NOW()");
-    console.log("✅ Test de connexion réussi:", result.rows[0]);
+    console.log("Test de connexion réussi:", result.rows[0]);
     client.release();
     return true;
   } catch (error) {
-    console.error("❌ Erreur de connexion à la base de données:", error);
+    console.error("Erreur de connexion à la base de données:", error);
     return false;
   }
 };
 
 export const closePool = async (): Promise<void> => {
   await pool.end();
-  console.log("🔒 Pool de connexions fermé");
+  console.log("Pool de connexions fermé");
 };

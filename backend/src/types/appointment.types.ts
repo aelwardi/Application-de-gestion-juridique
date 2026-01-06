@@ -28,8 +28,8 @@ export type AppointmentStatus =
 export interface Appointment {
   id: string;
   case_id: string | null;
-  lawyer_id: string;  // References lawyers.id
-  client_id: string;  // References clients.id
+  lawyer_id: string;
+  client_id: string;
   appointment_type: AppointmentType;
   title: string;
   description: string | null;
@@ -61,8 +61,8 @@ export interface AppointmentWithDetails extends Appointment {
 
 export interface CreateAppointmentDTO {
   case_id?: string;
-  lawyer_id: string;  // Must be a valid lawyers.id
-  client_id: string;  // Must be a valid clients.id
+  lawyer_id: string;
+  client_id: string;
   appointment_type: AppointmentType;
   title: string;
   description?: string;

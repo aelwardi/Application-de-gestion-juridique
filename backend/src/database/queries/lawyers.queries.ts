@@ -1,8 +1,3 @@
-// =====================================================
-// Requêtes pour les AVOCATS (role='avocat' dans users)
-// Note: La table lawyers n'existe plus, tout est dans users
-// =====================================================
-
 import { pool } from '../../config/database.config';
 import { QueryResult } from 'pg';
 
@@ -82,7 +77,6 @@ export const getAllLawyers = async (
     paramIndex++;
   }
 
-  // Count query
   const countQuery = `
     SELECT COUNT(*) 
     FROM users 
@@ -148,7 +142,6 @@ export const searchLawyersNearby = async (
   const params = [latitude, longitude, radiusKm, limit, (page - 1) * limit];
   const result = await pool.query(query, params);
 
-  // Count total
   const countQuery = `
     SELECT COUNT(*) FROM (
       SELECT id,

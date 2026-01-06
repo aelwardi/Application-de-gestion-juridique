@@ -97,4 +97,3 @@ export const deleteUserTokens = async (userId: string): Promise<void> => {
 
   await pool.query(query, [userId]);
 };
-

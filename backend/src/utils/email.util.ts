@@ -404,7 +404,7 @@ export const sendRequestAcceptedToClient = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>✅ Demande Acceptée !</h1>
+          <h1>Demande Acceptée !</h1>
         </div>
         <div class="content">
           <div class="icon">🎉</div>
@@ -489,7 +489,7 @@ export const sendRequestRejectedToClient = async (
           <p>Malheureusement, Me ${lawyerName} n'est pas en mesure de donner suite à votre demande pour le moment. Cela peut être dû à plusieurs raisons (disponibilité, spécialisation, etc.).</p>
 
           <div class="suggestion-box">
-            <p><strong>💡 Suggestions :</strong></p>
+            <p><strong>Suggestions :</strong></p>
             <ul>
               <li>Consultez notre liste d'avocats pour trouver d'autres spécialistes dans votre domaine</li>
               <li>Affinez votre demande avec plus de détails si nécessaire</li>

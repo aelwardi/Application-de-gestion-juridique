@@ -1,8 +1,3 @@
--- =====================================================
--- Note: La table 'lawyers' a été fusionnée dans la table 'users'
--- Les avocats sont maintenant identifiés par role='avocat' dans users
--- =====================================================
-
 CREATE TABLE IF NOT EXISTS lawyer_specialties (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) UNIQUE NOT NULL,
@@ -12,16 +7,16 @@ CREATE TABLE IF NOT EXISTS lawyer_specialties (
 );
 
 INSERT INTO lawyer_specialties (name, description, icon) VALUES
-('Droit pénal', 'Défense pénale, crimes, délits', '⚖️'),
-('Droit civil', 'Litiges civils, contrats, responsabilité', '📄'),
-('Droit de la famille', 'Divorce, garde enfants, succession', '👨‍👩‍👧'),
-('Droit du travail', 'Conflits employeur-employé, licenciements', '💼'),
-('Droit commercial', 'Entreprises, sociétés, commerce', '🏢'),
-('Droit immobilier', 'Transactions, litiges immobiliers', '🏠'),
-('Droit fiscal', 'Fiscalité, impôts, contrôles', '💰'),
-('Droit administratif', 'Relations avec administration', '🏛️'),
-('Droit international', 'Transactions internationales', '🌍'),
-('Propriété intellectuelle', 'Brevets, marques, droits auteur', '©️')
+('Droit pénal', 'Défense pénale, crimes, délits', ''),
+('Droit civil', 'Litiges civils, contrats, responsabilité', ''),
+('Droit de la famille', 'Divorce, garde enfants, succession', ''),
+('Droit du travail', 'Conflits employeur-employé, licenciements', ''),
+('Droit commercial', 'Entreprises, sociétés, commerce', ''),
+('Droit immobilier', 'Transactions, litiges immobiliers', ''),
+('Droit fiscal', 'Fiscalité, impôts, contrôles', ''),
+('Droit administratif', 'Relations avec administration', ''),
+('Droit international', 'Transactions internationales', ''),
+('Propriété intellectuelle', 'Brevets, marques, droits auteur', '')
 ON CONFLICT (name) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS cases (
@@ -100,12 +95,6 @@ CREATE TABLE IF NOT EXISTS reviews (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- INDEX pour optimiser les performances
--- =====================================================
-
--- Note: Les index pour les avocats sont maintenant dans 001_create_unified_users.sql
-
 CREATE INDEX IF NOT EXISTS idx_cases_client_id ON cases(client_id);
 CREATE INDEX IF NOT EXISTS idx_cases_lawyer_id ON cases(lawyer_id);
 CREATE INDEX IF NOT EXISTS idx_cases_status ON cases(status);
@@ -121,15 +110,10 @@ CREATE INDEX IF NOT EXISTS idx_appointments_reminder_24h ON appointments(start_t
 CREATE INDEX IF NOT EXISTS idx_appointments_reminder_2h ON appointments(start_time, reminder_2h_sent) WHERE status IN ('scheduled', 'confirmed');
 CREATE INDEX IF NOT EXISTS idx_reviews_lawyer_id ON reviews(lawyer_id);
 
--- =====================================================
--- COMMENTAIRES pour documentation
--- =====================================================
-
 COMMENT ON TABLE cases IS 'Legal cases managed by lawyers for clients';
 COMMENT ON TABLE appointments IS 'Scheduled appointments between lawyers and clients';
 COMMENT ON TABLE reviews IS 'Client reviews for lawyers';
 
--- Commentaires sur les colonnes de localisation
 COMMENT ON COLUMN appointments.location_type IS 'Type de lieu du rendez-vous (office, court, client_location, online, other)';
 COMMENT ON COLUMN appointments.location_address IS 'Adresse complète du rendez-vous';
 COMMENT ON COLUMN appointments.location_latitude IS 'Latitude pour géolocalisation';

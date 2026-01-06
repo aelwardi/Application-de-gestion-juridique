@@ -5,8 +5,6 @@ import { pool } from '../../config/database.config';
  * Plus besoin de tables lawyers/clients séparées
  */
 
-// ==================== AVOCATS ====================
-
 export const getAllLawyers = async (
   page: number = 1,
   limit: number = 10,
@@ -124,8 +122,6 @@ export const verifyLawyer = async (lawyerId: string) => {
   return result.rows[0] || null;
 };
 
-// ==================== CLIENTS ====================
-
 export const getAllClients = async (page: number = 1, limit: number = 10) => {
   const query = `
     SELECT 
@@ -202,8 +198,6 @@ export const updateClientProfile = async (clientId: string, data: any) => {
   return result.rows[0] || null;
 };
 
-// ==================== STATISTIQUES ====================
-
 export const getLawyerStats = async () => {
   const query = `
     SELECT 
@@ -261,8 +255,6 @@ export const getAppointmentStats = async () => {
   return result.rows[0];
 };
 
-// ==================== REVIEWS ====================
-
 export const getPendingReviews = async (page: number = 1, limit: number = 10) => {
   const query = `
     SELECT 
@@ -304,4 +296,3 @@ export const moderateReview = async (reviewId: string, approve: boolean, adminId
   const result = await pool.query(query, [approve, adminId, reviewId]);
   return result.rows[0] || null;
 };
-
