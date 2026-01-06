@@ -358,7 +358,8 @@ export const getAppointmentStats = async (req: Request, res: Response): Promise<
 export const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const appointment = await appointmentService.cancelAppointment(id);
+    const suggestion = req.body?.suggestion;
+    const appointment = await appointmentService.cancelAppointment(id, suggestion);
 
     res.status(200).json({
       success: true,
@@ -390,7 +391,8 @@ export const cancelAppointment = async (req: Request, res: Response): Promise<vo
 export const confirmAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const appointment = await appointmentService.confirmAppointment(id);
+    const suggestion = req.body?.suggestion;
+    const appointment = await appointmentService.confirmAppointment(id, suggestion);
 
     res.status(200).json({
       success: true,

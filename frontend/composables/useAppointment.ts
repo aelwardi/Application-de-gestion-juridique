@@ -283,11 +283,12 @@ export const useAppointment = () => {
   /**
    * Annuler un rendez-vous
    */
-  const cancelAppointment = async (id: string): Promise<AppointmentResponse> => {
+  const cancelAppointment = async (id: string, options?: { suggestion?: { start_time: string; end_time: string } }): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}/cancel`, {
         method: 'POST',
-        headers: getHeaders()
+        headers: getHeaders(),
+        body: options?.suggestion ? { suggestion: options.suggestion } : undefined
       });
       return response;
     } catch (error: any) {
@@ -299,11 +300,12 @@ export const useAppointment = () => {
   /**
    * Confirmer un rendez-vous
    */
-  const confirmAppointment = async (id: string): Promise<AppointmentResponse> => {
+  const confirmAppointment = async (id: string, options?: { suggestion?: { start_time: string; end_time: string } }): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}/confirm`, {
         method: 'POST',
-        headers: getHeaders()
+        headers: getHeaders(),
+        body: options?.suggestion ? { suggestion: options.suggestion } : undefined
       });
       return response;
     } catch (error: any) {

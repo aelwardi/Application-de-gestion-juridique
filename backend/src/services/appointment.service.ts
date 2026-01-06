@@ -8,7 +8,7 @@ import type {
   AppointmentStats
 } from '../types/appointment.types';
 import { NotificationService } from './notification.service';
-import { sendAppointmentEmail } from './email.service';
+import { sendAppointmentEmail, sendCustomEmail } from './email.service';
 import { pool } from '../config/database.config';
 
 const notificationService = new NotificationService();
@@ -171,23 +171,126 @@ export const markReminderSent = async (id: string): Promise<void> => {
 /**
  * Annuler un rendez-vous
  */
-export const cancelAppointment = async (id: string): Promise<Appointment> => {
-  const appointment = await appointmentQueries.cancelAppointment(id);
-  if (!appointment) {
+export const cancelAppointment = async (id: string, suggestion?: { start_time?: string; end_time?: string }): Promise<Appointment> => {
+  const updated = await appointmentQueries.cancelAppointment(id);
+  if (!updated) {
     throw new Error('Appointment not found');
   }
-  return appointment;
+
+  // Récupérer les détails complets pour notifier l'avocat
+  try {
+    const appointment = await getAppointmentById(id);
+    if (appointment && appointment.lawyer_id) {
+      const clientName = `${appointment.client_first_name || ''} ${appointment.client_last_name || ''}`.trim();
+
+      // Créer notification pour l'avocat
+      await notificationService.createNotification({
+        user_id: appointment.lawyer_id,
+        notification_type: 'appointment_cancelled',
+        title: 'Rendez-vous annulé',
+        message: `${clientName} a annulé le rendez-vous prévu le ${new Date(appointment.start_time).toLocaleString('fr-FR')}`,
+        data: {
+          appointment_id: id,
+          client_id: appointment.client_id,
+          suggestion: suggestion || null
+        }
+      });
+
+      // Préparer l'HTML de suggestion en toute sécurité
+      let suggestionHtml = '';
+      if (suggestion && suggestion.start_time && suggestion.end_time) {
+        try {
+          suggestionHtml = `<p>Le client propose un créneau alternatif : <strong>${new Date(suggestion.start_time).toLocaleString('fr-FR')}</strong> - <strong>${new Date(suggestion.end_time).toLocaleString('fr-FR')}</strong></p>`;
+        } catch (e) {
+          suggestionHtml = '';
+        }
+      }
+
+      // Envoyer un email à l'avocat
+      const html = `
+        <p>Bonjour ${appointment.lawyer_first_name || ''},</p>
+        <p>Le client <strong>${clientName}</strong> a annulé le rendez-vous prévu le <strong>${new Date(appointment.start_time).toLocaleString('fr-FR')}</strong>.</p>
+        ${suggestionHtml}
+        <p>Consultez votre espace pour gérer cette annulation.</p>
+        <p>Cordialement,<br/>L'équipe Gestion Juridique</p>
+      `;
+
+      if (appointment.lawyer_email) {
+        await sendCustomEmail({
+          to: appointment.lawyer_email,
+          subject: `Rendez-vous annulé par ${clientName}`,
+          html
+        });
+      }
+    }
+  } catch (notifError) {
+    console.error('Erreur lors de la notification après annulation:', notifError);
+    // Ne pas bloquer la réponse principale
+  }
+
+  return updated;
 };
 
 /**
  * Confirmer un rendez-vous
  */
-export const confirmAppointment = async (id: string): Promise<Appointment> => {
-  const appointment = await appointmentQueries.confirmAppointment(id);
-  if (!appointment) {
+export const confirmAppointment = async (id: string, suggestion?: { start_time?: string; end_time?: string }): Promise<Appointment> => {
+  const updated = await appointmentQueries.confirmAppointment(id);
+  if (!updated) {
     throw new Error('Appointment not found');
   }
-  return appointment;
+
+  // Récupérer les détails complets pour notifier l'avocat
+  try {
+    const appointment = await getAppointmentById(id);
+    if (appointment && appointment.lawyer_id) {
+      const clientName = `${appointment.client_first_name || ''} ${appointment.client_last_name || ''}`.trim();
+
+      // Créer notification pour l'avocat
+      await notificationService.createNotification({
+        user_id: appointment.lawyer_id,
+        notification_type: 'appointment_confirmed',
+        title: 'Rendez-vous confirmé',
+        message: `${clientName} a confirmé le rendez-vous prévu le ${new Date(appointment.start_time).toLocaleString('fr-FR')}`,
+        data: {
+          appointment_id: id,
+          client_id: appointment.client_id,
+          suggestion: suggestion || null
+        }
+      });
+
+      // Préparer l'HTML de suggestion en toute sécurité
+      let suggestionHtml = '';
+      if (suggestion && suggestion.start_time && suggestion.end_time) {
+        try {
+          suggestionHtml = `<p>Le client propose un autre créneau : <strong>${new Date(suggestion.start_time).toLocaleString('fr-FR')}</strong> - <strong>${new Date(suggestion.end_time).toLocaleString('fr-FR')}</strong></p>`;
+        } catch (e) {
+          suggestionHtml = '';
+        }
+      }
+
+      // Envoyer un email à l'avocat
+      const html = `
+        <p>Bonjour ${appointment.lawyer_first_name || ''},</p>
+        <p>Le client <strong>${clientName}</strong> a confirmé le rendez-vous prévu le <strong>${new Date(appointment.start_time).toLocaleString('fr-FR')}</strong>.</p>
+        ${suggestionHtml}
+        <p>Consultez votre espace pour plus de détails.</p>
+        <p>Cordialement,<br/>L'équipe Gestion Juridique</p>
+      `;
+
+      if (appointment.lawyer_email) {
+        await sendCustomEmail({
+          to: appointment.lawyer_email,
+          subject: `Rendez-vous confirmé par ${clientName}`,
+          html
+        });
+      }
+    }
+  } catch (notifError) {
+    console.error('Erreur lors de la notification après confirmation:', notifError);
+  }
+
+  return updated;
 };
 
 /**

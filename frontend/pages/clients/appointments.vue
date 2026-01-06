@@ -156,6 +156,17 @@
                   Annuler
                 </button>
                 <button
+                  v-if="apt.lawyer_id"
+                  @click="openSuggestionModal(apt.lawyer_id, apt.id)"
+                  class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold text-sm flex items-center gap-1"
+                  title="Proposer un autre créneau"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Proposer
+                </button>
+                <button
                   @click="viewAppointment(apt.id)"
                   class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold text-sm"
                 >
@@ -194,20 +205,30 @@
                   <p class="text-xs text-gray-500 font-medium">{{ formatTime(apt.start_time) }} - {{ formatTime(apt.end_time) }}</p>
                   <p class="text-xs text-gray-600 mt-1">👨‍⚖️ Me {{ apt.lawyer_first_name }} {{ apt.lawyer_last_name }}</p>
                 </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="text-xs px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-lg font-semibold shadow-sm">
-                  {{ getTypeLabel(apt.appointment_type) }}
-                </span>
-                <button
-                  @click="viewAppointment(apt.id)"
-                  class="p-2 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all"
-                >
-                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-lg font-semibold shadow-sm">
+                    {{ getTypeLabel(apt.appointment_type) }}
+                  </span>
+                  <button
+                    v-if="apt.lawyer_id"
+                    @click="openSuggestionModal(apt.lawyer_id, apt.id)"
+                    class="p-2 hover:bg-green-100 rounded-xl transition-all text-green-600"
+                    title="Proposer un autre créneau"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button
+                    @click="viewAppointment(apt.id)"
+                    class="p-2 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all"
+                  >
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
             </div>
           </div>
         </div>
@@ -217,13 +238,22 @@
           <ClientOnly>
             <AppointmentMap
               :appointments="appointments"
-              :selected-appointment-id="selectedAppointmentId || undefined"
+              :selected-appointment-id="mapSelectedAppointmentId || undefined"
               @select-appointment="handleSelectAppointment"
             />
           </ClientOnly>
         </div>
       </div>
     </div>
+
+    <!-- Modal de proposition de créneau -->
+    <SuggestionModal
+      :is-open="showSuggestionModal"
+      :lawyer-id="selectedLawyerId"
+      :appointment-id="selectedAppointmentId"
+      @close="showSuggestionModal = false"
+      @submitted="handleSuggestionSubmitted"
+    />
 
     <!-- Modal d'annulation -->
     <div v-if="showCancelModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
@@ -284,9 +314,10 @@
 
 <script setup lang="ts">
 import AppointmentMap from '~/components/appointments/AppointmentMap.vue'
+import SuggestionModal from '~/components/appointments/SuggestionModal.vue'
 
 definePageMeta({
-  middleware: 'client',
+  middleware: ['auth', 'client'],
   layout: 'authenticated'
 });
 
@@ -298,11 +329,16 @@ const appointments = ref<any[]>([]);
 const stats = ref<any>({});
 const loading = ref(true);
 const viewMode = ref<'list' | 'calendar' | 'map'>('list');
-const selectedAppointmentId = ref<string | null>(null);
+const mapSelectedAppointmentId = ref<string | null>(null);
 const showCancelModal = ref(false);
 const appointmentToCancel = ref<any>(null);
 const cancelReason = ref('');
 const cancelling = ref(false);
+
+// États pour la suggestion
+const showSuggestionModal = ref(false);
+const selectedLawyerId = ref('');
+const selectedAppointmentId = ref<string>('');
 
 onMounted(() => fetchInitialData());
 
@@ -315,11 +351,27 @@ const fetchInitialData = async () => {
       getAppointmentStats(undefined, userId)
     ]);
 
-    if (aptRes.success && aptRes.data) appointments.value = aptRes.data;
+    if (aptRes.success && aptRes.data) {
+      appointments.value = aptRes.data;
+    }
     if (statsRes.success) stats.value = statsRes.data;
   } finally {
     loading.value = false;
   }
+};
+
+const openSuggestionModal = (lawyerId: string, appointmentId?: string) => {
+  if (!lawyerId) {
+    alert('Aucun avocat associé trouvé');
+    return;
+  }
+  selectedLawyerId.value = lawyerId;
+  selectedAppointmentId.value = appointmentId || '';
+  showSuggestionModal.value = true;
+};
+
+const handleSuggestionSubmitted = () => {
+  fetchInitialData();
 };
 
 const sortedAppointments = computed(() => {
@@ -403,7 +455,7 @@ const getTypeLabel = (t: string) => {
 
 const viewAppointment = (id: string) => navigateTo(`/appointments/${id}`);
 const handleSelectAppointment = (id: string) => {
-  selectedAppointmentId.value = id;
+  mapSelectedAppointmentId.value = id;
 };
 </script>
 

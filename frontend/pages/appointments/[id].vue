@@ -121,8 +121,24 @@ const handleAction = async (action: 'confirm' | 'cancel' | 'complete') => {
 
   try {
     let res;
-    if (action === 'confirm') res = await confirmAppointment(appointment.value.id);
-    if (action === 'cancel') res = await cancelAppointment(appointment.value.id);
+    // Ask user if they want to propose an alternative slot
+    let suggestion: { start_time: string; end_time: string } | undefined;
+    if (action === 'cancel' || action === 'confirm') {
+      const wantsToSuggest = confirm('Voulez-vous proposer un autre créneau pour cet avocat ?');
+      if (wantsToSuggest) {
+        const startStr = prompt('Entrez la date/heure de début (YYYY-MM-DD HH:MM) — ex: 2026-01-20 14:30');
+        const endStr = prompt('Entrez la date/heure de fin (YYYY-MM-DD HH:MM) — ex: 2026-01-20 15:30');
+        if (startStr && endStr) {
+          // convert to ISO
+          const startIso = new Date(startStr.replace(' ', 'T')).toISOString();
+          const endIso = new Date(endStr.replace(' ', 'T')).toISOString();
+          suggestion = { start_time: startIso, end_time: endIso };
+        }
+      }
+    }
+
+    if (action === 'confirm') res = await confirmAppointment(appointment.value.id, { suggestion });
+    if (action === 'cancel') res = await cancelAppointment(appointment.value.id, { suggestion });
     if (action === 'complete') res = await completeAppointment(appointment.value.id);
     
     if (res?.success) await loadData();

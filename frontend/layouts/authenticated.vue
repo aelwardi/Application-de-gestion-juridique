@@ -24,6 +24,7 @@
                 <NuxtLink v-if="authStore.isClient" to="/cases" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Mes Dossiers</NuxtLink>
                 <NuxtLink v-if="authStore.isClient" to="/lawyers" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Avocats</NuxtLink>
                 <NuxtLink :to="authStore.isClient ? '/clients/appointments' : '/appointments'" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Rendez-vous</NuxtLink>
+                <NuxtLink v-if="authStore.isLawyer" to="/appointments/suggestions" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Propositions</NuxtLink>
                 <NuxtLink to="/messages" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Messages</NuxtLink>
                 <NuxtLink to="/documents" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Documents</NuxtLink>
               </div>

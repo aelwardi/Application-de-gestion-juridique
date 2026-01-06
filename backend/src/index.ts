@@ -20,6 +20,7 @@ import lawyerRoutes from './routes/lawyer.routes';
 import documentRoutes from "./routes/document.routes";
 import messageRoutes from "./routes/message.routes";
 import notificationRoutes from "./routes/notification.routes";
+import appointmentSuggestionRoutes from "./routes/appointment-suggestion.routes";
 import { startReminderJobs } from "./jobs/appointment-reminders.job";
 
 dotenv.config();
@@ -67,6 +68,7 @@ app.use('/api/lawyers', lawyerRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/appointment-suggestions", appointmentSuggestionRoutes);
 const startServer = async () => {
   try {
     await pool.query("SELECT 1");
