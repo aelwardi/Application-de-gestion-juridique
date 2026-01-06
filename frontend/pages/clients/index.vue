@@ -165,7 +165,7 @@
                   </button>
                   <button
                     class="text-indigo-600 hover:text-indigo-900"
-                    @click.stop="viewClientCases(client.userId)"
+                    @click.stop="viewClientCases(client.id)"
                   >
                     Dossiers
                   </button>
@@ -251,17 +251,17 @@
 </template>
 
 <script setup lang="ts">
-import type { ClientWithUser, ClientSearchFilters } from '~/types/client';
+import type { Client, ClientSearchFilters } from '~/types/client';
 
 definePageMeta({
   middleware: ['auth', 'lawyer'],
-  layout: 'authenticated',
+  layout: 'authenticated'
 });
 
-const { getClientsByLawyer, searchClients } = useClient();
 const authStore = useAuthStore();
+const { getAllClients, searchClients, getClientsByLawyer } = useClient();
 
-const clients = ref<ClientWithUser[]>([]);
+const clients = ref<Client[]>([]);
 const loading = ref(true);
 
 const filters = ref<ClientSearchFilters>({
@@ -356,6 +356,7 @@ const visiblePages = computed(() => {
 });
 
 const getInitials = (firstName: string, lastName: string) => {
+  if (!firstName || !lastName) return '??';
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 };
 
