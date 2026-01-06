@@ -26,8 +26,8 @@
             </div>
             
             <div class="flex gap-2">
-o              <button
-                v-if="appointment.status === 'scheduled'"
+              <button
+                v-if="appointment.status === 'scheduled' && authStore.user?.role === 'client'"
                 @click="handleAction('confirm')"
                 class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-semibold"
               >

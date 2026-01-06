@@ -44,13 +44,7 @@ export const uploadMiddleware = upload.single('file');
 export const createAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const data: CreateAppointmentDTO = req.body;
-    const user = (req as any).user;
-
-    // Si l'avocat crée le rendez-vous, il est automatiquement confirmé
-    if (!data.status && user.role === 'avocat' && user.userId === data.lawyer_id) {
-      data.status = 'confirmed';
-    }
-
+    // Le statut par défaut est 'scheduled' - le client devra confirmer
     const appointment = await appointmentService.createAppointment(data);
 
     res.status(201).json({

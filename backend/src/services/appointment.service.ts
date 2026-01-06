@@ -17,21 +17,7 @@ const notificationService = new NotificationService();
  * Créer un nouveau rendez-vous avec notifications
  */
 export const createAppointment = async (data: CreateAppointmentDTO): Promise<Appointment> => {
-  // Déterminer si le créateur est l'avocat du rendez-vous
-  // Si oui, le rendez-vous est automatiquement confirmé
-  let status = data.status || 'scheduled';
-
-  // Si le lawyer_id correspond au créateur (à vérifier via le token plus tard)
-  // Pour l'instant, on peut passer un flag ou vérifier si le créateur est avocat
-  // Si l'avocat crée le rdv, il est confirmé automatiquement
-  if (!data.status) {
-    // Par défaut scheduled, mais si l'avocat le crée directement, ce sera confirmed
-    // On peut améliorer ceci en passant le user_id du créateur
-    status = 'scheduled';
-  }
-
-  const appointmentData = { ...data, status };
-  const appointment = await appointmentQueries.createAppointment(appointmentData);
+  const appointment = await appointmentQueries.createAppointment(data);
 
   // Envoyer les notifications au client
   try {
