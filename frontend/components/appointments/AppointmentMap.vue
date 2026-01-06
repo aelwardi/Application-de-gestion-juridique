@@ -67,6 +67,30 @@
       </button>
 
       <button
+        @click="optimizeRoute"
+        :disabled="markers.length < 2"
+        class="w-full px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        title="Optimiser l'itinéraire"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+        Itinéraire
+      </button>
+
+      <button
+        v-if="routePolyline"
+        @click="clearRoute"
+        class="w-full px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+        title="Effacer l'itinéraire"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Effacer
+      </button>
+
+      <button
         @click="fitAllMarkers"
         class="w-full px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
         title="Voir tous les rendez-vous"
@@ -104,6 +128,11 @@
           <span>Autre</span>
         </div>
       </div>
+      <div class="mt-3 pt-3 border-t border-gray-200">
+        <p class="text-xs text-gray-500 italic">
+          ℹ️ Les RDV annulés et terminés ne sont pas affichés
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -134,6 +163,7 @@ const emit = defineEmits<{
 const loading = ref(true)
 let map: L.Map | null = null
 const markers: L.Marker[] = []
+let routePolyline: L.Polyline | null = null
 
 onMounted(() => {
   initMap()
@@ -207,9 +237,15 @@ const updateMarkers = () => {
   markers.forEach(marker => marker.remove())
   markers.length = 0
 
-  // Ajouter les nouveaux marqueurs
+  // Ajouter les nouveaux marqueurs (sauf annulés et terminés)
   let appointmentsWithCoords = 0
   props.appointments.forEach(appointment => {
+    // Filtrer les rendez-vous annulés et terminés
+    if (appointment.status === 'cancelled' || appointment.status === 'completed') {
+      console.log(`⏭️ Skipping ${appointment.status} appointment: "${appointment.title}"`)
+      return
+    }
+
     const hasCoords = !!(appointment.location_latitude && appointment.location_longitude)
 
     console.log(`📍 Appointment "${appointment.title}":`, {
@@ -219,7 +255,8 @@ const updateMarkers = () => {
       lng: appointment.location_longitude,
       hasCoords: hasCoords,
       type: appointment.appointment_type,
-      locationType: appointment.location_type
+      locationType: appointment.location_type,
+      status: appointment.status
     })
 
     if (hasCoords) {
@@ -507,6 +544,186 @@ const fitAllMarkers = () => {
 
   const group = L.featureGroup(markers)
   map.fitBounds(group.getBounds(), { padding: [50, 50] })
+}
+
+/**
+ * Calculer la distance entre deux points (formule de Haversine)
+ */
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371 // Rayon de la Terre en km
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+  return R * c
+}
+
+/**
+ * Optimiser l'itinéraire en utilisant l'algorithme du plus proche voisin
+ */
+const optimizeRoute = () => {
+  if (!map || markers.length < 2) {
+    alert('Il faut au moins 2 rendez-vous pour calculer un itinéraire')
+    return
+  }
+
+  // Effacer l'ancien itinéraire
+  if (routePolyline) {
+    map.removeLayer(routePolyline)
+    routePolyline = null
+  }
+
+  // Récupérer les coordonnées des rendez-vous actifs
+  const activeAppointments = props.appointments.filter(apt =>
+    apt.location_latitude &&
+    apt.location_longitude &&
+    apt.status !== 'cancelled' &&
+    apt.status !== 'completed'
+  )
+
+  if (activeAppointments.length < 2) return
+
+  // Trier par heure de début
+  const sortedByTime = [...activeAppointments].sort((a, b) =>
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+  )
+
+  // Algorithme du plus proche voisin
+  const visited = new Set<number>()
+  const route: number[] = []
+
+  // Commencer par le premier rendez-vous (le plus tôt)
+  route.push(0)
+  visited.add(0)
+
+  while (visited.size < sortedByTime.length) {
+    const currentIdx = route[route.length - 1]
+    if (currentIdx === undefined) break
+
+    const current = sortedByTime[currentIdx]
+    if (!current) break
+
+    let nearestIdx = -1
+    let nearestDist = Infinity
+
+    // Trouver le prochain rendez-vous le plus proche non visité
+    for (let i = 0; i < sortedByTime.length; i++) {
+      if (!visited.has(i)) {
+        const nextApt = sortedByTime[i]
+        if (!nextApt) continue
+
+        const dist = calculateDistance(
+          parseFloat(current.location_latitude),
+          parseFloat(current.location_longitude),
+          parseFloat(nextApt.location_latitude),
+          parseFloat(nextApt.location_longitude)
+        )
+
+        if (dist < nearestDist) {
+          nearestDist = dist
+          nearestIdx = i
+        }
+      }
+    }
+
+    if (nearestIdx !== -1) {
+      route.push(nearestIdx)
+      visited.add(nearestIdx)
+    } else {
+      break
+    }
+  }
+
+  // Créer les coordonnées de l'itinéraire optimisé
+  const routeCoords: [number, number][] = route
+    .map(idx => {
+      const apt = sortedByTime[idx]
+      if (!apt || !apt.location_latitude || !apt.location_longitude) return null
+      return [parseFloat(apt.location_latitude), parseFloat(apt.location_longitude)] as [number, number]
+    })
+    .filter((coord): coord is [number, number] => coord !== null)
+
+  // Calculer la distance totale
+  let totalDistance = 0
+  for (let i = 0; i < routeCoords.length - 1; i++) {
+    const current = routeCoords[i]
+    const next = routeCoords[i + 1]
+    if (current && next) {
+      totalDistance += calculateDistance(
+        current[0], current[1],
+        next[0], next[1]
+      )
+    }
+  }
+
+  // Dessiner l'itinéraire sur la carte
+  routePolyline = L.polyline(routeCoords, {
+    color: '#3b82f6',
+    weight: 4,
+    opacity: 0.7,
+    dashArray: '10, 10',
+    lineJoin: 'round'
+  }).addTo(map)
+
+  // Ajouter des numéros d'ordre sur les marqueurs
+  route.forEach((idx, order) => {
+    const apt = sortedByTime[idx]
+    if (!apt || !map) return
+
+    const lat = parseFloat(apt.location_latitude)
+    const lng = parseFloat(apt.location_longitude)
+
+    L.marker([lat, lng], {
+      icon: L.divIcon({
+        className: 'route-number',
+        html: `
+          <div style="
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-left: -12px;
+            margin-top: -35px;
+          ">${order + 1}</div>
+        `,
+        iconSize: [24, 24]
+      })
+    }).addTo(map)
+  })
+
+  // Afficher le résumé
+  alert(`🗺️ Itinéraire optimisé !\n\n📍 ${sortedByTime.length} rendez-vous\n📏 Distance totale : ${totalDistance.toFixed(2)} km\n\nLes numéros sur la carte indiquent l'ordre de visite optimal.`)
+
+  // Ajuster la vue pour voir tout l'itinéraire
+  fitAllMarkers()
+}
+
+/**
+ * Effacer l'itinéraire
+ */
+const clearRoute = () => {
+  if (routePolyline && map) {
+    map.removeLayer(routePolyline)
+    routePolyline = null
+
+    // Retirer les numéros d'ordre
+    map.eachLayer((layer: any) => {
+      if (layer.options?.icon?.options?.className === 'route-number') {
+        map?.removeLayer(layer)
+      }
+    })
+  }
 }
 
 // Event listener pour les clics depuis les popups
