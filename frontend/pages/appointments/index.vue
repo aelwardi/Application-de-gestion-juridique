@@ -13,8 +13,8 @@
             </div>
             <div class="flex gap-3">
               <button
-                @click="openRouteOptimizer"
-                class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
+                  @click="openRouteOptimizer"
+                  class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -22,8 +22,8 @@
                 Optimiser
               </button>
               <button
-                @click="openCreateModal"
-                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
+                  @click="openCreateModal"
+                  class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -39,8 +39,8 @@
       <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 mb-8 border border-white/20">
         <div class="flex gap-2">
           <button
-            @click="viewMode = 'list'"
-            :class="[
+              @click="viewMode = 'list'"
+              :class="[
               viewMode === 'list' 
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
@@ -53,8 +53,8 @@
             Liste
           </button>
           <button
-            @click="viewMode = 'calendar'"
-            :class="[
+              @click="viewMode = 'calendar'"
+              :class="[
               viewMode === 'calendar' 
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
@@ -67,8 +67,8 @@
             Calendrier
           </button>
           <button
-            @click="viewMode = 'map'"
-            :class="[
+              @click="viewMode = 'map'"
+              :class="[
               viewMode === 'map' 
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
@@ -131,10 +131,10 @@
             <p class="text-gray-500 text-lg">Aucun rendez-vous trouvé</p>
           </div>
           <div v-else class="divide-y divide-gray-100">
-            <div 
-              v-for="apt in appointments" 
-              :key="apt.id" 
-              class="p-6 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 flex items-center justify-between group"
+            <div
+                v-for="apt in appointments"
+                :key="apt.id"
+                class="p-6 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 flex items-center justify-between group"
             >
               <div class="flex gap-4">
                 <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex flex-col items-center justify-center border border-blue-200 shadow-sm group-hover:shadow-md transition-shadow">
@@ -163,21 +163,21 @@
                 </div>
               </div>
               <div class="flex items-center gap-4">
-                <button 
-                  v-if="!isLocked(apt.start_time)"
-                  @click="openEditModal(apt)" 
-                  class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  title="Modifier"
+                <button
+                    v-if="!isLocked(apt.start_time)"
+                    @click="openEditModal(apt)"
+                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Modifier"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
                 <span v-else class="text-[10px] text-gray-400 italic px-2 py-1 bg-gray-100 rounded">Verrouillé</span>
-                
-                <button 
-                  @click="viewAppointment(apt.id)" 
-                  class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold text-sm"
+
+                <button
+                    @click="viewAppointment(apt.id)"
+                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold text-sm"
                 >
                   Détails →
                 </button>
@@ -199,10 +199,10 @@
               <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 flex items-center gap-2">
                 Agenda chronologique
               </h3>
-              <div 
-                v-for="apt in sortedAppointments" 
-                :key="apt.id" 
-                class="bg-white/80 backdrop-blur-sm border-l-4 border-blue-500 rounded-r-xl shadow-lg p-4 flex items-center justify-between hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 group"
+              <div
+                  v-for="apt in sortedAppointments"
+                  :key="apt.id"
+                  class="bg-white/80 backdrop-blur-sm border-l-4 border-blue-500 rounded-r-xl shadow-lg p-4 flex items-center justify-between hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 group"
               >
                 <div class="flex items-center gap-4">
                   <div class="text-center min-w-[60px] bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2">
@@ -219,9 +219,9 @@
                   <span class="text-xs px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-lg font-semibold shadow-sm">
                     {{ getTypeLabel(apt.appointment_type) }}
                   </span>
-                  <button 
-                    @click="viewAppointment(apt.id)" 
-                    class="p-2 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all"
+                  <button
+                      @click="viewAppointment(apt.id)"
+                      class="p-2 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all"
                   >
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -250,9 +250,9 @@
         <div v-else-if="viewMode === 'map'" class="h-[600px] bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/20">
           <ClientOnly>
             <AppointmentMap
-              :appointments="appointments"
-              :selected-appointment-id="selectedAppointmentId || undefined"
-              @select-appointment="handleSelectAppointment"
+                :appointments="appointments"
+                :selected-appointment-id="selectedAppointmentId || undefined"
+                @select-appointment="handleSelectAppointment"
             />
           </ClientOnly>
         </div>
@@ -267,9 +267,9 @@
             <h2 class="text-2xl font-black">
               {{ isEditing ? 'Modifier le rendez-vous' : 'Programmer un rendez-vous' }}
             </h2>
-            <button 
-              @click="closeModal" 
-              class="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all"
+            <button
+                @click="closeModal"
+                class="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -277,25 +277,25 @@
             </button>
           </div>
         </div>
-        
+
         <form @submit.prevent="handleSubmit" class="p-6 space-y-5">
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-2">Motif du rendez-vous *</label>
-            <input 
-              v-model="form.title" 
-              type="text" 
-              required 
-              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              placeholder="Ex: Consultation dossier divorce"
+            <input
+                v-model="form.title"
+                type="text"
+                required
+                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                placeholder="Ex: Consultation dossier divorce"
             >
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-2">Type *</label>
-              <select 
-                v-model="form.appointment_type" 
-                required 
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              <select
+                  v-model="form.appointment_type"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               >
                 <option value="consultation">Consultation</option>
                 <option value="court">Tribunal</option>
@@ -306,11 +306,11 @@
             </div>
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-2">Type de lieu *</label>
-              <select 
-                v-model="form.location_type" 
-                required 
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
-                @change="onLocationTypeChange"
+              <select
+                  v-model="form.location_type"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  @change="onLocationTypeChange"
               >
                 <option value="office">Cabinet</option>
                 <option value="court">Tribunal</option>
@@ -324,11 +324,11 @@
           <!-- Adresse (si pas en ligne) -->
           <div v-if="form.location_type !== 'online'">
             <AddressAutocomplete
-              v-model="locationData"
-              label="Adresse du rendez-vous"
-              placeholder="Entrez une adresse..."
-              :required="form.location_type !== 'online'"
-              :show-current-location-button="form.location_type === 'client_location'"
+                v-model="locationData"
+                label="Adresse du rendez-vous"
+                placeholder="Entrez une adresse..."
+                :required="form.location_type !== 'online'"
+                :show-current-location-button="form.location_type === 'client_location'"
             />
           </div>
 
@@ -339,19 +339,19 @@
               <span class="text-xs font-normal text-gray-500">(Zoom, Google Meet, Teams, etc.)</span>
             </label>
             <input
-              v-model="form.meeting_url"
-              type="url"
-              placeholder="https://zoom.us/j/..."
-              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                v-model="form.meeting_url"
+                type="url"
+                placeholder="https://zoom.us/j/..."
+                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-2">Dossier lié</label>
-              <select 
-                v-model="form.case_id" 
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
-                @change="onCaseChange"
+              <select
+                  v-model="form.case_id"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  @change="onCaseChange"
               >
                 <option :value="null">Aucun dossier</option>
                 <option v-for="c in cases" :key="c.id" :value="c.id">{{ c.title }}</option>
@@ -362,10 +362,10 @@
                 Client *
                 <span class="text-xs font-normal text-gray-500">({{ clients.length }} disponible(s))</span>
               </label>
-              <select 
-                v-model="form.client_id" 
-                required 
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              <select
+                  v-model="form.client_id"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               >
                 <option value="" disabled>Sélectionner un client</option>
                 <option v-for="cl in clients" :key="cl.id" :value="cl.id">
@@ -377,37 +377,37 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-2">Début *</label>
-              <input 
-                v-model="form.start_time" 
-                type="datetime-local" 
-                required 
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              <input
+                  v-model="form.start_time"
+                  type="datetime-local"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               >
             </div>
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-2">Fin *</label>
-              <input 
-                v-model="form.end_time" 
-                type="datetime-local" 
-                :min="form.start_time" 
-                required 
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              <input
+                  v-model="form.end_time"
+                  type="datetime-local"
+                  :min="form.start_time"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               >
             </div>
           </div>
-          
+
           <div class="flex justify-end gap-3 mt-8 pt-6 border-t">
-            <button 
-              type="button" 
-              @click="closeModal" 
-              class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold"
+            <button
+                type="button"
+                @click="closeModal"
+                class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold"
             >
               Annuler
             </button>
-            <button 
-              type="submit" 
-              :disabled="submitting" 
-              class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            <button
+                type="submit"
+                :disabled="submitting"
+                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
             >
               {{ submitting ? '⏳ Chargement...' : (isEditing ? '✓ Enregistrer' : '✓ Confirmer') }}
             </button>
@@ -418,21 +418,21 @@
 
     <!-- Conflict Modal -->
     <ConflictModal
-      :is-open="showConflictModal"
-      :conflicts="conflictData?.conflicts || []"
-      :available-slots="conflictData?.availableSlots || []"
-      :allow-force="true"
-      @close="showConflictModal = false"
-      @select-slot="handleSelectSlot"
-      @force-create="handleForceCreate"
+        :is-open="showConflictModal"
+        :conflicts="conflictData?.conflicts || []"
+        :available-slots="conflictData?.availableSlots || []"
+        :allow-force="true"
+        @close="showConflictModal = false"
+        @select-slot="handleSelectSlot"
+        @force-create="handleForceCreate"
     />
 
     <!-- Route Optimizer Modal -->
     <div v-if="showRouteOptimizer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <RouteOptimizer
-        :lawyer-id="authStore.user?.id || ''"
-        :date="new Date().toISOString().split('T')[0] || ''"
-        @close="showRouteOptimizer = false"
+          :lawyer-id="authStore.user?.id || ''"
+          :date="new Date().toISOString().split('T')[0] || ''"
+          @close="showRouteOptimizer = false"
       />
     </div>
   </div>
@@ -570,8 +570,8 @@ const checkConflicts = async (lawyerId: string, startTime: string, endTime: stri
 const getAvailableSlots = async (lawyerId: string, date: string, duration: number = 60) => {
   try {
     const response = await $fetch<any>(
-      `${config.public.apiBaseUrl}/appointments/available-slots?lawyer_id=${lawyerId}&date=${date}&duration=${duration}`,
-      { headers: authStore.getAuthHeaders() }
+        `${config.public.apiBaseUrl}/appointments/available-slots?lawyer_id=${lawyerId}&date=${date}&duration=${duration}`,
+        { headers: authStore.getAuthHeaders() }
     );
     return response;
   } catch (error) {
@@ -606,17 +606,17 @@ const fetchInitialData = async () => {
     if (route.query.create === 'true') {
       isEditing.value = false;
       resetForm();
-      
+
       // On attend que le DOM se mette à jour avec les listes chargées
       await nextTick();
-      
+
       if (route.query.caseId) form.value.case_id = route.query.caseId as any;
       if (route.query.clientId) form.value.client_id = route.query.clientId as string;
-      
+
       form.value.title = "Consultation Dossier";
       showCreateModal.value = true;
     }
-    
+
   } finally {
     loading.value = false;
   }
@@ -677,27 +677,48 @@ const onCaseChange = () => {
   if (selectedCase) form.value.client_id = selectedCase.client_id;
 };
 
+// Fonction pour convertir datetime-local en ISO sans décalage de fuseau horaire
+const toISOStringLocal = (dateTimeLocal: string) => {
+
+  let withSeconds = dateTimeLocal;
+  if (dateTimeLocal.length === 16) { // Format "YYYY-MM-DDTHH:mm"
+    withSeconds = `${dateTimeLocal}:00`;
+  }
+
+  // Vérifier le format
+  const parts = withSeconds.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+  if (!parts) {
+    return withSeconds;
+  }
+
+  // Construire directement l'ISO string sans passer par Date()
+  // pour éviter toute conversion de fuseau horaire
+  const isoString = `${withSeconds}.000Z`;
+
+  return isoString;
+};
+
 const handleSubmit = async () => {
   const start = new Date(form.value.start_time).getTime();
   const end = new Date(form.value.end_time).getTime();
   if (end <= start) { alert("L'heure de fin doit être après l'heure de début."); return; }
   if (isEditing.value && isLocked(form.value.start_time)) { alert("Modification impossible à moins de 24h."); return; }
 
-  // Vérifier les conflits
+  // Vérifier les conflits en utilisant la conversion correcte des dates
   const conflictCheck = await checkConflicts(
-    form.value.lawyer_id || authStore.user?.id || '',
-    new Date(form.value.start_time).toISOString(),
-    new Date(form.value.end_time).toISOString(),
-    isEditing.value ? currentEditId.value : undefined
+      form.value.lawyer_id || authStore.user?.id || '',
+      toISOStringLocal(form.value.start_time),
+      toISOStringLocal(form.value.end_time),
+      isEditing.value ? currentEditId.value : undefined
   );
 
   if (conflictCheck.hasConflict) {
     // Récupérer les créneaux disponibles
-    const dateStr = new Date(form.value.start_time).toISOString().split('T')[0] || '';
+    const dateStr = form.value.start_time.split('T')[0] || '';
     const slotsRes = await getAvailableSlots(
-      form.value.lawyer_id || authStore.user?.id || '',
-      dateStr,
-      60
+        form.value.lawyer_id || authStore.user?.id || '',
+        dateStr,
+        60
     );
 
     conflictData.value = {
@@ -722,20 +743,28 @@ const saveAppointment = async () => {
       location_latitude: form.value.location_latitude,
       location_longitude: form.value.location_longitude,
       meeting_url: form.value.meeting_url,
-      start_time: new Date(form.value.start_time).toISOString(),
-      end_time: new Date(form.value.end_time).toISOString(),
+      start_time: toISOStringLocal(form.value.start_time),
+      end_time: toISOStringLocal(form.value.end_time),
       client_id: form.value.client_id,
       lawyer_id: form.value.lawyer_id
     };
     if (form.value.case_id) {
       payload.case_id = form.value.case_id;
     }
+
     const res = isEditing.value ? await updateAppointment(currentEditId.value!, payload) : await createAppointment(payload);
+
+
     if (res.success) {
       await fetchInitialData();
       closeModal();
       alert(isEditing.value ? 'Rendez-vous mis à jour !' : 'Rendez-vous créé !');
+    } else {
+      alert(res.message || 'Erreur lors de la sauvegarde');
     }
+  } catch (error: any) {
+    console.error('Erreur création rendez-vous:', error);
+    alert(error.data?.message || error.message || 'Erreur lors de la création du rendez-vous');
   } finally {
     submitting.value = false;
   }
@@ -781,10 +810,10 @@ const handleSelectAppointment = (id: string) => {
 // Watcher pour debug quand on passe en mode carte
 watch(viewMode, (newMode) => {
   if (newMode === 'map') {
-    console.log('Passage en mode carte');
-    console.log(`Nombre de rendez-vous à afficher: ${appointments.value.length}`);
+    console.log('🗺️ Passage en mode carte');
+    console.log(`📊 Nombre de rendez-vous à afficher: ${appointments.value.length}`);
     appointments.value.forEach(apt => {
-      console.log(`RDV: "${apt.title}"`, {
+      console.log(`📍 RDV: "${apt.title}"`, {
         id: apt.id,
         address: apt.location_address,
         lat: apt.location_latitude,

@@ -86,7 +86,7 @@ export const createSuggestion = async (data: CreateSuggestionInput): Promise<App
         <div style="background-color: #eff6ff; padding: 20px; border-left: 4px solid #3b82f6; margin: 20px 0;">
           <p><strong>Date :</strong> ${new Date(data.suggested_start_time).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
           <p><strong> Heure :</strong> ${new Date(data.suggested_start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${new Date(data.suggested_end_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
-          ${data.notes ? `<p><strong>📝 Note :</strong> ${data.notes}</p>` : ''}
+          ${data.notes ? `<p><strong>Note :</strong> ${data.notes}</p>` : ''}
         </div>
         <p>Connectez-vous à votre espace pour accepter, refuser ou proposer une alternative.</p>
         <p>Cordialement,<br/>L'équipe Gestion Juridique</p>

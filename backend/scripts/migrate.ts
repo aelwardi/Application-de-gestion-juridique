@@ -78,6 +78,21 @@ async function runMigrations(): Promise<void> {
 
     const executedMigrations = await getExecutedMigrations();
 
+    const migrationFiles = fs
+      .readdirSync(MIGRATIONS_DIR)
+      .filter((file) => file.endsWith(".sql"))
+      .sort();
+
+    console.log(`Fichiers de migration trouvés: ${migrationFiles.length}`);
+
+    for (const filename of migrationFiles) {
+      if (!executedMigrations.includes(filename)) {
+        await executeMigration(filename);
+      } else {
+        console.log(`Migration ${filename} déjà exécutée, ignorée`);
+      }
+    }
+
     console.log("\nToutes les migrations ont été exécutées avec succès");
   } catch (error: any) {
     console.error("\nErreur lors des migrations:", error.message);

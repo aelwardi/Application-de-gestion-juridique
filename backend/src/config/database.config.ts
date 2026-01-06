@@ -11,7 +11,8 @@ const poolConfig: PoolConfig = {
   database: process.env.DB_NAME,
   max: 20, 
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000, 
+  connectionTimeoutMillis: 2000,
+  options: '-c timezone=UTC',
 };
 
 export const pool = new Pool(poolConfig);

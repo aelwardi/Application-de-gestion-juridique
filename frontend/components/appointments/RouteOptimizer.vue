@@ -2,7 +2,7 @@
   <div class="bg-white rounded-lg shadow-lg p-6">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h3 class="text-xl font-bold text-gray-900">🚗 Optimisation d'itinéraire</h3>
+        <h3 class="text-xl font-bold text-gray-900">Optimisation d'itinéraire</h3>
         <p class="text-sm text-gray-600 mt-1">Optimisez vos déplacements pour la journée</p>
       </div>
       <button @click="close" class="text-gray-400 hover:text-gray-600">

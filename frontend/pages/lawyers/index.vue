@@ -33,10 +33,10 @@
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
-              ✓ VÉRIFIÉ
+              VÉRIFIÉ
             </span>
             <span v-else class="px-3 py-1.5 bg-orange-500 text-white rounded-full text-xs font-black flex items-center gap-1">
-              ⚠️ NON VÉRIFIÉ
+              NON VÉRIFIÉ
             </span>
 
             <!-- Statut de disponibilité -->
@@ -261,12 +261,12 @@
 
             <!-- Informations vérification -->
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <p class="text-xs font-bold text-gray-700 uppercase mb-2">ℹ️ Informations de vérification</p>
+              <p class="text-xs font-bold text-gray-700 uppercase mb-2">Informations de vérification</p>
               <div class="space-y-1 text-xs text-gray-600">
                 <div class="flex justify-between">
                   <span>Statut de vérification:</span>
                   <span class="font-bold" :class="lawyer.verified_by_admin ? 'text-green-600' : 'text-orange-600'">
-                    {{ lawyer.verified_by_admin ? '✓ Vérifié par admin' : '⚠️ En attente de vérification' }}
+                    {{ lawyer.verified_by_admin ? '✓ Vérifié par admin' : 'En attente de vérification' }}
                   </span>
                 </div>
                 <div v-if="lawyer.verified_at" class="flex justify-between">
@@ -276,7 +276,7 @@
                 <div class="flex justify-between">
                   <span>Compte:</span>
                   <span class="font-bold" :class="lawyer.is_active ? 'text-green-600' : 'text-red-600'">
-                    {{ lawyer.is_active ? '✓ Actif' : '✗ Inactif' }}
+                    {{ lawyer.is_active ? 'Actif' : 'Inactif' }}
                   </span>
                 </div>
                 <div v-if="lawyer.is_verified" class="flex justify-between">

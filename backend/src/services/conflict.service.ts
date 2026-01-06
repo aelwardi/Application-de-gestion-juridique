@@ -59,11 +59,10 @@ export const findAvailableSlots = async (
     const workEnd = 18;
     const slotDuration = duration;
 
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
+    const [year, month, day] = date.split('-').map(Number);
 
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
     const query = `
       SELECT start_time, end_time
@@ -81,21 +80,21 @@ export const findAvailableSlots = async (
       endOfDay.toISOString()
     ]);
 
+    console.log('📅 Rendez-vous trouvés:', result.rows);
+
     const bookedSlots = result.rows.map((row: any) => ({
       start: new Date(row.start_time),
       end: new Date(row.end_time)
     }));
 
     const availableSlots: any[] = [];
-    const baseDate = new Date(date);
+    const baseDate = new Date(Date.UTC(year, month - 1, day));
 
     for (let hour = workStart; hour < workEnd; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        const slotStart = new Date(baseDate);
-        slotStart.setHours(hour, minute, 0, 0);
-
+        const slotStart = new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
         const slotEnd = new Date(slotStart);
-        slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
+        slotEnd.setUTCMinutes(slotEnd.getUTCMinutes() + slotDuration);
 
         const hasConflict = bookedSlots.some((booked: any) => {
           return (
@@ -105,11 +104,11 @@ export const findAvailableSlots = async (
           );
         });
 
-        if (!hasConflict && slotEnd.getHours() <= workEnd) {
+        if (!hasConflict && slotEnd.getUTCHours() <= workEnd) {
           availableSlots.push({
             start: slotStart.toISOString(),
             end: slotEnd.toISOString(),
-            label: `${slotStart.getHours()}:${slotStart.getMinutes().toString().padStart(2, '0')} - ${slotEnd.getHours()}:${slotEnd.getMinutes().toString().padStart(2, '0')}`
+            label: `${slotStart.getUTCHours()}:${slotStart.getUTCMinutes().toString().padStart(2, '0')} - ${slotEnd.getUTCHours()}:${slotEnd.getUTCMinutes().toString().padStart(2, '0')}`
           });
         }
       }
