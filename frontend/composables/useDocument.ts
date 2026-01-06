@@ -45,6 +45,19 @@ const getRecentDocuments = async (lawyerId: string) => {
   });
 };
 
+const getClientDocuments = async (clientId: string, limit: number = 5) => {
+  try {
+    const response = await $fetch<any>(`${baseURL}/documents/client/${clientId}?limit=${limit}`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    return Array.isArray(response) ? response : (response.data || []);
+  } catch (error: any) {
+    console.error('Erreur récupération documents client:', error);
+    return [];
+  }
+};
+
   /**
    * Récupère tous les documents d'un dossier spécifique
    */
@@ -99,6 +112,7 @@ const getRecentDocuments = async (lawyerId: string) => {
     getDocumentsByCase,
     deleteDocument,
     getDownloadUrl,
-    getRecentDocuments
+    getRecentDocuments,
+    getClientDocuments
   };
 };

@@ -181,7 +181,7 @@
                 <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Prochains RDV
+                Prochain RDV
               </h2>
               <NuxtLink 
                 to="/clients/appointments"
@@ -203,7 +203,7 @@
                 </div>
                 <p class="text-gray-600 mt-3 text-sm font-medium">Chargement...</p>
               </div>
-              
+
               <!-- État vide -->
               <div v-else-if="appointments.length === 0" class="text-center py-12">
                 <div class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -214,40 +214,39 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-1">Aucun RDV</h3>
                 <p class="text-gray-600 text-sm">Pas de rendez-vous à venir</p>
               </div>
-              
-              <!-- Liste des rendez-vous -->
-              <div v-else class="space-y-4">
+
+              <!-- Prochain rendez-vous (le plus récent) -->
+              <div v-else>
                 <div
-                  v-for="appointment in appointments"
-                  :key="appointment.id"
                   class="border border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+                  @click="navigateTo(`/appointments/${appointments[0].id}`)"
                 >
-                  <h3 class="font-bold text-gray-900">{{ appointment.title }}</h3>
+                  <h3 class="font-bold text-gray-900">{{ appointments[0].title }}</h3>
                   <p class="text-sm text-gray-600 mt-2 flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    {{ formatDate(appointment.start_time) }}
+                    {{ formatDate(appointments[0].start_time) }}
                   </p>
                   <p class="text-sm text-gray-600 flex items-center gap-1 mt-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {{ formatTime(appointment.start_time) }} - {{ formatTime(appointment.end_time) }}
+                    {{ formatTime(appointments[0].start_time) }} - {{ formatTime(appointments[0].end_time) }}
                   </p>
-                  <div v-if="appointment.lawyer_first_name" class="mt-3 pt-3 border-t border-gray-200">
+                  <div v-if="appointments[0].lawyer_first_name" class="mt-3 pt-3 border-t border-gray-200">
                     <p class="text-xs text-gray-500 flex items-center gap-1">
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      Avec {{ appointment.lawyer_first_name }} {{ appointment.lawyer_last_name }}
+                      Avec {{ appointments[0].lawyer_first_name }} {{ appointments[0].lawyer_last_name }}
                     </p>
                   </div>
                   <span
                     class="inline-block mt-3 px-3 py-1 text-xs rounded-full font-bold shadow-sm"
-                    :class="getAppointmentStatusClass(appointment.status)"
+                    :class="getAppointmentStatusClass(appointments[0].status)"
                   >
-                    {{ getAppointmentStatusLabel(appointment.status) }}
+                    {{ getAppointmentStatusLabel(appointments[0].status) }}
                   </span>
                 </div>
               </div>
@@ -308,6 +307,7 @@
               v-for="document in documents"
               :key="document.id"
               class="group flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:border-orange-300 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+              @click="handleDocumentClick(document)"
             >
               <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
@@ -334,7 +334,10 @@
                   </p>
                 </div>
               </div>
-              <button class="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-100 rounded-lg transition-all duration-200">
+              <button
+                @click="handleDownloadDocument($event, document)"
+                class="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-100 rounded-lg transition-all duration-200"
+              >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
@@ -358,6 +361,7 @@ definePageMeta({
 const { getClientStats } = useClient();
 const { getAllCases } = useCase();
 const { getAllAppointments } = useAppointment();
+const { getClientDocuments } = useDocument();
 const authStore = useAuthStore();
 
 const stats = ref<ClientStats | null>(null);
@@ -391,10 +395,24 @@ onMounted(async () => {
       client_id: authStore.user.id,
       limit: 5
     });
-    appointments.value = (appointmentsResponse.data || []).filter((apt: any) => new Date(apt.start_time) > new Date());
+    // Filtrer les RDV futurs et trier par date (le plus proche en premier)
+    appointments.value = (appointmentsResponse.data || [])
+      .filter((apt: any) => new Date(apt.start_time) > new Date())
+      .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
     loadingAppointments.value = false;
 
-    // Documents - à implémenter si nécessaire
+    // Charger les documents
+    loadingDocuments.value = true;
+    const docs = await getClientDocuments(authStore.user.id, 5);
+    console.log('Dashboard Client - Documents reçus:', docs);
+    documents.value = docs.map((doc: any) => ({
+      id: doc.id,
+      fileName: doc.file_name || doc.title,
+      caseTitle: doc.case_title || 'Sans dossier',
+      createdAt: doc.created_at,
+      fileUrl: doc.file_url,
+      caseId: doc.case_id
+    }));
     loadingDocuments.value = false;
   } catch (error) {
     console.error('Error loading client dashboard:', error);
@@ -485,5 +503,18 @@ const getAppointmentStatusLabel = (status: string) => {
     no_show: 'Absent',
   };
   return labels[status] || status;
+};
+
+const handleDocumentClick = (document: any) => {
+  if (document.caseId) {
+    navigateTo(`/cases/${document.caseId}`);
+  }
+};
+
+const handleDownloadDocument = (event: Event, document: any) => {
+  event.stopPropagation();
+  const config = useRuntimeConfig();
+  const downloadUrl = `${config.public.apiBaseUrl}/storage/${document.fileUrl}`;
+  window.open(downloadUrl, '_blank');
 };
 </script>

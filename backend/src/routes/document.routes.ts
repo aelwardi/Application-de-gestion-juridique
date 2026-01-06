@@ -195,6 +195,41 @@ router.get('/lawyer/:lawyerId', authenticate, async (req: Request, res: Response
   }
 });
 
+/**
+ * GET /api/documents/client/:clientId
+ * Récupère les documents récents d'un client (tous dossiers confondus)
+ * Le client voit :
+ * 1) Ses propres documents uploadés
+ * 2) Les documents non confidentiels des dossiers où il est client
+ */
+router.get('/client/:clientId', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { clientId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 5;
+
+    const query = `
+      SELECT 
+        d.*,
+        c.title as case_title,
+        c.case_number,
+        u.first_name as uploader_first_name,
+        u.last_name as uploader_last_name
+      FROM documents d
+      LEFT JOIN cases c ON d.case_id = c.id
+      LEFT JOIN users u ON d.uploaded_by = u.id
+      WHERE c.client_id = $1 
+      AND (d.uploaded_by = $1 OR d.is_confidential = false)
+      ORDER BY d.created_at DESC 
+      LIMIT $2
+    `;
+
+    const result = await pool.query(query, [clientId, limit]);
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 
 /**
  * GET /api/documents/case/:caseId
