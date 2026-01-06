@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -137,6 +137,17 @@ const markers: L.Marker[] = []
 
 onMounted(() => {
   initMap()
+
+  // Écouter l'événement de visualisation des détails
+  window.addEventListener('view-appointment', (event: any) => {
+    const appointmentId = event.detail
+    navigateTo(`/appointments/${appointmentId}`)
+  })
+})
+
+onUnmounted(() => {
+  // Nettoyer l'écouteur d'événements
+  window.removeEventListener('view-appointment', () => {})
 })
 
 watch(() => props.appointments, () => {
@@ -278,24 +289,130 @@ const createMarker = (appointment: any) => {
 }
 
 const createPopupContent = (appointment: any) => {
+  const date = new Date(appointment.start_time).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+
   const time = new Date(appointment.start_time).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
     minute: '2-digit'
   })
 
+  const statusColors: Record<string, string> = {
+    scheduled: '#3b82f6',
+    confirmed: '#10b981',
+    completed: '#6b7280',
+    cancelled: '#ef4444'
+  }
+
+  const statusLabels: Record<string, string> = {
+    scheduled: 'Prévu',
+    confirmed: 'Confirmé',
+    completed: 'Terminé',
+    cancelled: 'Annulé'
+  }
+
+  const statusColor = statusColors[appointment.status] || '#6b7280'
+  const statusLabel = statusLabels[appointment.status] || appointment.status
+
   return `
-    <div class="p-2 min-w-[200px]">
-      <div class="font-bold text-gray-900 mb-1">${appointment.title}</div>
-      <div class="text-sm text-gray-600 space-y-1">
-        <div>🕐 ${time}</div>
-        <div>📍 ${appointment.location_address || 'Adresse non spécifiée'}</div>
-        <div>👤 ${appointment.client_first_name} ${appointment.client_last_name}</div>
+    <div style="padding: 16px; min-width: 280px; max-width: 320px; font-family: system-ui, -apple-system, sans-serif;">
+      <!-- En-tête avec badge de statut -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <span style="
+          background-color: ${statusColor}15;
+          color: ${statusColor};
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        ">${statusLabel}</span>
       </div>
+
+      <!-- Titre -->
+      <h3 style="
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 12px 0;
+        line-height: 1.4;
+      ">${appointment.title}</h3>
+
+      <!-- Informations -->
+      <div style="
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-left: 3px solid #3b82f6;
+      ">
+        <div style="display: flex; align-items: start; margin-bottom: 8px;">
+          <span style="font-size: 16px; margin-right: 8px;">📅</span>
+          <div style="flex: 1;">
+            <div style="font-size: 13px; font-weight: 600; color: #1e40af;">${date}</div>
+            <div style="font-size: 12px; color: #3b82f6; font-weight: 500;">🕐 ${time}</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 14px; margin-right: 8px;">📍</span>
+          <span style="font-size: 12px; color: #374151; line-height: 1.4;">
+            ${appointment.location_address || 'Adresse non spécifiée'}
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center;">
+          <span style="font-size: 14px; margin-right: 8px;">👤</span>
+          <span style="font-size: 13px; color: #111827; font-weight: 500;">
+            ${appointment.client_first_name} ${appointment.client_last_name}
+          </span>
+        </div>
+      </div>
+
+      <!-- Type de rendez-vous -->
+      <div style="
+        display: inline-block;
+        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+        color: #6b21a8;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        text-transform: capitalize;
+      ">
+        ${appointment.appointment_type}
+      </div>
+
+      <!-- Bouton d'action -->
       <button
         onclick="window.dispatchEvent(new CustomEvent('view-appointment', {detail: '${appointment.id}'}))"
-        class="mt-2 w-full px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+        style="
+          width: 100%;
+          padding: 12px;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        "
+        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.4)'"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(37, 99, 235, 0.3)'"
       >
-        Voir détails
+        <span style="font-size: 16px;">👁️</span>
+        Voir les détails
       </button>
     </div>
   `
@@ -405,18 +522,32 @@ if (process.client) {
   position: relative;
 }
 
-/* Fix pour les icônes Leaflet */
+/* Styles modernes pour les popups Leaflet */
 :deep(.leaflet-popup-content-wrapper) {
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
 :deep(.leaflet-popup-content) {
   margin: 0;
+  width: auto !important;
+}
+
+:deep(.leaflet-popup-tip) {
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.1);
 }
 
 :deep(.custom-marker) {
   background: transparent !important;
   border: none !important;
+}
+
+/* Animation au survol des marqueurs */
+:deep(.custom-marker:hover) {
+  transform: scale(1.15);
+  transition: transform 0.2s ease-out;
 }
 </style>
