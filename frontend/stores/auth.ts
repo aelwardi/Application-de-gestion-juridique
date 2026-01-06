@@ -166,6 +166,26 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
+     * Fetch current user data
+     */
+    async fetchUser() {
+      try {
+        if (!this.user?.id) return;
+
+        const config = useRuntimeConfig();
+        const response = await $fetch<any>(`${config.public.apiBaseUrl}/users/${this.user.id}`, {
+          headers: this.getAuthHeaders(),
+        });
+
+        if (response.success && response.data) {
+          this.user = response.data;
+        }
+      } catch (error) {
+        console.error('Fetch user error:', error);
+      }
+    },
+
+    /**
      * Refresh access token
      */
     async refreshAccessToken() {

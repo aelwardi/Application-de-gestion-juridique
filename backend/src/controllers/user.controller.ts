@@ -20,11 +20,11 @@ export class UserController {
     try {
       const { id } = req.params;
       const user = await userService.getUserById(id);
-      if (!user) return res.status(404).json({ status: "ERROR", message: "Utilisateur non trouvé" });
-      res.json({ status: "SUCCESS", data: user });
+      if (!user) return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+      res.json({ success: true, data: user });
     } catch (error: any) {
       console.error(error);
-      res.status(500).json({ status: "ERROR", message: "Erreur récupération utilisateur", error: error.message });
+      res.status(500).json({ success: false, message: "Erreur récupération utilisateur", error: error.message });
     }
   }
 
@@ -33,10 +33,10 @@ export class UserController {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       const { users, total } = await userService.getAllUsers(limit, offset);
-      res.json({ status: "SUCCESS", data: users, pagination: { total, limit, offset, count: users.length } });
+      res.json({ success: true, data: users, pagination: { total, limit, offset, count: users.length } });
     } catch (error: any) {
       console.error(error);
-      res.status(500).json({ status: "ERROR", message: "Erreur récupération utilisateurs", error: error.message });
+      res.status(500).json({ success: false, message: "Erreur récupération utilisateurs", error: error.message });
     }
   }
 
@@ -44,12 +44,20 @@ export class UserController {
     try {
       const { id } = req.params;
       const data: UpdateUserInput = req.body;
+
+      console.log('🔄 Mise à jour utilisateur:', { id, data });
+
       const updatedUser = await userService.updateUser(id, data);
-      if (!updatedUser) return res.status(404).json({ status: "ERROR", message: "Utilisateur non trouvé" });
-      res.json({ status: "SUCCESS", message: "Utilisateur mis à jour", data: updatedUser });
+      if (!updatedUser) {
+        return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+      }
+
+      console.log('✅ Utilisateur mis à jour:', updatedUser);
+
+      res.json({ success: true, message: "Utilisateur mis à jour", data: updatedUser });
     } catch (error: any) {
-      console.error(error);
-      res.status(500).json({ status: "ERROR", message: "Erreur mise à jour utilisateur", error: error.message });
+      console.error('❌ Erreur mise à jour utilisateur:', error);
+      res.status(500).json({ success: false, message: "Erreur mise à jour utilisateur", error: error.message });
     }
   }
 

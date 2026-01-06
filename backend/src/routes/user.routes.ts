@@ -79,8 +79,8 @@ router.get("/search", authenticate, async (req, res) => {
   }
 });
 
-router.get("/:id", validateUserId, (req, res) => userController.getUserById(req, res));
-router.put("/:id", validateUserId, validateUpdateUser, (req, res) => userController.updateUser(req, res));
-router.delete("/:id", validateUserId, (req, res) => userController.deleteUser(req, res));
+router.get("/:id", authenticate, validateUserId, (req, res) => userController.getUserById(req, res));
+router.put("/:id", authenticate, validateUserId, validateUpdateUser, (req, res) => userController.updateUser(req, res));
+router.delete("/:id", authenticate, validateUserId, (req, res) => userController.deleteUser(req, res));
 
 export default router;

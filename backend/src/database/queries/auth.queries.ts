@@ -62,14 +62,34 @@ export interface UserResponse {
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  // Champs avocats
+
+  // Champs avocats (tous les champs de la table users pour role='avocat')
   barNumber?: string | null;
   specialties?: string[];
+  experienceYears?: number;
+  officeAddress?: string | null;
   officeCity?: string | null;
-  rating?: number;
+  officePostalCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  hourlyRate?: number | null;
+  description?: string | null;
+  languages?: string[];
+  availabilityStatus?: string;
   verifiedByAdmin?: boolean;
-  // Champs clients
+  verifiedAt?: Date | null;
+  rating?: number;
+  totalReviews?: number;
+
+  // Champs clients (tous les champs de la table users pour role='client')
+  address?: string | null;
   city?: string | null;
+  postalCode?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  notes?: string | null;
+
+  // Statistiques (commun aux avocats et clients)
   totalCases?: number;
   activeCases?: number;
 }
@@ -300,18 +320,36 @@ export const userToResponse = (user: User): UserResponse => {
     updatedAt: user.updated_at,
   };
 
-  // Ajouter les champs avocats si applicable
+  // Ajouter TOUS les champs avocats si applicable
   if (user.role === 'avocat') {
     response.barNumber = user.bar_number || null;
     response.specialties = user.specialties || [];
+    response.experienceYears = user.experience_years || 0;
+    response.officeAddress = user.office_address || null;
     response.officeCity = user.office_city || null;
-    response.rating = user.rating || 0;
+    response.officePostalCode = user.office_postal_code || null;
+    response.latitude = user.latitude || null;
+    response.longitude = user.longitude || null;
+    response.hourlyRate = user.hourly_rate || null;
+    response.description = user.description || null;
+    response.languages = user.languages || [];
+    response.availabilityStatus = user.availability_status || 'available';
     response.verifiedByAdmin = user.verified_by_admin || false;
+    response.verifiedAt = user.verified_at || null;
+    response.rating = user.rating || 0;
+    response.totalReviews = user.total_reviews || 0;
+    response.totalCases = user.total_cases || 0;
+    response.activeCases = user.active_cases || 0;
   }
 
-  // Ajouter les champs clients si applicable
+  // Ajouter TOUS les champs clients si applicable
   if (user.role === 'client') {
+    response.address = user.address || null;
     response.city = user.city || null;
+    response.postalCode = user.postal_code || null;
+    response.emergencyContactName = user.emergency_contact_name || null;
+    response.emergencyContactPhone = user.emergency_contact_phone || null;
+    response.notes = user.notes || null;
     response.totalCases = user.total_cases || 0;
     response.activeCases = user.active_cases || 0;
   }
