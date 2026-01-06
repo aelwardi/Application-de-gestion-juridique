@@ -134,6 +134,125 @@
         </p>
       </div>
     </div>
+
+    <!-- Modal d'itinéraire optimisé -->
+    <div v-if="showRouteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-2 sm:p-4 animate-fadeIn" @click="showRouteModal = false">
+      <div class="bg-white rounded-xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl animate-slideUp" @click.stop>
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 sm:p-4 rounded-t-xl sm:rounded-t-2xl flex-shrink-0">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-lg sm:text-xl font-bold truncate">🗺️ Itinéraire Optimisé</h3>
+                <p class="text-blue-100 text-xs sm:text-sm truncate">Ordre de visite calculé</p>
+              </div>
+            </div>
+            <button @click="showRouteModal = false" class="text-white/80 hover:text-white transition-colors p-1.5 sm:p-2 hover:bg-white/10 rounded-lg flex-shrink-0">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Content scrollable -->
+        <div class="flex-1 overflow-y-auto p-3 sm:p-4">
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-blue-100">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[10px] sm:text-xs text-blue-600 font-semibold uppercase tracking-wide truncate">RDV</p>
+                  <p class="text-xl sm:text-2xl font-black text-blue-900">{{ routeStats?.count || 0 }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-green-100">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[10px] sm:text-xs text-green-600 font-semibold uppercase tracking-wide truncate">Distance</p>
+                  <p class="text-xl sm:text-2xl font-black text-green-900">{{ routeStats?.distance || 0 }} <span class="text-sm sm:text-base">km</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des rendez-vous dans l'ordre -->
+          <div class="mb-3 sm:mb-4">
+            <h4 class="text-sm sm:text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span class="truncate">Ordre de visite optimal</span>
+            </h4>
+            <div class="space-y-1.5 sm:space-y-2 max-h-48 sm:max-h-64 overflow-y-auto pr-1">
+              <div
+                v-for="(apt, index) in routeStats?.route || []"
+                :key="apt.id"
+                class="flex items-start gap-2 p-2 sm:p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div class="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">
+                  {{ index + 1 }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-gray-900 text-xs sm:text-sm truncate">{{ apt.title }}</p>
+                  <p class="text-[10px] sm:text-xs text-gray-600 truncate">{{ apt.location_address }}</p>
+                  <p class="text-[10px] sm:text-xs text-blue-600 font-medium mt-0.5">
+                    🕐 {{ new Date(apt.start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-2.5 sm:p-3">
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+              <div class="flex-1 min-w-0">
+                <p class="text-[10px] sm:text-xs text-blue-900 font-medium">
+                  Les numéros sur la carte indiquent l'ordre de visite optimal.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-50 px-3 py-2.5 sm:px-4 sm:py-3 rounded-b-xl sm:rounded-b-2xl flex items-center justify-between gap-2 flex-shrink-0 border-t border-gray-100">
+          <button
+            @click="clearRoute(); showRouteModal = false"
+            class="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-semibold text-xs sm:text-sm"
+          >
+            Effacer
+          </button>
+          <button
+            @click="showRouteModal = false"
+            class="px-4 py-1.5 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-xs sm:text-sm"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -164,6 +283,8 @@ const loading = ref(true)
 let map: L.Map | null = null
 const markers: L.Marker[] = []
 let routePolyline: L.Polyline | null = null
+const showRouteModal = ref(false)
+const routeStats = ref<{ count: number; distance: string; route: any[] } | null>(null)
 
 onMounted(() => {
   initMap()
@@ -702,8 +823,13 @@ const optimizeRoute = () => {
     }).addTo(map)
   })
 
-  // Afficher le résumé
-  alert(`🗺️ Itinéraire optimisé !\n\n📍 ${sortedByTime.length} rendez-vous\n📏 Distance totale : ${totalDistance.toFixed(2)} km\n\nLes numéros sur la carte indiquent l'ordre de visite optimal.`)
+  // Afficher le résumé dans une belle modal
+  showRouteModal.value = true
+  routeStats.value = {
+    count: sortedByTime.length,
+    distance: totalDistance.toFixed(2),
+    route: route.map(idx => sortedByTime[idx])
+  }
 
   // Ajuster la vue pour voir tout l'itinéraire
   fitAllMarkers()
@@ -766,5 +892,34 @@ if (process.client) {
 :deep(.custom-marker:hover) {
   transform: scale(1.15);
   transition: transform 0.2s ease-out;
+}
+
+/* Animations pour la modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
 }
 </style>
