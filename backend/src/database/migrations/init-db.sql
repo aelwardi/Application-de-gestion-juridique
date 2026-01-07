@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS users (
     active_cases INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
@@ -59,15 +59,24 @@ ALTER TABLE users ADD CONSTRAINT check_lawyer_bar_number
     CHECK (role != 'avocat' OR (role = 'avocat' AND bar_number IS NOT NULL));
 
 COMMENT ON TABLE users IS 'Table unifiée pour tous les utilisateurs: admin, avocat, client, collaborateur';
+COMMENT ON COLUMN users.role IS 'Type utilisateur: admin, avocat, client, collaborateur';
+COMMENT ON COLUMN users.bar_number IS 'Numéro du barreau (obligatoire et unique pour les avocats)';
+COMMENT ON COLUMN users.specialties IS 'Tableau des spécialités juridiques (avocats uniquement)';
+COMMENT ON COLUMN users.languages IS 'Langues parlées par l''avocat';
+COMMENT ON COLUMN users.total_cases IS 'Nombre total de dossiers (clients et avocats)';
+COMMENT ON COLUMN users.active_cases IS 'Nombre de dossiers actifs (clients et avocats)';
+COMMENT ON COLUMN users.address IS 'Adresse personnelle (clients)';
+COMMENT ON COLUMN users.office_address IS 'Adresse du cabinet (avocats)';
+COMMENT ON COLUMN users.verified_by_admin IS 'Statut de vérification par un administrateur (avocats)';
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                                                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token VARCHAR(255) UNIQUE NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     used BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
@@ -85,14 +94,19 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     ip_address VARCHAR(45),
     user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_entity_type ON activity_logs(entity_type);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_entity_id ON activity_logs(entity_id);
 
-COMMENT ON TABLE activity_logs IS 'Journaux d''activité des utilisateurs';
+COMMENT ON TABLE activity_logs IS 'Journaux d''activité des utilisateurs et audit trail';
+COMMENT ON COLUMN activity_logs.action IS 'Type d''action effectuée (USER_CREATED, USER_DELETED, USER_VERIFIED, etc.)';
+COMMENT ON COLUMN activity_logs.entity_type IS 'Type d''entité affectée (user, case, appointment, etc.)';
+COMMENT ON COLUMN activity_logs.entity_id IS 'ID de l''entité affectée';
+COMMENT ON COLUMN activity_logs.details IS 'Données contextuelles supplémentaires en JSON';
 
 CREATE TABLE IF NOT EXISTS support_tickets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,19 +120,56 @@ CREATE TABLE IF NOT EXISTS support_tickets (
     resolved_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
+
+CREATE TABLE IF NOT EXISTS support_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    is_internal BOOLEAN DEFAULT FALSE,
+    attachments JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 
 CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON support_tickets(user_id);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_priority ON support_tickets(priority);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_assigned_to ON support_tickets(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_created_at ON support_tickets(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_support_messages_ticket_id ON support_messages(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_support_messages_created_at ON support_messages(created_at DESC);
 
 COMMENT ON TABLE support_tickets IS 'Tickets de support et assistance';
+COMMENT ON TABLE support_messages IS 'Messages dans les tickets de support';
+COMMENT ON COLUMN support_messages.is_internal IS 'Notes internes visibles uniquement par les admins';
+
+CREATE TABLE IF NOT EXISTS lawyer_specialties (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    icon VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+INSERT INTO lawyer_specialties (name, description, icon) VALUES
+    ('Droit pénal', 'Défense pénale, crimes, délits', ''),
+    ('Droit civil', 'Litiges civils, contrats, responsabilité', ''),
+    ('Droit de la famille', 'Divorce, garde enfants, succession', ''),
+    ('Droit du travail', 'Conflits employeur-employé, licenciements', ''),
+    ('Droit commercial', 'Entreprises, sociétés, commerce', ''),
+    ('Droit immobilier', 'Transactions, litiges immobiliers', ''),
+    ('Droit fiscal', 'Fiscalité, impôts, contrôles', ''),
+    ('Droit administratif', 'Relations avec administration', ''),
+    ('Droit international', 'Transactions internationales', ''),
+    ('Propriété intellectuelle', 'Brevets, marques, droits auteur', '')
+    ON CONFLICT (name) DO NOTHING;
+
+COMMENT ON TABLE lawyer_specialties IS 'Liste des spécialités juridiques disponibles';
 
 CREATE TABLE IF NOT EXISTS cases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    case_number VARCHAR(50) UNIQUE NOT NULL,
+    case_number VARCHAR(100) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     case_type VARCHAR(100),
@@ -133,9 +184,12 @@ CREATE TABLE IF NOT EXISTS cases (
     court_name VARCHAR(255),
     judge_name VARCHAR(255),
     opposing_party VARCHAR(255),
+    court_reference VARCHAR(100),
+    estimated_cost DECIMAL(10, 2),
+    actual_cost DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_cases_case_number ON cases(case_number);
 CREATE INDEX IF NOT EXISTS idx_cases_client_id ON cases(client_id);
@@ -145,64 +199,15 @@ CREATE INDEX IF NOT EXISTS idx_cases_priority ON cases(priority);
 CREATE INDEX IF NOT EXISTS idx_cases_case_type ON cases(case_type);
 CREATE INDEX IF NOT EXISTS idx_cases_opening_date ON cases(opening_date DESC);
 CREATE INDEX IF NOT EXISTS idx_cases_next_hearing_date ON cases(next_hearing_date) WHERE next_hearing_date IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_cases_created_at ON cases(created_at DESC);
 
 COMMENT ON TABLE cases IS 'Dossiers juridiques gérés par les avocats pour les clients';
-
-CREATE TABLE IF NOT EXISTS appointments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    lawyer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    client_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    case_id UUID REFERENCES cases(id) ON DELETE SET NULL,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    location VARCHAR(255),
-    appointment_type VARCHAR(100) DEFAULT 'consultation',
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed', 'no_show')),
-    is_recurring BOOLEAN DEFAULT false,
-    recurrence_pattern VARCHAR(50),
-    recurrence_end_date DATE,
-    parent_appointment_id UUID REFERENCES appointments(id) ON DELETE CASCADE,
-    reminder_sent BOOLEAN DEFAULT false,
-    reminder_sent_at TIMESTAMP,
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_start_before_end CHECK (start_date < end_date)
-);
-
-CREATE INDEX IF NOT EXISTS idx_appointments_lawyer_id ON appointments(lawyer_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_client_id ON appointments(client_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_case_id ON appointments(case_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_start_date ON appointments(start_date);
-CREATE INDEX IF NOT EXISTS idx_appointments_end_date ON appointments(end_date);
-CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
-CREATE INDEX IF NOT EXISTS idx_appointments_is_recurring ON appointments(is_recurring);
-CREATE INDEX IF NOT EXISTS idx_appointments_parent_id ON appointments(parent_appointment_id);
-
-COMMENT ON TABLE appointments IS 'Rendez-vous entre avocats et clients';
-
-CREATE TABLE IF NOT EXISTS appointment_suggestions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    appointment_id UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
-    suggested_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    suggested_to UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    suggested_start_date TIMESTAMP NOT NULL,
-    suggested_end_date TIMESTAMP NOT NULL,
-    message TEXT,
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
-    responded_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_suggested_dates CHECK (suggested_start_date < suggested_end_date)
-);
-
-CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_appointment_id ON appointment_suggestions(appointment_id);
-CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_suggested_by ON appointment_suggestions(suggested_by);
-CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_suggested_to ON appointment_suggestions(suggested_to);
-CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_status ON appointment_suggestions(status);
-
-COMMENT ON TABLE appointment_suggestions IS 'Propositions de créneaux de rendez-vous';
+COMMENT ON COLUMN cases.case_type IS 'Type de dossier (civil, pénal, commercial, familial, etc.)';
+COMMENT ON COLUMN cases.opening_date IS 'Date d''ouverture du dossier';
+COMMENT ON COLUMN cases.closing_date IS 'Date de clôture du dossier';
+COMMENT ON COLUMN cases.court_name IS 'Nom du tribunal';
+COMMENT ON COLUMN cases.judge_name IS 'Nom du juge';
+COMMENT ON COLUMN cases.status IS 'Statut du dossier: pending, in_progress, on_hold, closed, archived';
 
 CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -216,18 +221,23 @@ CREATE TABLE IF NOT EXISTS documents (
     file_type VARCHAR(100),
     file_url VARCHAR(500) NOT NULL,
     is_confidential BOOLEAN DEFAULT false,
+    version INTEGER DEFAULT 1,
+    parent_document_id UUID REFERENCES documents(id),
+    tags TEXT[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_documents_case_id ON documents(case_id);
 CREATE INDEX IF NOT EXISTS idx_documents_uploaded_by ON documents(uploaded_by);
 CREATE INDEX IF NOT EXISTS idx_documents_document_type ON documents(document_type);
 CREATE INDEX IF NOT EXISTS idx_documents_is_confidential ON documents(is_confidential);
+CREATE INDEX IF NOT EXISTS idx_documents_parent_document_id ON documents(parent_document_id);
+CREATE INDEX IF NOT EXISTS idx_documents_tags ON documents USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(created_at DESC);
 
-COMMENT ON TABLE documents IS 'Documents liés aux dossiers juridiques';
+COMMENT ON TABLE documents IS 'Documents et fichiers liés aux dossiers juridiques';
 
 CREATE TABLE IF NOT EXISTS document_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -244,7 +254,7 @@ CREATE TABLE IF NOT EXISTS document_requests (
     last_upload_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_document_requests_case_id ON document_requests(case_id);
 CREATE INDEX IF NOT EXISTS idx_document_requests_lawyer_id ON document_requests(lawyer_id);
@@ -254,6 +264,293 @@ CREATE INDEX IF NOT EXISTS idx_document_requests_status ON document_requests(sta
 CREATE INDEX IF NOT EXISTS idx_document_requests_created_at ON document_requests(created_at DESC);
 
 COMMENT ON TABLE document_requests IS 'Demandes de documents envoyées par les avocats aux clients';
+COMMENT ON COLUMN document_requests.access_token IS 'Token sécurisé pour accéder au formulaire d''upload sans authentification';
+COMMENT ON COLUMN document_requests.document_types IS 'Types de documents demandés sous forme de tableau';
+
+CREATE TABLE IF NOT EXISTS appointments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    lawyer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    case_id UUID REFERENCES cases(id) ON DELETE SET NULL,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    location VARCHAR(255),
+    location_type VARCHAR(50) CHECK (location_type IN ('office', 'court', 'client_location', 'online', 'other')),
+    location_address TEXT,
+    location_latitude DECIMAL(10, 8),
+    location_longitude DECIMAL(11, 8),
+    meeting_url VARCHAR(500),
+    appointment_type VARCHAR(100) DEFAULT 'consultation',
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed', 'no_show')),
+    is_recurring BOOLEAN DEFAULT false,
+    recurrence_pattern VARCHAR(50),
+    recurrence_end_date DATE,
+    parent_appointment_id UUID REFERENCES appointments(id) ON DELETE CASCADE,
+    series_id UUID,
+    reminder_sent BOOLEAN DEFAULT false,
+    reminder_sent_at TIMESTAMP,
+    reminder_24h_sent BOOLEAN DEFAULT FALSE,
+    reminder_24h_sent_at TIMESTAMP,
+    reminder_2h_sent BOOLEAN DEFAULT FALSE,
+    reminder_2h_sent_at TIMESTAMP,
+    notes TEXT,
+    private_notes TEXT,
+    shared_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_start_before_end CHECK (start_date < end_date)
+    );
+
+CREATE INDEX IF NOT EXISTS idx_appointments_lawyer_id ON appointments(lawyer_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_client_id ON appointments(client_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_case_id ON appointments(case_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_start_date ON appointments(start_date);
+CREATE INDEX IF NOT EXISTS idx_appointments_end_date ON appointments(end_date);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
+CREATE INDEX IF NOT EXISTS idx_appointments_is_recurring ON appointments(is_recurring);
+CREATE INDEX IF NOT EXISTS idx_appointments_parent_id ON appointments(parent_appointment_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_series_id ON appointments(series_id) WHERE series_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_appointments_location_type ON appointments(location_type) WHERE location_type IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_appointments_reminder_24h ON appointments(start_date, reminder_24h_sent) WHERE status IN ('pending', 'confirmed');
+CREATE INDEX IF NOT EXISTS idx_appointments_reminder_2h ON appointments(start_date, reminder_2h_sent) WHERE status IN ('pending', 'confirmed');
+
+COMMENT ON TABLE appointments IS 'Rendez-vous entre avocats et clients';
+COMMENT ON COLUMN appointments.location_type IS 'Type de lieu du rendez-vous (office, court, client_location, online, other)';
+COMMENT ON COLUMN appointments.location_address IS 'Adresse complète du rendez-vous';
+COMMENT ON COLUMN appointments.location_latitude IS 'Latitude GPS du lieu';
+COMMENT ON COLUMN appointments.location_longitude IS 'Longitude GPS du lieu';
+COMMENT ON COLUMN appointments.meeting_url IS 'URL de la réunion en ligne (Zoom, Teams, etc.)';
+COMMENT ON COLUMN appointments.private_notes IS 'Notes privées visibles uniquement par l''avocat';
+COMMENT ON COLUMN appointments.shared_notes IS 'Notes partagées visibles par le client';
+COMMENT ON COLUMN appointments.series_id IS 'ID de la série si le rendez-vous fait partie d''une récurrence';
+COMMENT ON COLUMN appointments.reminder_24h_sent IS 'Indique si le rappel 24h avant a été envoyé';
+COMMENT ON COLUMN appointments.reminder_2h_sent IS 'Indique si le rappel 2h avant a été envoyé';
+
+CREATE TABLE IF NOT EXISTS appointment_series (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    frequency VARCHAR(20) NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly')),
+    interval INTEGER NOT NULL DEFAULT 1,
+    days_of_week INTEGER[],
+    end_date DATE,
+    occurrences INTEGER,
+    created_by UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+COMMENT ON TABLE appointment_series IS 'Séries de rendez-vous récurrents';
+
+CREATE TABLE IF NOT EXISTS appointment_suggestions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    appointment_id UUID REFERENCES appointments(id) ON DELETE CASCADE,
+    suggested_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    suggested_to UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    suggested_start_date TIMESTAMP NOT NULL,
+    suggested_end_date TIMESTAMP NOT NULL,
+    message TEXT,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+    responded_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_suggested_dates CHECK (suggested_start_date < suggested_end_date)
+    );
+
+CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_appointment_id ON appointment_suggestions(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_suggested_by ON appointment_suggestions(suggested_by);
+CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_suggested_to ON appointment_suggestions(suggested_to);
+CREATE INDEX IF NOT EXISTS idx_appointment_suggestions_status ON appointment_suggestions(status);
+
+COMMENT ON TABLE appointment_suggestions IS 'Propositions de créneaux de rendez-vous';
+
+CREATE TABLE IF NOT EXISTS appointment_documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    appointment_id UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+    uploaded_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    document_type VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    file_name VARCHAR(255) NOT NULL,
+    file_size BIGINT NOT NULL,
+    file_type VARCHAR(100) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    is_private BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_appointment_documents_appointment_id ON appointment_documents(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_appointment_documents_uploaded_by ON appointment_documents(uploaded_by);
+CREATE INDEX IF NOT EXISTS idx_appointment_documents_document_type ON appointment_documents(document_type);
+CREATE INDEX IF NOT EXISTS idx_appointment_documents_is_private ON appointment_documents(is_private);
+CREATE INDEX IF NOT EXISTS idx_appointment_documents_created_at ON appointment_documents(created_at DESC);
+
+COMMENT ON TABLE appointment_documents IS 'Documents et notes liés aux rendez-vous';
+COMMENT ON COLUMN appointment_documents.is_private IS 'True si document visible uniquement par l''avocat';
+COMMENT ON COLUMN appointment_documents.document_type IS 'Type de document (agenda, notes, contract, evidence, report, other)';
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lawyer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    case_id UUID REFERENCES cases(id) ON DELETE SET NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    is_published BOOLEAN DEFAULT FALSE,
+    moderated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    moderated_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_reviews_lawyer_id ON reviews(lawyer_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_client_id ON reviews(client_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_is_published ON reviews(is_published);
+
+COMMENT ON TABLE reviews IS 'Avis et évaluations des clients sur les avocats';
+
+CREATE TABLE IF NOT EXISTS client_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    lawyer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    request_type VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    case_category VARCHAR(100),
+    urgency VARCHAR(50) DEFAULT 'medium' CHECK (urgency IN ('low', 'medium', 'high', 'urgent')),
+    budget_min DECIMAL(10, 2),
+    budget_max DECIMAL(10, 2),
+    preferred_date DATE,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+    lawyer_response TEXT,
+    responded_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_client_requests_client_id ON client_requests(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_requests_lawyer_id ON client_requests(lawyer_id);
+CREATE INDEX IF NOT EXISTS idx_client_requests_status ON client_requests(status);
+CREATE INDEX IF NOT EXISTS idx_client_requests_urgency ON client_requests(urgency);
+CREATE INDEX IF NOT EXISTS idx_client_requests_created_at ON client_requests(created_at DESC);
+
+COMMENT ON TABLE client_requests IS 'Demandes envoyées par les clients aux avocats';
+
+CREATE TABLE IF NOT EXISTS client_notes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    note_type VARCHAR(50) DEFAULT 'general' CHECK (note_type IN ('general', 'important', 'warning', 'reminder', 'meeting')),
+    title VARCHAR(255),
+    content TEXT NOT NULL,
+    is_private BOOLEAN DEFAULT TRUE,
+    remind_at TIMESTAMP,
+    reminder_sent BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_client_notes_client_id ON client_notes(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_notes_created_by ON client_notes(created_by);
+CREATE INDEX IF NOT EXISTS idx_client_notes_note_type ON client_notes(note_type);
+
+COMMENT ON TABLE client_notes IS 'Notes privées concernant les clients (pour avocats)';
+
+CREATE TABLE IF NOT EXISTS client_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    case_id UUID REFERENCES cases(id) ON DELETE SET NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_type VARCHAR(50) NOT NULL CHECK (payment_type IN ('consultation', 'retainer', 'hourly', 'fixed', 'expense', 'other')),
+    payment_method VARCHAR(50) CHECK (payment_method IN ('cash', 'check', 'card', 'transfer', 'online')),
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'partial', 'overdue', 'cancelled', 'refunded')),
+    due_date DATE,
+    paid_date DATE,
+    invoice_number VARCHAR(100),
+    description TEXT,
+    notes TEXT,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_client_payments_client_id ON client_payments(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_payments_case_id ON client_payments(case_id);
+CREATE INDEX IF NOT EXISTS idx_client_payments_status ON client_payments(status);
+CREATE INDEX IF NOT EXISTS idx_client_payments_due_date ON client_payments(due_date);
+
+COMMENT ON TABLE client_payments IS 'Suivi des paiements des clients';
+
+CREATE TABLE IF NOT EXISTS client_communications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    case_id UUID REFERENCES cases(id) ON DELETE SET NULL,
+    communication_type VARCHAR(50) NOT NULL CHECK (communication_type IN ('email', 'phone', 'meeting', 'sms', 'video_call', 'other')),
+    direction VARCHAR(20) NOT NULL CHECK (direction IN ('incoming', 'outgoing')),
+    subject VARCHAR(255),
+    summary TEXT,
+    duration_minutes INTEGER,
+    outcome TEXT,
+    follow_up_required BOOLEAN DEFAULT FALSE,
+    follow_up_date DATE,
+    created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_client_communications_client_id ON client_communications(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_communications_case_id ON client_communications(case_id);
+CREATE INDEX IF NOT EXISTS idx_client_communications_created_at ON client_communications(created_at DESC);
+
+COMMENT ON TABLE client_communications IS 'Historique des communications avec les clients';
+
+CREATE TABLE IF NOT EXISTS case_offers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    case_title VARCHAR(255) NOT NULL,
+    case_description TEXT NOT NULL,
+    case_type VARCHAR(100) NOT NULL,
+    urgency VARCHAR(50) DEFAULT 'medium' CHECK (urgency IN ('low', 'medium', 'high', 'urgent')),
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    budget_range VARCHAR(100),
+    location VARCHAR(255),
+    preferred_specialties TEXT[],
+    status VARCHAR(50) DEFAULT 'open' CHECK (status IN ('open', 'assigned', 'closed', 'cancelled')),
+    assigned_lawyer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    assigned_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_case_offers_client_id ON case_offers(client_id);
+CREATE INDEX IF NOT EXISTS idx_case_offers_assigned_lawyer_id ON case_offers(assigned_lawyer_id);
+CREATE INDEX IF NOT EXISTS idx_case_offers_status ON case_offers(status);
+CREATE INDEX IF NOT EXISTS idx_case_offers_urgency ON case_offers(urgency);
+CREATE INDEX IF NOT EXISTS idx_case_offers_case_type ON case_offers(case_type);
+CREATE INDEX IF NOT EXISTS idx_case_offers_created_at ON case_offers(created_at DESC);
+
+COMMENT ON TABLE case_offers IS 'Offres de dossiers publiées par les clients';
+
+CREATE TABLE IF NOT EXISTS lawyer_requests (
+                                               id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    lawyer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    case_type VARCHAR(100) NOT NULL,
+    urgency VARCHAR(50) DEFAULT 'medium' CHECK (urgency IN ('low', 'medium', 'high', 'urgent')),
+    budget_min DECIMAL(10, 2),
+    budget_max DECIMAL(10, 2),
+    preferred_date TIMESTAMP,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+    rejection_reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    responded_at TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_lawyer_requests_client_id ON lawyer_requests(client_id);
+CREATE INDEX IF NOT EXISTS idx_lawyer_requests_lawyer_id ON lawyer_requests(lawyer_id);
+CREATE INDEX IF NOT EXISTS idx_lawyer_requests_status ON lawyer_requests(status);
+CREATE INDEX IF NOT EXISTS idx_lawyer_requests_created_at ON lawyer_requests(created_at DESC);
+
+COMMENT ON TABLE lawyer_requests IS 'Demandes des clients vers des avocats spécifiques';
 
 CREATE TABLE IF NOT EXISTS conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -264,7 +561,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT check_different_participants CHECK (participant1_id != participant2_id),
     CONSTRAINT unique_conversation UNIQUE (participant1_id, participant2_id)
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_conversations_participant1 ON conversations(participant1_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_participant2 ON conversations(participant2_id);
@@ -283,7 +580,7 @@ CREATE TABLE IF NOT EXISTS messages (
     is_read BOOLEAN DEFAULT false,
     read_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
@@ -303,7 +600,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN DEFAULT false,
     read_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(notification_type);
@@ -312,78 +609,31 @@ CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created
 
 COMMENT ON TABLE notifications IS 'Notifications système pour les utilisateurs';
 
-CREATE TABLE IF NOT EXISTS client_requests (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    lawyer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    request_type VARCHAR(100) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    case_category VARCHAR(100),
-    urgency VARCHAR(50) DEFAULT 'medium' CHECK (urgency IN ('low', 'medium', 'high', 'urgent')),
-    budget_min DECIMAL(10, 2),
-    budget_max DECIMAL(10, 2),
-    preferred_date DATE,
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_client_requests_client_id ON client_requests(client_id);
-CREATE INDEX IF NOT EXISTS idx_client_requests_lawyer_id ON client_requests(lawyer_id);
-CREATE INDEX IF NOT EXISTS idx_client_requests_status ON client_requests(status);
-CREATE INDEX IF NOT EXISTS idx_client_requests_urgency ON client_requests(urgency);
-CREATE INDEX IF NOT EXISTS idx_client_requests_created_at ON client_requests(created_at DESC);
-
-COMMENT ON TABLE client_requests IS 'Demandes envoyées par les clients aux avocats';
-
-CREATE TABLE IF NOT EXISTS case_offers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    case_title VARCHAR(255) NOT NULL,
-    case_description TEXT NOT NULL,
-    case_type VARCHAR(100) NOT NULL,
-    urgency VARCHAR(50) DEFAULT 'medium' CHECK (urgency IN ('low', 'medium', 'high', 'urgent')),
-    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    budget_range VARCHAR(100),
-    location VARCHAR(255),
-    preferred_specialties TEXT[],
-    status VARCHAR(50) DEFAULT 'open' CHECK (status IN ('open', 'assigned', 'closed', 'cancelled')),
-    assigned_lawyer_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    assigned_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_case_offers_client_id ON case_offers(client_id);
-CREATE INDEX IF NOT EXISTS idx_case_offers_assigned_lawyer_id ON case_offers(assigned_lawyer_id);
-CREATE INDEX IF NOT EXISTS idx_case_offers_status ON case_offers(status);
-CREATE INDEX IF NOT EXISTS idx_case_offers_urgency ON case_offers(urgency);
-CREATE INDEX IF NOT EXISTS idx_case_offers_case_type ON case_offers(case_type);
-CREATE INDEX IF NOT EXISTS idx_case_offers_created_at ON case_offers(created_at DESC);
-
-COMMENT ON TABLE case_offers IS 'Offres de dossiers publiées par les clients';
-
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DO $$
 DECLARE
-    table_name TEXT;
+table_name TEXT;
 BEGIN
-    FOR table_name IN
-        SELECT tablename
-        FROM pg_tables
-        WHERE schemaname = 'public'
-        AND tablename IN ('users', 'support_tickets', 'cases', 'appointments', 'documents', 'document_requests', 'client_requests', 'case_offers')
+FOR table_name IN
+SELECT tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+  AND tablename IN (
+                    'users', 'support_tickets', 'cases', 'appointments', 'documents',
+                    'document_requests', 'client_requests', 'case_offers', 'client_notes',
+                    'client_payments', 'appointment_documents', 'lawyer_requests'
+    )
     LOOP
         EXECUTE format('DROP TRIGGER IF EXISTS trigger_update_%I_timestamp ON %I', table_name, table_name);
-        EXECUTE format('CREATE TRIGGER trigger_update_%I_timestamp BEFORE UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', table_name, table_name);
-    END LOOP;
+EXECUTE format('CREATE TRIGGER trigger_update_%I_timestamp BEFORE UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', table_name, table_name);
+END LOOP;
 END;
 $$;
 
@@ -391,10 +641,11 @@ CREATE TABLE IF NOT EXISTS migrations (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
     executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
-INSERT INTO migrations (name) VALUES ('init-db')
-ON CONFLICT (name) DO NOTHING;
+INSERT INTO migrations (name) VALUES
+    ('init-db')
+    ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO users (
     email,
@@ -405,13 +656,13 @@ INSERT INTO users (
     is_active,
     is_verified
 ) VALUES (
-    'a.elwardi@myskolae.fr',
-    '$2b$10$rBV2R8T5fGKjKW.8xqF5..8qVx4YZ5nD7hNZO8nQqCXKZ1L0vE7Oi',
-    'admin',
-    'Admin',
-    'Système',
-    true,
-    true
-) ON CONFLICT (email) DO NOTHING;
+             'a.elwardi@myskolae.fr',
+             '$2b$10$rBV2R8T5fGKjKW.8xqF5..8qVx4YZ5nD7hNZO8nQqCXKZ1L0vE7Oi',
+             'admin',
+             'Admin',
+             'Système',
+             true,
+             true
+         ) ON CONFLICT (email) DO NOTHING;
 
-COMMENT ON DATABASE CURRENT_DATABASE() IS 'Base de données Application de Gestion Juridique - Version 2026-01-07';
+COMMENT ON DATABASE postgres IS 'Base de données Application de Gestion Juridique - Version consolidée 2026-01-07';
