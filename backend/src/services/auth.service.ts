@@ -209,7 +209,6 @@ export const forgotPassword = async (email: string): Promise<void> => {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    console.log('Password reset requested for non-existent email:', email);
     return;
   }
 

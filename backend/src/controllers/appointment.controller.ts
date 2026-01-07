@@ -46,7 +46,6 @@ export const createAppointment = async (req: Request, res: Response): Promise<vo
     const data: CreateAppointmentDTO = req.body;
     const appointment = await appointmentService.createAppointment(data);
 
-    // Logger l'activité de création de rendez-vous
     if (req.user?.userId) {
       try {
         await adminQueries.createActivityLog(

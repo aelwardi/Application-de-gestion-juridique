@@ -142,7 +142,6 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}): Prom
     paramCount++;
   }
 
-  // Compter le total
   const countQuery = query.replace(
     /SELECT.*FROM/s,
     'SELECT COUNT(*) FROM'
@@ -150,7 +149,6 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}): Prom
   const countResult = await pool.query(countQuery, values);
   const total = parseInt(countResult.rows[0].count);
 
-  // Ajouter l'ordre et la pagination
   query += ` ORDER BY a.start_date ASC`;
 
   if (filters.limit) {
@@ -434,7 +432,6 @@ export const getAppointmentStats = async (lawyerId?: string, clientId?: string):
   const result = await pool.query(query, values);
   const stats = result.rows[0];
 
-  // Statistiques par type
   const typeQuery = `
     SELECT appointment_type, COUNT(*) as count
     FROM appointments

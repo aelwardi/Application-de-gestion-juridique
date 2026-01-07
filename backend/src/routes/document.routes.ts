@@ -96,7 +96,6 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
     const document = result.rows[0];
 
 
-    // Logger l'activité d'upload de document
     try {
       await adminQueries.createActivityLog(
         uploaded_by,
@@ -117,7 +116,6 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
       console.error('Failed to log DOCUMENT_UPLOADED activity:', logError);
     }
 
-    // === NOTIFICATIONS ===
     if (case_id && case_id !== 'null') {
       try {
         const caseQuery = await pool.query(
@@ -249,14 +247,12 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     const params: any[] = [];
     let paramIndex = 1;
 
-    // Filtre par user_id (documents uploadés par ou accessibles à cet utilisateur)
     if (user_id) {
       query += ` AND (d.uploaded_by = $${paramIndex} OR c.client_id = $${paramIndex} OR c.lawyer_id = $${paramIndex})`;
       params.push(user_id);
       paramIndex++;
     }
 
-    // Filtre par case_id
     if (case_id) {
       query += ` AND d.case_id = $${paramIndex}`;
       params.push(case_id);

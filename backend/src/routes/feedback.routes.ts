@@ -6,11 +6,9 @@ import { requireAdmin } from '../middleware/admin.middleware';
 const router = Router();
 const feedbackController = new FeedbackController();
 
-// Routes pour tous les utilisateurs authentifiés
 router.post('/', authenticate, feedbackController.create.bind(feedbackController));
 router.get('/my-feedback', authenticate, feedbackController.getMyFeedback.bind(feedbackController));
 
-// Routes admin uniquement
 router.get('/', authenticate, requireAdmin, feedbackController.getAll.bind(feedbackController));
 router.get('/stats', authenticate, requireAdmin, feedbackController.getStats.bind(feedbackController));
 router.get('/:id', authenticate, requireAdmin, feedbackController.getById.bind(feedbackController));

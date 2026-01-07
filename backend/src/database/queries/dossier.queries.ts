@@ -245,7 +245,7 @@ export const caseQueries = {
       RETURNING *
     `;
 
-    const result = await pool.query(query, [lawyerId, caseId]); // lawyerId est déjà users.id
+    const result = await pool.query(query, [lawyerId, caseId]);
     return result.rows[0] || null;
   },
 

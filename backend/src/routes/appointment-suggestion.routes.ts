@@ -17,7 +17,6 @@ router.post('/', async (req: Request, res: Response) => {
     const user = (req as any).user;
     const { appointment_id, suggested_to_user_id, suggested_start_time, suggested_end_time, notes } = req.body;
 
-    // Vérifier que le créneau est valide
     if (new Date(suggested_end_time) <= new Date(suggested_start_time)) {
       res.status(400).json({
         success: false,

@@ -38,7 +38,6 @@ router.get('/pending/:lawyerId', async (req, res) => {
  */
 router.post('/:id/accept', async (req, res) => {
     try {
-        console.log(`[BACKEND] Tentative d'acceptation de l'offre : ${req.params.id}`);
         const result = await acceptOfferQuery(req.params.id);
 
         if (result.success && result.caseId) {

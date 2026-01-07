@@ -2,8 +2,6 @@ import { pool } from '../config/database.config';
 
 /**
  * Marquer automatiquement les rendez-vous terminés
- * Vérifie tous les rendez-vous dont la date de fin est dépassée
- * et les marque comme 'completed'
  */
 export const autoCompleteAppointments = async (): Promise<number> => {
   const query = `
@@ -18,13 +16,9 @@ export const autoCompleteAppointments = async (): Promise<number> => {
     const result = await pool.query(query);
     const count = result.rowCount || 0;
 
-    if (count > 0) {
-      console.log(`✅ ${count} rendez-vous marqués automatiquement comme terminés`);
-    }
-
     return count;
   } catch (error) {
-    console.error('❌ Erreur lors du marquage automatique des rendez-vous:', error);
+    console.error('Erreur lors du marquage automatique des rendez-vous:', error);
     throw error;
   }
 };

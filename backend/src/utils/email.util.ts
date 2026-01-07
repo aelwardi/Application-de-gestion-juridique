@@ -23,8 +23,6 @@ const transporter = nodemailer.createTransport({
  */
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   if (!process.env.GMAIL_APP_USERNAME || !process.env.GMAIL_APP_PASSWORD) {
-    console.warn('Email non configuré. Passez cette étape.');
-    console.warn('   Pour activer les emails, configurez GMAIL_APP_USERNAME et GMAIL_APP_PASSWORD dans .env');
     return false;
   }
 

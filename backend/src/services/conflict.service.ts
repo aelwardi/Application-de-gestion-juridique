@@ -80,8 +80,6 @@ export const findAvailableSlots = async (
       endOfDay.toISOString()
     ]);
 
-    console.log('📅 Rendez-vous trouvés:', result.rows);
-
     const bookedSlots = result.rows.map((row: any) => ({
       start: new Date(row.start_time),
       end: new Date(row.end_time)

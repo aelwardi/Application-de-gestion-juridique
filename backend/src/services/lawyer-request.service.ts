@@ -274,7 +274,6 @@ export const acceptLawyerRequest = async (requestId: string): Promise<LawyerRequ
     }
   } catch (emailError) {
     console.error('Erreur lors de la récupération des données pour l\'email:', emailError);
-    // On ne fait pas échouer l'acceptation si l'email échoue
   }
 
   return acceptedRequest;
