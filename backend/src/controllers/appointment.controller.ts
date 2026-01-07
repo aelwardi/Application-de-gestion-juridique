@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as appointmentService from '../services/appointment.service';
 import * as appointmentDocumentsService from '../services/appointment-documents.service';
+import * as adminQueries from '../database/queries/admin.queries';
 import type { CreateAppointmentDTO, UpdateAppointmentDTO, AppointmentFilters } from '../types/appointment.types';
 import multer from 'multer';
 import path from 'path';
@@ -44,6 +45,28 @@ export const createAppointment = async (req: Request, res: Response): Promise<vo
   try {
     const data: CreateAppointmentDTO = req.body;
     const appointment = await appointmentService.createAppointment(data);
+
+    // Logger l'activité de création de rendez-vous
+    if (req.user?.userId) {
+      try {
+        await adminQueries.createActivityLog(
+          req.user.userId,
+          'APPOINTMENT_CREATED',
+          'appointment',
+          appointment.id,
+          req.ip || req.socket.remoteAddress || null,
+          req.get('user-agent') || null,
+          {
+            appointment_type: data.appointment_type,
+            appointment_date: data.start_time,
+            lawyer_id: data.lawyer_id,
+            client_id: data.client_id
+          }
+        );
+      } catch (logError) {
+        console.error('Failed to log APPOINTMENT_CREATED activity:', logError);
+      }
+    }
 
     res.status(201).json({
       success: true,

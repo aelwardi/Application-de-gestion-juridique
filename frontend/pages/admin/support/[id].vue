@@ -26,6 +26,13 @@
               <option value="closed">Fermé</option>
             </select>
             <button
+              v-if="ticket.status !== 'closed'"
+              @click="closeTicket"
+              class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+            >
+              ✓ Clôturer
+            </button>
+            <button
               @click="assignToMe"
               class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
@@ -108,14 +115,22 @@
           </div>
 
           <div class="mt-6 bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Messages</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Conversation ({{ messages.length }} messages)</h3>
 
-            <div class="space-y-4 mb-6">
+            <div v-if="messages.length === 0" class="text-center py-8 bg-gray-50 rounded-lg">
+              <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <p class="text-sm text-gray-500">Aucun message pour le moment</p>
+              <p class="text-xs text-gray-400 mt-1">Envoyez un message pour commencer la conversation</p>
+            </div>
+
+            <div v-else class="space-y-4 mb-6 max-h-96 overflow-y-auto">
               <div
                 v-for="message in messages"
                 :key="message.id"
-                class="border rounded-lg p-4"
-                :class="message.is_internal ? 'border-yellow-200 bg-yellow-50' : 'border-gray-200'"
+                class="border rounded-lg p-4 transition-all hover:shadow-sm"
+                :class="message.is_internal ? 'border-yellow-200 bg-yellow-50' : 'border-gray-200 bg-white'"
               >
                 <div class="flex items-start justify-between">
                   <div>
@@ -123,10 +138,10 @@
                     <p class="text-xs text-gray-500">{{ formatDate(message.created_at) }}</p>
                   </div>
                   <span v-if="message.is_internal" class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Interne
+                    🔒 Interne
                   </span>
                 </div>
-                <p class="mt-2 text-sm text-gray-700">{{ message.message }}</p>
+                <p class="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{{ message.message }}</p>
               </div>
             </div>
 
@@ -188,13 +203,18 @@ const fetchTicket = async () => {
       method: 'GET',
     });
 
+    console.log('📬 Réponse ticket:', response);
+
     if (response.success) {
       ticket.value = response.data.ticket;
       messages.value = response.data.messages;
       newStatus.value = ticket.value.status;
+
+      console.log(' Ticket chargé:', ticket.value);
+      console.log(' Messages chargés:', messages.value.length);
     }
   } catch (error) {
-    console.error('Failed to fetch ticket:', error);
+    console.error('❌ Failed to fetch ticket:', error);
   } finally {
     loading.value = false;
   }
@@ -227,10 +247,29 @@ const assignToMe = async () => {
   }
 };
 
+const closeTicket = async () => {
+  if (!confirm('Êtes-vous sûr de vouloir clôturer ce ticket ? L\'utilisateur devra créer un nouveau ticket pour vous contacter à nouveau.')) {
+    return;
+  }
+
+  try {
+    await apiFetch(`/support/tickets/${ticket.value.id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'closed' }),
+    });
+    ticket.value.status = 'closed';
+    newStatus.value = 'closed';
+    alert('✅ Ticket clôturé avec succès');
+  } catch (error) {
+    console.error('Failed to close ticket:', error);
+    alert('❌ Erreur lors de la clôture du ticket');
+  }
+};
+
 const sendMessage = async () => {
   sending.value = true;
   try {
-    const response = await apiFetch(`/support/tickets/${ticket.value.id}/messages`, {
+    const response = await apiFetch<any>(`/support/tickets/${ticket.value.id}/messages`, {
       method: 'POST',
       body: JSON.stringify({
         message: newMessage.value,

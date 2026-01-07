@@ -31,8 +31,8 @@
     </nav>
 
     <div class="flex">
-      <aside class="w-64 bg-white shadow-lg min-h-screen">
-        <nav class="mt-5 px-2">
+      <aside class="w-64 bg-white shadow-lg min-h-screen flex flex-col">
+        <nav class="mt-5 px-2 flex-1 overflow-y-auto">
           <NuxtLink
             to="/admin/stats"
             class="group flex items-center px-3 py-3 text-sm font-medium rounded-md mb-1 hover:bg-purple-50 hover:text-purple-700 transition"
@@ -142,8 +142,8 @@
           </NuxtLink>
         </nav>
 
-        <div class="absolute bottom-4 left-4 right-4">
-          <div class="bg-purple-50 rounded-lg p-3">
+        <div class="mt-auto pt-4">
+          <div class="bg-purple-50 rounded-lg p-3 relative z-0">
             <p class="text-xs text-purple-700 font-medium">Version 1.0.0</p>
             <p class="text-xs text-gray-500 mt-1">© 2025 Back Office</p>
           </div>

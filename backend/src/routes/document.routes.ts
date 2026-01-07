@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/auth.middleware';
 import { sendDocumentUploadedEmail } from '../utils/email.util';
+import * as adminQueries from '../database/queries/admin.queries';
 
 import { pool } from '../config/database.config';
 const storage = multer.diskStorage({
@@ -25,7 +26,7 @@ if (!fs.existsSync(uploadDir)) {
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 /**
@@ -90,6 +91,29 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
     const result = await pool.query(query, values);
     const document = result.rows[0];
 
+
+    // Logger l'activité d'upload de document
+    try {
+      await adminQueries.createActivityLog(
+        uploaded_by,
+        'DOCUMENT_UPLOADED',
+        'document',
+        document.id,
+        req.ip || req.socket.remoteAddress || null,
+        req.get('user-agent') || null,
+        {
+          title: title,
+          document_type: document_type,
+          case_id: case_id === 'null' ? null : case_id,
+          file_name: req.file.originalname,
+          is_confidential: finalIsConfidential
+        }
+      );
+    } catch (logError) {
+      console.error('Failed to log DOCUMENT_UPLOADED activity:', logError);
+    }
+
+    // === NOTIFICATIONS ===
     if (case_id && case_id !== 'null') {
       try {
         const caseQuery = await pool.query(

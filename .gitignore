@@ -12,3 +12,4 @@ backend/uploads/
 dist
 .nuxt
 .output
+.idea

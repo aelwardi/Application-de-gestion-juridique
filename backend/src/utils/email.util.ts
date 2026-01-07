@@ -759,7 +759,7 @@ export const sendDocumentRequestEmail = async (
 
   return sendEmail({
     to: clientEmail,
-    subject: `📄 Demande de documents - ${caseTitle}`,
+    subject: `Demande de documents - ${caseTitle}`,
     html,
   });
 };

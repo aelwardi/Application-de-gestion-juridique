@@ -66,6 +66,7 @@ export const useNotificationStore = defineStore('notifications', {
         const config = useRuntimeConfig();
         let allNotifs: Notification[] = [];
 
+        // 1. Récupération des notifications depuis l'API (documents, messages, etc.)
         try {
           const apiResponse = await $fetch<any>(`${config.public.apiBaseUrl}/notifications`, {
             method: 'GET',

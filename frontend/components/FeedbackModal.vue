@@ -198,23 +198,29 @@ const submitFeedback = async () => {
 
   submitting.value = true
   try {
-    // TODO: Implémenter l'envoi du feedback au backend
+    const { apiFetch } = useApi()
+
     const feedbackData = {
-      ...form.value,
-      userId: authStore.user?.id,
-      userEmail: authStore.user?.email,
-      userRole: authStore.user?.role,
-      timestamp: new Date().toISOString()
+      rating: form.value.rating,
+      category: form.value.category || null,
+      comment: form.value.comment || null,
+      suggestions: form.value.suggestions || null,
+      user_email: authStore.user?.email,
+      user_role: authStore.user?.role
     }
 
-    console.log('Feedback envoyé:', feedbackData)
+    const response = await apiFetch('/feedback', {
+      method: 'POST',
+      body: JSON.stringify(feedbackData)
+    })
 
-    // Simuler l'envoi
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    alert('✅ Merci pour votre avis ! Votre retour a été enregistré avec succès.')
-    closeModal()
-  } catch (error) {
+    if (response.success) {
+      alert('✅ Merci pour votre avis ! Votre retour a été enregistré avec succès.')
+      closeModal()
+    } else {
+      throw new Error(response.message || 'Erreur lors de l\'envoi')
+    }
+  } catch (error: any) {
     console.error('Erreur lors de l\'envoi du feedback:', error)
     alert('❌ Une erreur est survenue. Veuillez réessayer.')
   } finally {

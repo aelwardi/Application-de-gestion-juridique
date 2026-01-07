@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { dossierService } from '../services/dossier.service';
+import * as adminQueries from '../database/queries/admin.queries';
 import { CreateCaseDTO, UpdateCaseDTO, CaseFilters } from '../types/case.types';
 
 export const dossierController = {
@@ -15,6 +16,24 @@ export const dossierController = {
       }
       
       const result = await dossierService.createCase(caseData);
+
+      // Logger l'activité de création de dossier
+      if (result.success && result.data && req.user?.userId) {
+        try {
+          await adminQueries.createActivityLog(
+            req.user.userId,
+            'CASE_CREATED',
+            'case',
+            result.data.id,
+            req.ip || req.socket.remoteAddress || null,
+            req.get('user-agent') || null,
+            { title: caseData.title, case_type: caseData.case_type, client_id: caseData.client_id }
+          );
+        } catch (logError) {
+          console.error('Failed to log CASE_CREATED activity:', logError);
+        }
+      }
+
       return res.status(201).json(result);
     } catch (error: any) {
       return res.status(500).json({

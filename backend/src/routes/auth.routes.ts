@@ -17,6 +17,7 @@ router.post('/reset-password', authController.resetPassword);
 /**
  * Protected routes (require authentication)
  */
+router.post('/logout', authenticate, authController.logout);
 router.get('/me', authenticate, authController.getMe);
 router.put('/me', authenticate, authController.updateMe);
 router.patch('/me/password', authenticate, authController.changePassword);
