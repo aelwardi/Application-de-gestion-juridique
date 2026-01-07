@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import * as supportService from '../services/support.service';
+import * as adminQueries from '../database/queries/admin.queries';
 import { authenticate } from '../middleware/auth.middleware';
 import { requireAdmin } from '../middleware/admin.middleware';
 
@@ -128,6 +129,21 @@ router.post('/tickets', async (req: Request, res: Response) => {
       category || null
     );
 
+    // Logger l'activité de création de ticket
+    try {
+      await adminQueries.createActivityLog(
+        userId,
+        'TICKET_CREATED',
+        'support_ticket',
+        ticket.id,
+        req.ip || req.socket.remoteAddress || null,
+        req.get('user-agent') || null,
+        { subject, priority: priority || 'medium', category }
+      );
+    } catch (logError) {
+      console.error('Failed to log TICKET_CREATED activity:', logError);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Ticket created successfully',
@@ -202,6 +218,23 @@ router.patch('/tickets/:id/status', requireAdmin, async (req: Request, res: Resp
     }
 
     await supportService.updateStatus(ticketId, status, adminId);
+
+    // Logger l'activité de clôture si le statut est "closed"
+    if (status === 'closed') {
+      try {
+        await adminQueries.createActivityLog(
+          adminId,
+          'TICKET_CLOSED',
+          'support_ticket',
+          ticketId,
+          req.ip || req.socket.remoteAddress || null,
+          req.get('user-agent') || null,
+          { ticket_id: ticketId, closed_by: adminId }
+        );
+      } catch (logError) {
+        console.error('Failed to log TICKET_CLOSED activity:', logError);
+      }
+    }
 
     res.json({
       success: true,

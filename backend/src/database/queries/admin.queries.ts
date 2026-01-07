@@ -247,6 +247,7 @@ export const getActivityLogs = async (
     SELECT 
       al.*,
       u.email as user_email,
+      u.role as user_role,
       CONCAT(u.first_name, ' ', u.last_name) as user_name
     FROM activity_logs al
     LEFT JOIN users u ON al.user_id = u.id

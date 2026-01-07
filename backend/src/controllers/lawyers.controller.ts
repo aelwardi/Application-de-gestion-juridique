@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as lawyersService from '../services/lawyers.service';
+import * as adminQueries from '../database/queries/admin.queries';
 
 /**
  * GET /api/admin/lawyers
@@ -72,6 +73,21 @@ export const verifyLawyer = async (req: Request, res: Response): Promise<void> =
     const adminId = req.user!.userId;
 
     await lawyersService.verifyLawyer(lawyerId, adminId);
+
+    // Logger l'activité de validation
+    try {
+      await adminQueries.createActivityLog(
+        adminId,
+        'LAWYER_VERIFIED',
+        'user',
+        lawyerId,
+        req.ip || req.socket.remoteAddress || null,
+        req.get('user-agent') || null,
+        { verified_by: adminId, lawyer_id: lawyerId }
+      );
+    } catch (logError) {
+      console.error('Failed to log LAWYER_VERIFIED activity:', logError);
+    }
 
     res.json({
       success: true,

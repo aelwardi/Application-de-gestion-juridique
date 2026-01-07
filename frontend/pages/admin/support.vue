@@ -1,366 +1,429 @@
-<template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 py-6">
-      <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Gestion des Tickets Support</h1>
-        <p class="text-gray-600 mt-2">Gérez tous les tickets de support des utilisateurs</p>
-      </div>
-
-      <!-- Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="text-sm text-gray-600">Total</div>
-          <div class="text-2xl font-bold text-gray-900">{{ stats.total }}</div>
+﻿<template>
+  <div class="min-h-screen bg-gray-50 flex flex-col">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-4 py-4">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <h1 class="text-2xl font-bold text-gray-900">Support Admin</h1>
         </div>
-        <div class="bg-blue-50 rounded-lg shadow p-6">
-          <div class="text-sm text-blue-600">Ouverts</div>
-          <div class="text-2xl font-bold text-blue-900">{{ stats.open }}</div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-600">{{ pagination.total }} tickets</span>
         </div>
-        <div class="bg-yellow-50 rounded-lg shadow p-6">
-          <div class="text-sm text-yellow-600">En cours</div>
-          <div class="text-2xl font-bold text-yellow-900">{{ stats.in_progress }}</div>
-        </div>
-        <div class="bg-green-50 rounded-lg shadow p-6">
-          <div class="text-sm text-green-600">Résolus</div>
-          <div class="text-2xl font-bold text-green-900">{{ stats.resolved }}</div>
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div class="bg-white rounded-lg shadow p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Rechercher..."
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-          />
-          <select
-            v-model="statusFilter"
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="">Tous les statuts</option>
-            <option value="open">Ouverts</option>
-            <option value="in_progress">En cours</option>
-            <option value="resolved">Résolus</option>
-            <option value="closed">Fermés</option>
-          </select>
-          <select
-            v-model="priorityFilter"
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="">Toutes les priorités</option>
-            <option value="low">Basse</option>
-            <option value="medium">Moyenne</option>
-            <option value="high">Haute</option>
-            <option value="urgent">Urgente</option>
-          </select>
-          <button
-            @click="loadTickets"
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-          >
-            Rafraîchir
-          </button>
-        </div>
-      </div>
-
-      <!-- Tickets List -->
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ticket</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilisateur</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priorité</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="ticket in filteredTickets" :key="ticket.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4">
-                <div class="text-sm font-medium text-gray-900">{{ ticket.subject }}</div>
-                <div class="text-sm text-gray-500">{{ ticket.category }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="text-sm text-gray-900">{{ ticket.user_name }}</div>
-                <div class="text-sm text-gray-500">{{ ticket.user_email }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <span :class="getStatusClass(ticket.status)" class="px-2 py-1 text-xs rounded-full">
-                  {{ getStatusLabel(ticket.status) }}
-                </span>
-              </td>
-              <td class="px-6 py-4">
-                <span :class="getPriorityClass(ticket.priority)" class="px-2 py-1 text-xs rounded-full">
-                  {{ getPriorityLabel(ticket.priority) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-500">
-                {{ formatDate(ticket.created_at) }}
-              </td>
-              <td class="px-6 py-4 text-sm">
-                <button
-                  @click="openTicket(ticket)"
-                  class="text-purple-600 hover:text-purple-900 font-medium"
-                >
-                  Répondre
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
 
-    <!-- Ticket Modal -->
-    <div v-if="selectedTicket" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="closeModal">
-      <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <!-- Header -->
-        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-          <div>
-            <h2 class="text-xl font-bold text-gray-900">{{ selectedTicket.subject }}</h2>
-            <p class="text-sm text-gray-600 mt-1">Par {{ selectedTicket.user_name }}</p>
-          </div>
-          <button @click="closeModal" class="p-2 hover:bg-gray-100 rounded-lg">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Messages -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4">
-          <!-- Initial message -->
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div class="text-sm text-gray-600 mb-2">Message initial</div>
-            <p class="text-gray-900">{{ selectedTicket.description }}</p>
-            <div class="text-xs text-gray-500 mt-2">{{ formatDateTime(selectedTicket.created_at) }}</div>
-          </div>
-
-          <!-- Messages -->
-          <div
-            v-for="message in selectedTicket.messages || []"
-            :key="message.id"
-            :class="['rounded-lg p-4', message.is_admin ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200']"
-          >
-            <div class="flex items-center gap-2 mb-2">
-              <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold', message.is_admin ? 'bg-green-600' : 'bg-purple-600']">
-                {{ message.is_admin ? 'A' : 'U' }}
-              </div>
-              <div>
-                <div class="text-sm font-medium">{{ message.is_admin ? 'Admin' : selectedTicket.user_name }}</div>
-                <div class="text-xs text-gray-500">{{ formatDateTime(message.created_at) }}</div>
-              </div>
+    <!-- Main Content -->
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)]">
+        <!-- Tickets List -->
+        <div class="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+          <!-- Search & Filter -->
+          <div class="p-4 border-b border-gray-200 space-y-3 flex-shrink-0">
+            <div class="relative">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Rechercher..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+              />
             </div>
-            <p class="text-gray-900">{{ message.message }}</p>
-          </div>
-        </div>
 
-        <!-- Input -->
-        <div class="p-6 border-t border-gray-200">
-          <form @submit.prevent="sendResponse" class="space-y-4">
-            <textarea
-              v-model="responseText"
-              rows="4"
-              placeholder="Votre réponse..."
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              required
-            ></textarea>
-            <div class="flex gap-3">
-              <button
-                type="submit"
-                :disabled="sending"
-                class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-              >
-                {{ sending ? 'Envoi...' : 'Envoyer la réponse' }}
-              </button>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
               <select
-                v-model="newStatus"
-                class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                v-model="filters.status"
+                @change="fetchTickets"
+                class="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
               >
-                <option value="open">Ouvert</option>
+                <option value="">Tous</option>
+                <option value="open">Ouverts</option>
                 <option value="in_progress">En cours</option>
-                <option value="resolved">Résolu</option>
-                <option value="closed">Fermé</option>
+                <option value="resolved">Resolus</option>
+                <option value="closed">Fermes</option>
               </select>
             </div>
-          </form>
+          </div>
+
+          <!-- Tickets -->
+          <div class="flex-1 overflow-y-auto">
+            <div v-if="loading" class="flex items-center justify-center py-12">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+
+            <div v-else-if="filteredTickets.length === 0" class="text-center py-12 px-4">
+              <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              <p class="text-sm text-gray-600">Aucun ticket trouvé</p>
+            </div>
+
+            <div v-else class="divide-y divide-gray-200">
+              <button
+                v-for="ticket in filteredTickets"
+                :key="ticket.id"
+                @click="selectTicket(ticket)"
+                :class="[
+                  'w-full text-left p-4 hover:bg-gray-50 transition-colors',
+                  selectedTicket?.id === ticket.id ? 'bg-purple-50 border-l-4 border-purple-600' : ''
+                ]"
+              >
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <h3 class="font-medium text-gray-900 text-sm line-clamp-1">
+                    {{ ticket.subject }}
+                  </h3>
+                  <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0', getStatusClass(ticket.status)]">
+                    {{ getStatusLabel(ticket.status) }}
+                  </span>
+                </div>
+                <p class="text-xs text-gray-600 line-clamp-2 mb-2">{{ ticket.description }}</p>
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                  <span>{{ ticket.user_name }}</span>
+                  <span></span>
+                  <span>{{ formatDate(ticket.created_at) }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conversation -->
+        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+          <div v-if="selectedTicket" class="flex flex-col h-full">
+            <!-- Header -->
+            <div class="p-4 border-b border-gray-200 flex-shrink-0">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-lg font-semibold text-gray-900">{{ selectedTicket.subject }}</h2>
+                  <div class="flex items-center gap-3 mt-1">
+                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', getStatusClass(selectedTicket.status)]">
+                      {{ getStatusLabel(selectedTicket.status) }}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                      {{ selectedTicket.user_name }} ({{ selectedTicket.user_email }})
+                    </span>
+                  </div>
+                </div>
+                <button
+                  v-if="selectedTicket.status !== 'closed'"
+                  @click="closeTicket"
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm flex items-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Cloturer
+                </button>
+              </div>
+            </div>
+
+            <!-- Messages -->
+            <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+              <!-- Initial message -->
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                    {{ getInitials(selectedTicket.user_name) }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="font-medium text-gray-900 text-sm">{{ selectedTicket.user_name }}</span>
+                      <span class="text-xs text-gray-500">
+                        {{ formatDateTime(selectedTicket.created_at) }}
+                      </span>
+                    </div>
+                    <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ selectedTicket.description }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RÃ©ponses -->
+              <div
+                v-for="message in selectedTicket.messages || []"
+                :key="message.id"
+                :class="['flex items-start gap-3', message.is_admin ? '' : 'flex-row-reverse']"
+              >
+                <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0', message.is_admin ? 'bg-green-600' : 'bg-blue-600']">
+                  {{ message.is_admin ? 'A' : getInitials(selectedTicket.user_name) }}
+                </div>
+                <div :class="['flex-1 min-w-0', message.is_admin ? '' : 'text-right']">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-medium text-gray-900 text-sm">
+                      {{ message.is_admin ? 'Admin' : selectedTicket.user_name }}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                      {{ formatDateTime(message.created_at) }}
+                    </span>
+                  </div>
+                  <div :class="['inline-block px-4 py-2 rounded-lg', message.is_admin ? 'bg-gray-100 text-gray-900' : 'bg-blue-100 text-gray-900']">
+                    <p class="text-sm whitespace-pre-wrap">{{ message.message }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input -->
+            <div v-if="selectedTicket.status !== 'closed'" class="p-4 border-t border-gray-200 flex-shrink-0">
+              <form @submit.prevent="sendMessage" class="flex gap-2">
+                <input
+                  v-model="messageText"
+                  type="text"
+                  placeholder="Ecrire votre reponse..."
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  :disabled="sendingMessage"
+                />
+                <button
+                  type="submit"
+                  :disabled="sendingMessage || !messageText.trim()"
+                  class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
+              </form>
+            </div>
+            <div v-else class="p-4 border-t border-gray-200 bg-gray-50 text-center flex-shrink-0">
+              <p class="text-sm text-gray-600">Ce ticket est cloturé</p>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else class="flex-1 flex items-center justify-center">
+            <div class="text-center">
+              <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              <p class="text-gray-600 font-medium">Selectionnez un ticket</p>
+              <p class="text-sm text-gray-400 mt-1">Choisissez une conversation pour commencer</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '~/stores/auth'
 
+<script setup lang="ts">
 definePageMeta({
   middleware: ['auth', 'admin'],
-  layout: 'authenticated'
-})
+  layout: 'admin',
+});
 
-const authStore = useAuthStore()
-const config = useRuntimeConfig()
+const { apiFetch } = useApi();
 
-const tickets = ref<any[]>([])
-const selectedTicket = ref<any>(null)
-const loading = ref(false)
-const sending = ref(false)
-const searchQuery = ref('')
-const statusFilter = ref('')
-const priorityFilter = ref('')
-const responseText = ref('')
-const newStatus = ref('in_progress')
+const tickets = ref<any[]>([]);
+const selectedTicket = ref<any>(null);
+const loading = ref(true);
+const searchQuery = ref('');
+const messageText = ref('');
+const sendingMessage = ref(false);
+const messagesContainer = ref<HTMLElement | null>(null);
 
-const stats = computed(() => {
-  return {
-    total: tickets.value.length,
-    open: tickets.value.filter(t => t.status === 'open').length,
-    in_progress: tickets.value.filter(t => t.status === 'in_progress').length,
-    resolved: tickets.value.filter(t => t.status === 'resolved').length
-  }
-})
+const filters = ref({
+  status: '',
+});
+
+const pagination = ref({
+  page: 1,
+  limit: 100,
+  total: 0,
+  totalPages: 0,
+});
 
 const filteredTickets = computed(() => {
-  return tickets.value.filter(ticket => {
-    const matchesSearch =
-      ticket.subject.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      ticket.user_name?.toLowerCase().includes(searchQuery.value.toLowerCase())
+  let result = tickets.value;
 
-    const matchesStatus = !statusFilter.value || ticket.status === statusFilter.value
-    const matchesPriority = !priorityFilter.value || ticket.priority === priorityFilter.value
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(t =>
+      t.subject.toLowerCase().includes(query) ||
+      t.description.toLowerCase().includes(query) ||
+      t.user_name.toLowerCase().includes(query)
+    );
+  }
 
-    return matchesSearch && matchesStatus && matchesPriority
-  })
-})
+  return result;
+});
 
-const loadTickets = async () => {
-  loading.value = true
+const fetchTickets = async () => {
+  loading.value = true;
   try {
-    const response = await $fetch<any>(`${config.public.apiBaseUrl}/support/tickets`, {
-      headers: authStore.getAuthHeaders()
-    })
+    const params = new URLSearchParams({
+      page: pagination.value.page.toString(),
+      limit: pagination.value.limit.toString(),
+    });
+
+    if (filters.value.status) params.append('status', filters.value.status);
+
+    const response = await apiFetch<any>(`/support/tickets?${params}`, { method: 'GET' });
 
     if (response.success) {
-      tickets.value = response.data.tickets || response.data || []
+      tickets.value = response.data;
+      pagination.value = { ...pagination.value, ...response.pagination };
     }
   } catch (error) {
-    console.error('Error loading tickets:', error)
+    console.error('Failed to fetch tickets:', error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
-const openTicket = async (ticket: any) => {
+const selectTicket = async (ticket: any) => {
   try {
-    const response = await $fetch<any>(`${config.public.apiBaseUrl}/support/tickets/${ticket.id}`, {
-      headers: authStore.getAuthHeaders()
-    })
+    const response = await apiFetch<any>(`/support/tickets/${ticket.id}`, { method: 'GET' });
 
     if (response.success) {
-      selectedTicket.value = response.data.ticket || response.data
-      newStatus.value = selectedTicket.value.status
+      selectedTicket.value = {
+        ...response.data.ticket,
+        messages: response.data.messages
+      };
+
+      setTimeout(() => {
+        if (messagesContainer.value) {
+          messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        }
+      }, 100);
     }
   } catch (error) {
-    console.error('Error loading ticket details:', error)
+    console.error('Failed to fetch ticket details:', error);
   }
-}
+};
 
-const sendResponse = async () => {
-  if (!responseText.value.trim() || !selectedTicket.value) return
+const sendMessage = async () => {
+  if (!messageText.value.trim() || !selectedTicket.value) return;
 
-  sending.value = true
+  sendingMessage.value = true;
   try {
-    // Envoyer le message
-    await $fetch(`${config.public.apiBaseUrl}/support/tickets/${selectedTicket.value.id}/messages`, {
+    const response = await apiFetch<any>(`/support/tickets/${selectedTicket.value.id}/messages`, {
       method: 'POST',
-      headers: authStore.getAuthHeaders(),
-      body: { message: responseText.value }
-    })
+      body: JSON.stringify({
+        message: messageText.value,
+        isInternal: false,
+      }),
+    });
 
-    // Mettre à jour le statut si changé
-    if (newStatus.value !== selectedTicket.value.status) {
-      await $fetch(`${config.public.apiBaseUrl}/support/tickets/${selectedTicket.value.id}/status`, {
-        method: 'PATCH',
-        headers: authStore.getAuthHeaders(),
-        body: { status: newStatus.value }
-      })
+    if (response.success) {
+      if (!selectedTicket.value.messages) {
+        selectedTicket.value.messages = [];
+      }
+      selectedTicket.value.messages.push(response.data);
+      messageText.value = '';
+
+      setTimeout(() => {
+        if (messagesContainer.value) {
+          messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        }
+      }, 100);
+    }
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    alert('Erreur lors de l\'envoi du message');
+  } finally {
+    sendingMessage.value = false;
+  }
+};
+
+const closeTicket = async () => {
+  if (!selectedTicket.value) return;
+
+  if (!confirm('Etes-vous sur de vouloir cloturer ce ticket ? Le client/avocat devra creer un nouveau ticket pour vous contacter a nouveau.')) {
+    return;
+  }
+
+  try {
+    await apiFetch(`/support/tickets/${selectedTicket.value.id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'closed' }),
+    });
+
+    selectedTicket.value.status = 'closed';
+
+    const ticketIndex = tickets.value.findIndex(t => t.id === selectedTicket.value.id);
+    if (ticketIndex !== -1) {
+      tickets.value[ticketIndex].status = 'closed';
     }
 
-    responseText.value = ''
-    await loadTickets()
-    await openTicket(selectedTicket.value)
+    alert('Ticket cloture avec succes');
   } catch (error) {
-    console.error('Error sending response:', error)
-    alert('Erreur lors de l\'envoi de la réponse')
-  } finally {
-    sending.value = false
+    console.error('Failed to close ticket:', error);
+    alert('Erreur lors de la cloture du ticket');
   }
-}
+};
 
-const closeModal = () => {
-  selectedTicket.value = null
-  responseText.value = ''
-}
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    open: 'Ouvert',
+    in_progress: 'En cours',
+    resolved: 'Resolu',
+    closed: 'Ferme',
+  };
+  return labels[status] || status;
+};
 
 const getStatusClass = (status: string) => {
   const classes: Record<string, string> = {
     open: 'bg-blue-100 text-blue-800',
     in_progress: 'bg-yellow-100 text-yellow-800',
     resolved: 'bg-green-100 text-green-800',
-    closed: 'bg-gray-100 text-gray-800'
+    closed: 'bg-gray-100 text-gray-800',
+  };
+  return classes[status] || 'bg-gray-100 text-gray-800';
+};
+
+const getInitials = (name: string) => {
+  if (!name) return '?';
+  const parts = name.split(' ');
+  if (parts.length >= 2 && parts[0] && parts[1]) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
-  return classes[status] || 'bg-gray-100 text-gray-800'
-}
+  return name.substring(0, 2).toUpperCase();
+};
 
-const getStatusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    open: 'Ouvert',
-    in_progress: 'En cours',
-    resolved: 'Résolu',
-    closed: 'Fermé'
-  }
-  return labels[status] || status
-}
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-const getPriorityClass = (priority: string) => {
-  const classes: Record<string, string> = {
-    low: 'bg-gray-100 text-gray-700',
-    medium: 'bg-blue-100 text-blue-700',
-    high: 'bg-orange-100 text-orange-700',
-    urgent: 'bg-red-100 text-red-700'
-  }
-  return classes[priority] || 'bg-gray-100 text-gray-700'
-}
+  if (days === 0) return 'Aujourd\'hui';
+  if (days === 1) return 'Hier';
+  if (days < 7) return `Il y a ${days} jours`;
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+};
 
-const getPriorityLabel = (priority: string) => {
-  const labels: Record<string, string> = {
-    low: 'Basse',
-    medium: 'Moyenne',
-    high: 'Haute',
-    urgent: 'Urgente'
-  }
-  return labels[priority] || priority
-}
+const formatDateTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('fr-FR')
-}
+  if (minutes < 1) return 'A l\'instant';
+  if (minutes < 60) return `Il y a ${minutes}min`;
+  if (hours < 24) return `Il y a ${hours}h`;
+  if (days === 1) return 'Hier';
+  if (days < 7) return `Il y a ${days} jours`;
 
-const formatDateTime = (date: string) => {
-  return new Date(date).toLocaleString('fr-FR', {
+  return date.toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
     minute: '2-digit'
-  })
-}
+  });
+};
 
 onMounted(() => {
-  loadTickets()
-})
+  fetchTickets();
+});
 </script>
 

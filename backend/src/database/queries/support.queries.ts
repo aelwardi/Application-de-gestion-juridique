@@ -209,7 +209,7 @@ export const updateTicketStatus = async (
 ): Promise<void> => {
   const query = `
     UPDATE support_tickets
-    SET status = $1, updated_at = CURRENT_TIMESTAMP, resolved_at = CASE WHEN $1 = 'resolved' THEN CURRENT_TIMESTAMP ELSE resolved_at END
+    SET status = $1::varchar, updated_at = CURRENT_TIMESTAMP, resolved_at = CASE WHEN $1::varchar = 'resolved' THEN CURRENT_TIMESTAMP ELSE resolved_at END
     WHERE id = $2
   `;
   await pool.query(query, [status, ticketId]);

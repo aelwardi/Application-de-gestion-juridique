@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
+import * as adminQueries from '../database/queries/admin.queries';
 import {
   registerSchema,
   loginSchema,
@@ -58,6 +59,21 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const validatedData = loginSchema.parse(req.body);
 
     const result = await authService.login(validatedData);
+
+    // Logger l'activité de connexion
+    try {
+      await adminQueries.createActivityLog(
+        result.user.id,
+        'USER_LOGIN',
+        'user',
+        result.user.id,
+        req.ip || req.socket.remoteAddress || null,
+        req.get('user-agent') || null,
+        { email: result.user.email, role: result.user.role }
+      );
+    } catch (logError) {
+      console.error('Failed to log USER_LOGIN activity:', logError);
+    }
 
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
@@ -155,6 +171,23 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
  */
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Logger l'activité de déconnexion si l'utilisateur est authentifié
+    if (req.user?.userId) {
+      try {
+        await adminQueries.createActivityLog(
+          req.user.userId,
+          'USER_LOGOUT',
+          'user',
+          req.user.userId,
+          req.ip || req.socket.remoteAddress || null,
+          req.get('user-agent') || null,
+          { email: req.user.email, role: req.user.role }
+        );
+      } catch (logError) {
+        console.error('Failed to log USER_LOGOUT activity:', logError);
+      }
+    }
+
     res.clearCookie('refreshToken');
 
     res.status(200).json({
@@ -215,6 +248,21 @@ export const updateMe = async (req: Request, res: Response): Promise<void> => {
     const validatedData = updateProfileSchema.parse(req.body);
 
     const user = await authService.updateProfile(req.user.userId, validatedData);
+
+    // Logger l'activité de mise à jour de profil
+    try {
+      await adminQueries.createActivityLog(
+        req.user.userId,
+        'PROFILE_UPDATED',
+        'user',
+        req.user.userId,
+        req.ip || req.socket.remoteAddress || null,
+        req.get('user-agent') || null,
+        { updated_fields: Object.keys(validatedData) }
+      );
+    } catch (logError) {
+      console.error('Failed to log PROFILE_UPDATED activity:', logError);
+    }
 
     res.status(200).json({
       success: true,

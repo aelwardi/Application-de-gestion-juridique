@@ -1,0 +1,21 @@
+import { Router } from 'express';
+import { FeedbackController } from '../controllers/feedback.controller';
+import { authenticate } from '../middleware/auth.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
+
+const router = Router();
+const feedbackController = new FeedbackController();
+
+// Routes pour tous les utilisateurs authentifiés
+router.post('/', authenticate, feedbackController.create.bind(feedbackController));
+router.get('/my-feedback', authenticate, feedbackController.getMyFeedback.bind(feedbackController));
+
+// Routes admin uniquement
+router.get('/', authenticate, requireAdmin, feedbackController.getAll.bind(feedbackController));
+router.get('/stats', authenticate, requireAdmin, feedbackController.getStats.bind(feedbackController));
+router.get('/:id', authenticate, requireAdmin, feedbackController.getById.bind(feedbackController));
+router.patch('/:id/status', authenticate, requireAdmin, feedbackController.updateStatus.bind(feedbackController));
+router.post('/:id/reply', authenticate, requireAdmin, feedbackController.reply.bind(feedbackController));
+
+export default router;
+
