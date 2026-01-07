@@ -359,15 +359,66 @@
                 </div>
               </div>
               <div class="flex items-center gap-4">
-                <button
-                  @click.stop="contactPerson(clientId, group.clientName)"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  Contacter
-                </button>
+                <!-- Bouton Contacter avec menu déroulant pour choisir le dossier -->
+                <div class="relative group/contact">
+                  <button
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Contacter
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <!-- Menu déroulant -->
+                  <div class="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 py-2 opacity-0 invisible group-hover/contact:opacity-100 group-hover/contact:visible transition-all duration-200 z-50">
+                    <div class="px-4 py-2 border-b border-gray-100">
+                      <p class="text-xs font-semibold text-gray-500 uppercase">Choisir un dossier</p>
+                    </div>
+
+                    <!-- Conversation générale -->
+                    <button
+                      @click.stop="contactPerson(clientId, group.clientName, null, 'Conversation générale')"
+                      class="w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors flex items-center gap-3"
+                    >
+                      <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <div>
+                        <p class="text-sm font-semibold text-gray-900">Conversation générale</p>
+                        <p class="text-xs text-gray-500">Sans lien à un dossier spécifique</p>
+                      </div>
+                    </button>
+
+                    <div class="border-t border-gray-100 my-1"></div>
+
+                    <!-- Liste des dossiers -->
+                    <div class="max-h-64 overflow-y-auto">
+                      <button
+                        v-for="caseItem in group.cases"
+                        :key="caseItem.id"
+                        @click.stop="contactPerson(clientId, group.clientName, caseItem.id, caseItem.title)"
+                        class="w-full px-4 py-2 text-left hover:bg-purple-50 transition-colors flex items-center gap-3"
+                      >
+                        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm font-semibold text-gray-900 truncate">{{ caseItem.title }}</p>
+                          <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-xs text-gray-500">{{ caseItem.case_number }}</span>
+                            <span class="px-1.5 py-0.5 text-xs rounded-full" :class="getStatusClass(caseItem.status)">
+                              {{ getStatusLabel(caseItem.status) }}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div class="text-right">
                   <p
                     class="text-3xl font-bold mb-1"
@@ -876,9 +927,22 @@ const toggleClient = (clientId: string) => {
   }
 };
 
-const contactPerson = (personId: string, personName: string) => {
-  // Conversation globale sans lien à un dossier spécifique
-  navigateTo(`/messages?recipientId=${personId}&recipientName=${encodeURIComponent(personName)}`);
+const contactPerson = (personId: string, personName: string, caseId?: string | null, caseTitle?: string) => {
+  const query: any = {
+    recipientId: personId,
+    recipientName: encodeURIComponent(personName)
+  };
+
+  // Si un dossier est spécifié, inclure dans les paramètres
+  if (caseId) {
+    query.caseId = caseId;
+    query.caseTitle = encodeURIComponent(caseTitle || '');
+  }
+
+  navigateTo({
+    path: '/messages',
+    query
+  });
 };
 
 const getInitials = (name: string) => {

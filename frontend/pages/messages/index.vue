@@ -70,11 +70,21 @@
                     <p class="text-sm font-bold text-gray-900 truncate flex-1 group-hover:text-blue-600 transition-colors">
                       {{ getConversationName(conv) }}
                     </p>
-                    <span v-if="conv.case_info" class="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700 font-bold flex-shrink-0 shadow-sm">
-                      <svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 20 20">
+                    <!-- Badge pour conversation liée à un dossier -->
+                    <span v-if="conv.case_info" class="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700 font-bold flex-shrink-0 shadow-sm flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                       </svg>
+                      Dossier
                     </span>
+                    <!-- Badge pour conversation générale -->
+                    <span v-else class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 font-bold flex-shrink-0 shadow-sm flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Général
+                    </span>
+                    <!-- Badge messages non lus -->
                     <span v-if="conv.unread_count > 0" class="px-2 py-1 text-xs font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full flex-shrink-0 shadow-md animate-pulse">
                       {{ conv.unread_count }}
                     </span>
@@ -119,10 +129,54 @@
                 <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
                   {{ getInitials(selectedConversation) }}
                 </div>
-                <div>
+                <div class="flex-1">
                   <h3 class="font-bold text-gray-900 text-lg">{{ getConversationName(selectedConversation) }}</h3>
                   <p class="text-xs text-gray-600 font-medium">{{ getConversationRole(selectedConversation) }}</p>
                 </div>
+                <!-- Badge type de conversation -->
+                <span v-if="selectedConversation.case_info" class="px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-700 font-bold shadow-sm flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                  </svg>
+                  Dossier
+                </span>
+                <span v-else class="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-bold shadow-sm flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Général
+                </span>
+              </div>
+            </div>
+
+            <!-- Bandeau contexte du dossier -->
+            <div v-if="selectedConversation.case_info" class="bg-gradient-to-r from-purple-50 via-purple-100 to-indigo-50 border-l-4 border-purple-500 p-4">
+              <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                  <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-md">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h4 class="font-bold text-purple-900">{{ selectedConversation.case_info.title }}</h4>
+                    <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-purple-200 text-purple-800">
+                      {{ selectedConversation.case_info.case_number }}
+                    </span>
+                  </div>
+                  <p class="text-sm text-purple-700">Cette conversation est liée à ce dossier</p>
+                </div>
+                <NuxtLink
+                  :to="`/cases/${selectedConversation.case_info.id}`"
+                  class="px-4 py-2 bg-white text-purple-700 rounded-lg hover:bg-purple-50 transition-colors flex items-center gap-2 text-sm font-semibold shadow-sm border border-purple-200"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Voir le dossier
+                </NuxtLink>
               </div>
             </div>
 
@@ -270,21 +324,80 @@
             <div
               v-for="user in searchResults"
               :key="user.id"
-              @click="startConversationWith(user)"
-              class="group p-4 border-2 border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-300 cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-md"
+              class="border-2 border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-300 transition-all duration-200"
             >
-              <div class="flex items-center gap-3">
-                <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md group-hover:scale-110 transition-transform duration-200">
+              <!-- Info utilisateur -->
+              <div class="p-4 flex items-center gap-3">
+                <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
                   {{ user.first_name?.[0] }}{{ user.last_name?.[0] }}
                 </div>
                 <div class="flex-1">
-                  <p class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ user.first_name }} {{ user.last_name }}</p>
+                  <p class="font-bold text-gray-900">{{ user.first_name }} {{ user.last_name }}</p>
                   <p class="text-sm text-gray-500">{{ user.email }}</p>
                 </div>
                 <span class="px-3 py-1 text-xs rounded-full font-bold shadow-sm"
                   :class="user.role === 'avocat' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'">
                   {{ user.role === 'avocat' ? 'Avocat' : 'Client' }}
                 </span>
+              </div>
+
+              <!-- Sélecteur de type de conversation -->
+              <div class="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+                <div>
+                  <label class="text-sm font-semibold text-gray-700 mb-2 block">Type de conversation</label>
+                  <div class="flex gap-2">
+                    <button
+                      @click="conversationType = 'general'"
+                      :class="conversationType === 'general'
+                        ? 'bg-blue-100 text-blue-700 border-blue-300'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'"
+                      class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Général
+                    </button>
+                    <button
+                      @click="conversationType = 'case'"
+                      :class="conversationType === 'case'
+                        ? 'bg-purple-100 text-purple-700 border-purple-300'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'"
+                      class="flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                      Dossier
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Sélecteur de dossier -->
+                <div v-if="conversationType === 'case'">
+                  <label class="text-sm font-semibold text-gray-700 mb-2 block">Choisir un dossier</label>
+                  <select
+                    v-model="selectedCaseId"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                  >
+                    <option value="">Sélectionner un dossier...</option>
+                    <option v-for="caseItem in userCases" :key="caseItem.id" :value="caseItem.id">
+                      {{ caseItem.case_number }} - {{ caseItem.title }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Bouton démarrer conversation -->
+                <button
+                  @click="startConversationWith(user)"
+                  :disabled="conversationType === 'case' && !selectedCaseId"
+                  class="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Démarrer la conversation
+                </button>
               </div>
             </div>
           </div>
@@ -334,6 +447,9 @@ const searchQuery = ref('')
 const searchResults = ref<any[]>([])
 const searchingUsers = ref(false)
 const filterByRole = ref(true)
+const conversationType = ref<'general' | 'case'>('general')
+const selectedCaseId = ref<string>('')
+const userCases = ref<any[]>([])
 let searchTimeout: NodeJS.Timeout | null = null
 
 // Charger les conversations
@@ -348,6 +464,37 @@ const loadConversations = async () => {
     console.error('Error loading conversations:', error)
   } finally {
     loadingConversations.value = false
+  }
+}
+
+// Charger les dossiers de l'utilisateur
+const loadUserCases = async () => {
+  try {
+    const config = useRuntimeConfig()
+    const authStore = useAuthStore()
+
+    const filters: any = {}
+    if (authStore.user?.role === 'avocat') {
+      filters.lawyer_id = authStore.user.id
+    } else if (authStore.user?.role === 'client') {
+      filters.client_id = authStore.user.id
+    }
+
+    const response = await $fetch<any>(`${config.public.apiBaseUrl}/cases`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      params: filters
+    })
+
+    if (response.success) {
+      userCases.value = response.data || []
+    }
+  } catch (error) {
+    console.error('Error loading cases:', error)
+    userCases.value = []
   }
 }
 
@@ -469,11 +616,16 @@ const searchUsers = () => {
 // Démarrer une conversation avec un utilisateur
 const startConversationWith = async (user: any) => {
   try {
-    const response = await createOrGetConversation(user.id)
+    // Déterminer le caseId selon le type de conversation
+    const caseId = conversationType.value === 'case' ? selectedCaseId.value : undefined
+
+    const response = await createOrGetConversation(user.id, caseId)
     if (response.success) {
       showNewConversationModal.value = false
       searchQuery.value = ''
       searchResults.value = []
+      conversationType.value = 'general'
+      selectedCaseId.value = ''
 
       selectedConversation.value = response.data
       await loadMessages(response.data.id)
@@ -490,6 +642,8 @@ const closeNewConversationModal = () => {
   showNewConversationModal.value = false
   searchQuery.value = ''
   searchResults.value = []
+  conversationType.value = 'general'
+  selectedCaseId.value = ''
 }
 
 // Helper functions
@@ -500,9 +654,9 @@ const getInitials = (conv: any) => {
 }
 
 const getConversationName = (conv: any) => {
-  // Si la conversation est liée à un dossier, afficher le titre du dossier
+  // Si la conversation est liée à un dossier, afficher le titre du dossier avec son numéro
   if (conv.case_info && conv.case_info.title) {
-    return `Dossier: ${conv.case_info.title}`
+    return `${conv.case_info.case_number} - ${conv.case_info.title}`
   }
 
   // Sinon, afficher le nom du participant (conversation globale)
@@ -551,6 +705,7 @@ const formatTime = (date: string) => {
 // Initialisation
 onMounted(async () => {
   await loadConversations()
+  await loadUserCases()  // Charger les dossiers de l'utilisateur
 
   // Si conversationId est passé (depuis une notification), ouvrir directement la conversation
   const conversationId = route.query.conversationId as string

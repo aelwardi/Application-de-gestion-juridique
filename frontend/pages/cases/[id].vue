@@ -141,16 +141,49 @@
 
                 <button
                   @click="contactOtherParty"
-                  class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
+                  class="group/contact relative px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
+                  title="Créer une conversation liée à ce dossier"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  <span class="hidden sm:inline">{{ authStore.user?.role === 'avocat' ? 'Contacter le client' : 'Contacter mon avocat' }}</span>
-                  <span class="sm:hidden">Contacter</span>
+                  <div class="flex flex-col items-start">
+                    <span class="hidden sm:inline text-sm font-semibold">{{ authStore.user?.role === 'avocat' ? 'Contacter le client' : 'Contacter mon avocat' }}</span>
+                    <span class="sm:hidden text-sm font-semibold">Contacter</span>
+                    <span class="hidden sm:flex items-center gap-1 text-xs text-purple-100">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                      </svg>
+                      pour ce dossier
+                    </span>
+                  </div>
                 </button>
               </div>
             </div>
+
+            <!-- Info bulle explicative pour la messagerie -->
+            <div class="mt-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-500 rounded-lg p-4">
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                  <svg class="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-sm font-bold text-purple-900 mb-1 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                    </svg>
+                    Conversation liée à ce dossier
+                  </h4>
+                  <p class="text-xs text-purple-700">
+                    En cliquant sur "Contacter", vous créerez une conversation <strong>spécifiquement liée à ce dossier</strong> ({{ caseData.case_number }}).
+                    Cette conversation apparaîtra avec un badge violet "Dossier" dans votre messagerie et toutes les discussions seront organisées par dossier.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="my-6"></div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div class="group">
                 <p class="text-sm font-medium text-gray-500 mb-2 flex items-center gap-2">
@@ -727,14 +760,17 @@ const contactOtherParty = () => {
     recipientName = `${caseData.value.lawyer_first_name || ''} ${caseData.value.lawyer_last_name || ''}`.trim()
   }
 
-  // Créer une conversation générale SANS lien au dossier
-  // Juste une conversation entre les deux personnes
+  // ✅ CONVERSATION LIÉE À CE DOSSIER SPÉCIFIQUE
+  // Cette conversation sera automatiquement associée au dossier en cours
+  // et apparaîtra avec un badge violet "Dossier" dans la messagerie
   router.push({
     path: '/messages',
     query: {
       recipientId,
-      recipientName: encodeURIComponent(recipientName)
-      // PAS de caseId - conversation générale
+      recipientName: encodeURIComponent(recipientName),
+      caseId: caseData.value.id,  // ✅ ID du dossier actuel
+      caseTitle: encodeURIComponent(caseData.value.title),  // Titre pour affichage
+      caseNumber: encodeURIComponent(caseData.value.case_number)  // Numéro du dossier
     }
   })
 }
