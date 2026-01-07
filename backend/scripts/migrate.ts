@@ -5,8 +5,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const MIGRATIONS_DIR = path.join(__dirname, "../src/database/migrations");
-
 const pool = new Pool({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
@@ -15,95 +13,56 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
 });
 
-async function createMigrationsTable(): Promise<void> {
-  const query = `
-    CREATE TABLE IF NOT EXISTS migrations (
-      id SERIAL PRIMARY KEY,
-      filename VARCHAR(255) UNIQUE NOT NULL,
-      executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      status VARCHAR(20) DEFAULT 'success'
-    );
-  `;
-  await pool.query(query);
-  console.log("Table migrations créée ou déjà existante");
-}
-
-async function getExecutedMigrations(): Promise<string[]> {
-  const result = await pool.query("SELECT filename FROM migrations ORDER BY id");
-  return result.rows.map((row) => row.filename);
-}
-
-async function executeMigration(filename: string): Promise<void> {
-  const filePath = path.join(MIGRATIONS_DIR, filename);
-  const sql = fs.readFileSync(filePath, "utf8");
-
-  console.log(`Exécution de la migration: ${filename}`);
-
+async function runCompleteMigration(): Promise<void> {
   const client = await pool.connect();
+
   try {
+    console.log("Démarrage de la migration de la base de données...\n");
+
+    const migrationFilePath = path.join(__dirname, "../src/database/migrations/init-db.sql");
+
+    if (!fs.existsSync(migrationFilePath)) {
+      throw new Error("Le fichier de migration consolidée n'existe pas!");
+    }
+
+    const sql = fs.readFileSync(migrationFilePath, "utf8");
+
+    console.log("Fichier de migration chargé");
+    console.log("Exécution de la migration...\n");
+
     await client.query("BEGIN");
-
     await client.query(sql);
-
-    await client.query("INSERT INTO migrations (filename, status) VALUES ($1, $2)", [
-      filename,
-      "success",
-    ]);
-
     await client.query("COMMIT");
-    console.log(`Migration ${filename} exécutée avec succès`);
+
+    console.log("Migration complète exécutée avec succès!");
+    console.log("\nÉtat de la base de données:");
+
+    const tablesResult = await client.query(`
+      SELECT tablename 
+      FROM pg_tables 
+      WHERE schemaname = 'public' 
+      ORDER BY tablename
+    `);
+
+    console.log(`   • ${tablesResult.rows.length} tables créées`);
+    tablesResult.rows.forEach(row => {
+      console.log(`     - ${row.tablename}`);
+    });
+
+    const usersResult = await client.query("SELECT COUNT(*) as count FROM users");
+    console.log(`\nUtilisateurs: ${usersResult.rows[0].count}`);
+
+    console.log("\nBase de données prête à l'emploi!");
+
   } catch (error: any) {
     await client.query("ROLLBACK");
-    console.error(`Erreur lors de l'exécution de ${filename}:`, error.message);
-
-    try {
-      await client.query(
-        "INSERT INTO migrations (filename, status) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING",
-        [filename, "failed"]
-      );
-    } catch (logError) {
-    }
-
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-async function runMigrations(): Promise<void> {
-  try {
-    console.log("Démarrage des migrations...\n");
-
-    await createMigrationsTable();
-
-    const executedMigrations = await getExecutedMigrations();
-
-    const migrationFiles = fs
-      .readdirSync(MIGRATIONS_DIR)
-      .filter((file) => file.endsWith(".sql"))
-      .sort();
-
-    console.log(`Fichiers de migration trouvés: ${migrationFiles.length}`);
-
-    for (const filename of migrationFiles) {
-      if (!executedMigrations.includes(filename)) {
-        await executeMigration(filename);
-      } else {
-        console.log(`Migration ${filename} déjà exécutée, ignorée`);
-      }
-    }
-
-    console.log("\nToutes les migrations ont été exécutées avec succès");
-  } catch (error: any) {
-    console.error("\nErreur lors des migrations:", error.message);
+    console.error("\nErreur lors de la migration:", error.message);
+    console.error("\nConseil: Vérifiez que la base de données existe et que les credentials sont corrects.");
     process.exit(1);
   } finally {
+    client.release();
     await pool.end();
   }
 }
 
-if (require.main === module) {
-  runMigrations();
-}
-
-export { runMigrations };
+runCompleteMigration().catch(console.error);
