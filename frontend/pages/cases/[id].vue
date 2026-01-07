@@ -299,16 +299,30 @@
                   {{ documents.length }}
                 </span>
               </h2>
-              <button
-                @click="showUploadModal = true"
-                class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <span class="hidden sm:inline">Ajouter un document</span>
-                <span class="sm:hidden">Ajouter</span>
-              </button>
+              <div class="flex gap-2">
+                <button
+                  v-if="authStore.isLawyer"
+                  @click="showDocumentRequestModal = true"
+                  class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span class="hidden sm:inline">Demander des documents</span>
+                  <span class="sm:hidden">Demander</span>
+                </button>
+
+                <button
+                  @click="showUploadModal = true"
+                  class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span class="hidden sm:inline">Ajouter un document</span>
+                  <span class="sm:hidden">Ajouter</span>
+                </button>
+              </div>
             </div>
 
             <div v-if="loadingDocuments" class="text-center py-12">
@@ -390,10 +404,17 @@
                       {{ formatFileSize(doc.file_size) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                      {{ formatDate(doc.uploaded_at) }}
+                      {{ formatDate(doc.created_at || doc.uploaded_at) }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                      {{ doc.uploader_name || 'N/A' }}
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                          {{ getInitials(doc.uploader_name) }}
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">
+                          {{ doc.uploader_name || 'Non disponible' }}
+                        </span>
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex items-center justify-end gap-2">
@@ -532,6 +553,15 @@
       </div>
     </div>
   </div>
+
+  <DocumentRequestModal
+    v-if="caseData"
+    :show="showDocumentRequestModal"
+    :case-id="caseData.id"
+    :client-id="caseData.client_id"
+    @close="showDocumentRequestModal = false"
+    @success="handleDocumentRequestSuccess"
+  />
 </template>
 
 <script setup lang="ts">
@@ -541,6 +571,7 @@ import { useCase } from '~/composables/useCase'
 import { useDocument } from '~/composables/useDocument'
 import { useAuthStore } from '~/stores/auth'
 import type { CaseWithDetails } from '~/types/case'
+import DocumentRequestModal from '~/components/documents/DocumentRequestModal.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -561,6 +592,7 @@ const statusUpdating = ref(false)
 const uploading = ref(false)
 const error = ref<string | null>(null)
 const showUploadModal = ref(false)
+const showDocumentRequestModal = ref(false)
 
 const uploadForm = ref({
   title: '',
@@ -747,7 +779,10 @@ const deleteDocument = async (docId: string) => {
   }
 }
 
-// ...existing code (utility functions)...
+const handleDocumentRequestSuccess = (data: any) => {
+  console.log('Document request created:', data);
+  alert('✅ Demande envoyée avec succès ! Le client recevra un email avec le lien pour uploader les documents.');
+};
 
 const getDocumentTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
@@ -767,6 +802,37 @@ const formatFileSize = (bytes: number) => {
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+ const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const getInitials = (name: string | null | undefined) => {
+  if (!name) return '?'
+  const parts = name.trim().split(' ').filter(p => p.length > 0)
+  if (parts.length >= 2) {
+    const first = parts[0]?.[0]
+    const last = parts[parts.length - 1]?.[0]
+    if (first && last) {
+      return (first + last).toUpperCase()
+    }
+  }
+  if (parts[0] && parts[0].length >= 2) {
+    return parts[0].substring(0, 2).toUpperCase()
+  }
+  if (parts[0] && parts[0][0]) {
+    return parts[0][0].toUpperCase()
+  }
+  return '?'
 }
 
 const getStatusClass = (status: string) => {
@@ -798,15 +864,6 @@ const getPriorityLabel = (priority: string) => {
     urgent: 'Urgente'
   }
   return labels[priority] || priority
-}
-
-const formatDate = (date: string | Date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
 }
 
 onMounted(() => {

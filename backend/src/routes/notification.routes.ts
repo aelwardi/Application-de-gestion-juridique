@@ -42,13 +42,31 @@ router.get('/', authenticate, async (req, res) => {
                     category = 'Communication';
                     break;
                 case 'document_uploaded':
-                    category = 'Nouveau Document';
+                    category = 'Nouveau document';
                     break;
                 case 'appointment_reminder':
                     category = 'Rendez-vous';
                     break;
+                case 'appointment_created':
+                    category = 'Rendez-vous';
+                    break;
+                case 'appointment_confirmed':
+                    category = 'Rendez-vous';
+                    break;
+                case 'appointment_cancelled':
+                    category = 'Rendez-vous';
+                    break;
                 case 'case_update':
-                    category = 'Mise à jour Dossier';
+                    category = 'Mise à jour dossier';
+                    break;
+                case 'suggestion_received':
+                    category = 'Proposition créneau';
+                    break;
+                case 'suggestion_accepted':
+                    category = 'Proposition créneau';
+                    break;
+                case 'suggestion_rejected':
+                    category = 'Proposition créneau';
                     break;
                 default:
                     category = 'Notification';

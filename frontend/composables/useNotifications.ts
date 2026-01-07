@@ -1,6 +1,6 @@
 import type { ApiResponse, PaginatedResponse } from '~/types/api';
 
-export interface Notification {
+export interface ApiNotification {
   id: string;
   user_id: string;
   type: string;
@@ -22,7 +22,7 @@ export const useNotifications = () => {
     userId: string,
     limit = 20,
     offset = 0
-  ): Promise<PaginatedResponse<Notification>> => {
+  ): Promise<PaginatedResponse<ApiNotification>> => {
     const response = await apiFetch<any>(`/notifications/user/${userId}?limit=${limit}&offset=${offset}`);
     return {
       data: response.data || [],
@@ -36,8 +36,8 @@ export const useNotifications = () => {
   /**
    * Récupérer les notifications non lues
    */
-  const getUnreadNotifications = async (userId: string): Promise<Notification[]> => {
-    const response = await apiFetch<ApiResponse<Notification[]>>(`/notifications/user/${userId}/unread`);
+  const getUnreadNotifications = async (userId: string): Promise<ApiNotification[]> => {
+    const response = await apiFetch<ApiResponse<ApiNotification[]>>(`/notifications/user/${userId}/unread`);
     return response.data || [];
   };
 
