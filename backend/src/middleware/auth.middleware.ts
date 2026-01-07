@@ -14,7 +14,6 @@ declare global {
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
-    // Get token from header
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {

@@ -17,7 +17,6 @@ export const dossierController = {
       
       const result = await dossierService.createCase(caseData);
 
-      // Logger l'activité de création de dossier
       if (result.success && result.data && req.user?.userId) {
         try {
           await adminQueries.createActivityLog(

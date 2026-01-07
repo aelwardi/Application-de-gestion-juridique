@@ -17,12 +17,10 @@ const poolConfig: PoolConfig = {
 
 export const pool = new Pool(poolConfig);
 
-pool.on("connect", () => {
-  console.log("Connexion PostgreSQL établie");
-});
+pool.on("connect", () => {});
 
 pool.on("error", (err: Error) => {
-  console.error("Erreur inattendue sur le client PostgreSQL", err);
+  console.error("Erreur inattendue sur PostgreSQL", err);
   process.exit(-1);
 });
 
@@ -30,7 +28,6 @@ export const testConnection = async (): Promise<boolean> => {
   try {
     const client = await pool.connect();
     const result = await client.query("SELECT NOW()");
-    console.log("Test de connexion réussi:", result.rows[0]);
     client.release();
     return true;
   } catch (error) {

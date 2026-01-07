@@ -63,7 +63,6 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
         appointmentType: data.appointment_type
       });
 
-      console.log(`Notifications envoyées au client ${client.email}`);
     }
   } catch (error) {
     console.error('Erreur lors de l\'envoi des notifications:', error);

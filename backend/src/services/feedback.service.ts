@@ -4,13 +4,12 @@ import { sendEmail } from '../utils/email.util';
 export async function createFeedback(data: feedbackQueries.CreateFeedbackInput) {
   const feedback = await feedbackQueries.createFeedback(data);
 
-  // Envoyer un email de confirmation à l'utilisateur
   if (data.user_email) {
     await sendEmail({
       to: data.user_email,
       subject: 'Merci pour votre avis',
       html: `
-        <h2>✨ Merci pour votre retour !</h2>
+        <h2>Merci pour votre retour !</h2>
         <p>Bonjour,</p>
         <p>Nous avons bien reçu votre avis avec une note de <strong>${data.rating}/10</strong>.</p>
         ${data.comment ? `<p><strong>Votre commentaire :</strong><br>${data.comment}</p>` : ''}
@@ -50,16 +49,14 @@ export async function updateFeedbackStatus(id: string, status: string) {
 export async function replyToFeedback(id: string, adminId: string, response: string) {
   const feedback = await feedbackQueries.replyToFeedback(id, adminId, response);
 
-  // Récupérer les infos complètes du feedback avec l'email utilisateur
   const fullFeedback = await feedbackQueries.getFeedbackById(id);
 
-  // Envoyer un email à l'utilisateur
   if (fullFeedback && fullFeedback.user_email) {
     await sendEmail({
       to: fullFeedback.user_email,
       subject: 'Réponse à votre avis',
       html: `
-        <h2>📬 Réponse de l'administrateur</h2>
+        <h2>Réponse de l'administrateur</h2>
         <p>Bonjour ${fullFeedback.user_first_name || ''},</p>
         <p>Un administrateur a répondu à votre avis :</p>
         

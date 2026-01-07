@@ -203,7 +203,6 @@ export const sendHourlyReminders = async () => {
     `;
 
     const result = await pool.query(query);
-    console.log(`📋 ${result.rows.length} rappel(s) 2h à envoyer`);
 
     for (const row of result.rows) {
       await sendAppointmentReminder(row.id, '2h');

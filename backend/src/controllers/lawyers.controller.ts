@@ -74,7 +74,6 @@ export const verifyLawyer = async (req: Request, res: Response): Promise<void> =
 
     await lawyersService.verifyLawyer(lawyerId, adminId);
 
-    // Logger l'activité de validation
     try {
       await adminQueries.createActivityLog(
         adminId,

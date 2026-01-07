@@ -157,11 +157,6 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
       });
     }
 
-    // Vérifier si une conversation existe déjà entre ces deux utilisateurs
-    // Distinction importante :
-    // - Si case_id est fourni : chercher une conversation pour CE dossier spécifique
-    // - Si case_id est NULL : chercher une conversation générale (sans dossier)
-    // Utilisation de LEAST/GREATEST pour gérer l'ordre des participants (A,B) = (B,A)
     const existingConv = await pool.query(
       `SELECT * FROM conversations 
        WHERE LEAST(participant1_id, participant2_id) = LEAST($1::uuid, $2::uuid)
@@ -178,7 +173,6 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
       });
     }
 
-    // Créer une nouvelle conversation
     try {
       const query = `
         INSERT INTO conversations (
@@ -201,10 +195,7 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
         data: result.rows[0]
       });
     } catch (insertError: any) {
-      // Si erreur de contrainte unique (23505), la conversation existe déjà
-      // Cela peut arriver à cause d'une race condition
       if (insertError.code === '23505') {
-        // Récupérer la conversation existante
         const retryConv = await pool.query(
           `SELECT * FROM conversations 
            WHERE LEAST(participant1_id, participant2_id) = LEAST($1::uuid, $2::uuid)
@@ -222,7 +213,6 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
         }
       }
 
-      // Si autre erreur, la propager
       throw insertError;
     }
   } catch (error: any) {
@@ -263,7 +253,6 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
       });
     }
 
-    // Déterminer le receiver_id (l'autre participant de la conversation)
     const conversation = convCheck.rows[0];
     const receiverId = conversation.participant1_id === userId
       ? conversation.participant2_id
@@ -293,7 +282,6 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
       [conversationId]
     );
 
-    // Envoyer une notification au destinataire
     await pool.query(
       `INSERT INTO notifications (user_id, notification_type, title, message, data)
        VALUES ($1, $2, $3, $4, $5)`,

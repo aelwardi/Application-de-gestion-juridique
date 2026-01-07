@@ -15,7 +15,6 @@ export interface Feedback {
   responded_at?: Date;
   created_at: Date;
   updated_at: Date;
-  // Joined fields
   user_first_name?: string;
   user_last_name?: string;
   admin_first_name?: string;
@@ -32,7 +31,6 @@ export interface CreateFeedbackInput {
   user_role?: string;
 }
 
-// Créer un feedback
 export async function createFeedback(data: CreateFeedbackInput): Promise<Feedback> {
   const query = `
     INSERT INTO feedback (user_id, rating, category, comment, suggestions, user_email, user_role)
@@ -54,7 +52,6 @@ export async function createFeedback(data: CreateFeedbackInput): Promise<Feedbac
   return result.rows[0];
 }
 
-// Récupérer tous les feedbacks avec filtres (admin)
 export async function getAllFeedback(
   page: number = 1,
   limit: number = 20,
@@ -106,7 +103,6 @@ export async function getAllFeedback(
 
   query += ` ORDER BY f.created_at DESC`;
 
-  // Count total
   const countQuery = query.replace(
     /SELECT[\s\S]*?FROM/,
     'SELECT COUNT(*) as total FROM'
@@ -115,7 +111,6 @@ export async function getAllFeedback(
   const countResult = await pool.query(countQuery, params);
   const total = parseInt(countResult.rows[0].total);
 
-  // Add pagination
   query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
   params.push(limit, (page - 1) * limit);
 
@@ -127,7 +122,6 @@ export async function getAllFeedback(
   };
 }
 
-// Récupérer un feedback par ID
 export async function getFeedbackById(id: string): Promise<Feedback | null> {
   const query = `
     SELECT 
@@ -147,7 +141,6 @@ export async function getFeedbackById(id: string): Promise<Feedback | null> {
   return result.rows[0] || null;
 }
 
-// Récupérer les feedbacks d'un utilisateur
 export async function getUserFeedback(userId: string): Promise<Feedback[]> {
   const query = `
     SELECT 
@@ -164,7 +157,6 @@ export async function getUserFeedback(userId: string): Promise<Feedback[]> {
   return result.rows;
 }
 
-// Mettre à jour le statut
 export async function updateFeedbackStatus(
   id: string,
   status: string
@@ -180,7 +172,6 @@ export async function updateFeedbackStatus(
   return result.rows[0];
 }
 
-// Répondre à un feedback
 export async function replyToFeedback(
   id: string,
   adminId: string,
@@ -201,7 +192,6 @@ export async function replyToFeedback(
   const result = await pool.query(query, [response, adminId, id]);
   const feedback = result.rows[0];
 
-  // Créer manuellement une notification (fallback si le trigger ne fonctionne pas)
   try {
     await pool.query(`
       INSERT INTO notifications (user_id, type, title, message, link, created_at)
@@ -220,7 +210,6 @@ export async function replyToFeedback(
   return feedback;
 }
 
-// Statistiques des feedbacks
 export async function getFeedbackStats(): Promise<{
   total: number;
   pending: number;
@@ -279,4 +268,3 @@ export async function getFeedbackStats(): Promise<{
     by_role: roleResult.rows
   };
 }
-

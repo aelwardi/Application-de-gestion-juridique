@@ -60,7 +60,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const result = await authService.login(validatedData);
 
-    // Logger l'activité de connexion
     try {
       await adminQueries.createActivityLog(
         result.user.id,
@@ -171,7 +170,6 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
  */
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Logger l'activité de déconnexion si l'utilisateur est authentifié
     if (req.user?.userId) {
       try {
         await adminQueries.createActivityLog(
@@ -249,7 +247,6 @@ export const updateMe = async (req: Request, res: Response): Promise<void> => {
 
     const user = await authService.updateProfile(req.user.userId, validatedData);
 
-    // Logger l'activité de mise à jour de profil
     try {
       await adminQueries.createActivityLog(
         req.user.userId,

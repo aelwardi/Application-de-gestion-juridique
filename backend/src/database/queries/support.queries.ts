@@ -72,7 +72,6 @@ export const getAllTickets = async (
     paramIndex++;
   }
 
-  // Create count query - keep the FROM and WHERE clauses but remove SELECT columns
   const countQuery = `
     SELECT COUNT(*) 
     FROM support_tickets st

@@ -102,7 +102,7 @@ export const createRecurringAppointments = async (data: CreateRecurringAppointme
 function generateRecurringDates(startDate: Date, pattern: RecurrencePattern): Date[] {
   const dates: Date[] = [];
   let currentDate = new Date(startDate);
-  const maxOccurrences = pattern.occurrences || 52; // Max 1 an par défaut
+  const maxOccurrences = pattern.occurrences || 52;
   const endDate = pattern.endDate ? new Date(pattern.endDate) : null;
 
   for (let i = 0; i < maxOccurrences; i++) {

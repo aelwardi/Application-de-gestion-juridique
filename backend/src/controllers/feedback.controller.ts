@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import * as feedbackService from '../services/feedback.service';
 
 export class FeedbackController {
-  // Créer un feedback (utilisateurs authentifiés)
   async create(req: Request, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -47,7 +46,6 @@ export class FeedbackController {
     }
   }
 
-  // Récupérer tous les feedbacks (admin)
   async getAll(req: Request, res: Response) {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -86,7 +84,6 @@ export class FeedbackController {
     }
   }
 
-  // Récupérer un feedback par ID
   async getById(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -113,7 +110,6 @@ export class FeedbackController {
     }
   }
 
-  // Récupérer les feedbacks de l'utilisateur connecté
   async getMyFeedback(req: Request, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -141,7 +137,6 @@ export class FeedbackController {
     }
   }
 
-  // Mettre à jour le statut (admin)
   async updateStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -171,7 +166,6 @@ export class FeedbackController {
     }
   }
 
-  // Répondre à un feedback (admin)
   async reply(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -209,7 +203,6 @@ export class FeedbackController {
     }
   }
 
-  // Statistiques (admin)
   async getStats(req: Request, res: Response) {
     try {
       const stats = await feedbackService.getFeedbackStats();
@@ -228,4 +221,3 @@ export class FeedbackController {
     }
   }
 }
-

@@ -1,8 +1,3 @@
-// =====================================================
-// Requêtes d'AUTHENTIFICATION
-// Utilise la table USERS UNIFIÉE
-// =====================================================
-
 import { pool } from '../../config/database.config';
 import { QueryResult } from 'pg';
 
@@ -20,7 +15,6 @@ export interface User {
   last_login_at: Date | null;
   created_at: Date;
   updated_at: Date;
-  // Champs avocats
   bar_number?: string | null;
   specialties?: string[];
   experience_years?: number | null;
@@ -37,14 +31,12 @@ export interface User {
   verified_at?: Date | null;
   rating?: number;
   total_reviews?: number;
-  // Champs clients
   address?: string | null;
   city?: string | null;
   postal_code?: string | null;
   emergency_contact_name?: string | null;
   emergency_contact_phone?: string | null;
   notes?: string | null;
-  // Statistiques
   total_cases?: number;
   active_cases?: number;
 }

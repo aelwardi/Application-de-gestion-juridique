@@ -129,7 +129,6 @@ router.post('/tickets', async (req: Request, res: Response) => {
       category || null
     );
 
-    // Logger l'activité de création de ticket
     try {
       await adminQueries.createActivityLog(
         userId,
@@ -219,7 +218,6 @@ router.patch('/tickets/:id/status', requireAdmin, async (req: Request, res: Resp
 
     await supportService.updateStatus(ticketId, status, adminId);
 
-    // Logger l'activité de clôture si le statut est "closed"
     if (status === 'closed') {
       try {
         await adminQueries.createActivityLog(
