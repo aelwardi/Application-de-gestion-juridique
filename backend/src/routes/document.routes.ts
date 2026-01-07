@@ -4,6 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/auth.middleware';
+import { sendDocumentUploadedEmail } from '../utils/email.util';
 import * as adminQueries from '../database/queries/admin.queries';
 
 import { pool } from '../config/database.config';
@@ -145,6 +146,26 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
                 })
               ]
             );
+
+            const clientEmailQuery = await pool.query(
+              'SELECT first_name, email FROM users WHERE id = $1',
+              [caseData.client_id]
+            );
+
+            if (clientEmailQuery.rows.length > 0) {
+              const client = clientEmailQuery.rows[0];
+              sendDocumentUploadedEmail(
+                client.email,
+                client.first_name,
+                uploaderName,
+                title,
+                caseData.case_title,
+                case_id,
+                false
+              ).catch(error => {
+                console.error('Erreur envoi email document au client:', error);
+              });
+            }
           } else if (uploaderRole === 'client') {
             await pool.query(
               `INSERT INTO notifications (user_id, notification_type, title, message, data)
@@ -162,6 +183,26 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
                 })
               ]
             );
+
+            const lawyerEmailQuery = await pool.query(
+              'SELECT first_name, email FROM users WHERE id = $1',
+              [caseData.lawyer_id]
+            );
+
+            if (lawyerEmailQuery.rows.length > 0) {
+              const lawyer = lawyerEmailQuery.rows[0];
+              sendDocumentUploadedEmail(
+                lawyer.email,
+                lawyer.first_name,
+                uploaderName,
+                title,
+                caseData.case_title,
+                case_id,
+                false
+              ).catch(error => {
+                console.error('Erreur envoi email document à l\'avocat:', error);
+              });
+            }
           }
         }
       } catch (notifError) {
@@ -258,14 +299,26 @@ router.get('/case/:caseId', authenticate, async (req: Request, res: Response) =>
     let params: any[];
 
     if (userRole === 'avocat') {
-      query = 'SELECT * FROM documents WHERE case_id = $1 ORDER BY created_at DESC';
+      query = `
+        SELECT 
+          d.*,
+          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
+        FROM documents d
+        LEFT JOIN users u ON d.uploaded_by = u.id
+        WHERE d.case_id = $1 
+        ORDER BY d.created_at DESC
+      `;
       params = [caseId];
     } else {
       query = `
-        SELECT * FROM documents 
-        WHERE case_id = $1 
-        AND (uploaded_by = $2 OR is_confidential = false)
-        ORDER BY created_at DESC
+        SELECT 
+          d.*,
+          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
+        FROM documents d
+        LEFT JOIN users u ON d.uploaded_by = u.id
+        WHERE d.case_id = $1 
+        AND (d.uploaded_by = $2 OR d.is_confidential = false)
+        ORDER BY d.created_at DESC
       `;
       params = [caseId, userId];
     }
