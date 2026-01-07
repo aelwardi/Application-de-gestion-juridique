@@ -1,3 +1,131 @@
+<script setup lang="ts">
+import type { Client, ClientSearchFilters } from '~/types/client';
+
+definePageMeta({
+  middleware: ['auth', 'lawyer'],
+  layout: 'authenticated'
+});
+
+const authStore = useAuthStore();
+const { getAllClients, searchClients, getClientsByLawyer } = useClient();
+
+const clients = ref<Client[]>([]);
+const loading = ref(true);
+
+const filters = ref<ClientSearchFilters>({
+  name: '',
+  email: '',
+  city: '',
+  hasActiveCases: undefined,
+  limit: 20,
+  offset: 0,
+});
+
+const pagination = ref({
+  total: 0,
+  page: 1,
+  limit: 20,
+  totalPages: 1,
+});
+
+let searchTimeout: NodeJS.Timeout;
+
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    handleSearch();
+  }, 500);
+};
+
+const handleSearch = async () => {
+  loading.value = true;
+  filters.value.offset = 0;
+  pagination.value.page = 1;
+  await loadClients();
+};
+
+const loadClients = async () => {
+  if (!authStore.user) return;
+
+  try {
+    loading.value = true;
+
+    if (!filters.value.name && !filters.value.email && !filters.value.city && filters.value.hasActiveCases === undefined) {
+      const result = await getClientsByLawyer(authStore.user.id, filters.value.limit, filters.value.offset);
+      clients.value = result.data;
+      pagination.value = {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      };
+    } else {
+      const result = await searchClients({
+        ...filters.value,
+        lawyerId: authStore.user.id,
+      });
+      clients.value = result.data;
+      pagination.value = {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      };
+    }
+  } catch (error) {
+    console.error('Error loading clients:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const changePage = (page: number) => {
+  if (page < 1 || page > pagination.value.totalPages) return;
+  pagination.value.page = page;
+  filters.value.offset = (page - 1) * pagination.value.limit;
+  loadClients();
+};
+
+const visiblePages = computed(() => {
+  const pages = [];
+  const maxVisible = 5;
+  let start = Math.max(1, pagination.value.page - Math.floor(maxVisible / 2));
+  let end = Math.min(pagination.value.totalPages, start + maxVisible - 1);
+
+  if (end - start < maxVisible - 1) {
+    start = Math.max(1, end - maxVisible + 1);
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+
+  return pages;
+});
+
+const getInitials = (firstName: string, lastName: string) => {
+  if (!firstName || !lastName) return '??';
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+};
+
+const viewClient = (clientId: string) => {
+  navigateTo(`/clients/${clientId}`);
+};
+
+const viewClientCases = (userId: string) => {
+  navigateTo(`/cases?client=${userId}`);
+};
+
+onMounted(() => {
+  loadClients();
+});
+
+onBeforeUnmount(() => {
+  clearTimeout(searchTimeout);
+});
+</script>
+
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -250,129 +378,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import type { Client, ClientSearchFilters } from '~/types/client';
-
-definePageMeta({
-  middleware: ['auth', 'lawyer'],
-  layout: 'authenticated'
-});
-
-const authStore = useAuthStore();
-const { getAllClients, searchClients, getClientsByLawyer } = useClient();
-
-const clients = ref<Client[]>([]);
-const loading = ref(true);
-
-const filters = ref<ClientSearchFilters>({
-  name: '',
-  email: '',
-  city: '',
-  hasActiveCases: undefined,
-  limit: 20,
-  offset: 0,
-});
-
-const pagination = ref({
-  total: 0,
-  page: 1,
-  limit: 20,
-  totalPages: 1,
-});
-
-let searchTimeout: NodeJS.Timeout;
-
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    handleSearch();
-  }, 500);
-};
-
-const handleSearch = async () => {
-  loading.value = true;
-  filters.value.offset = 0;
-  pagination.value.page = 1;
-  await loadClients();
-};
-
-const loadClients = async () => {
-  if (!authStore.user) return;
-
-  try {
-    loading.value = true;
-
-    if (!filters.value.name && !filters.value.email && !filters.value.city && filters.value.hasActiveCases === undefined) {
-      const result = await getClientsByLawyer(authStore.user.id, filters.value.limit, filters.value.offset);
-      clients.value = result.data;
-      pagination.value = {
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
-      };
-    } else {
-      const result = await searchClients({
-        ...filters.value,
-        lawyerId: authStore.user.id,
-      });
-      clients.value = result.data;
-      pagination.value = {
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
-      };
-    }
-  } catch (error) {
-    console.error('Error loading clients:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const changePage = (page: number) => {
-  if (page < 1 || page > pagination.value.totalPages) return;
-  pagination.value.page = page;
-  filters.value.offset = (page - 1) * pagination.value.limit;
-  loadClients();
-};
-
-const visiblePages = computed(() => {
-  const pages = [];
-  const maxVisible = 5;
-  let start = Math.max(1, pagination.value.page - Math.floor(maxVisible / 2));
-  let end = Math.min(pagination.value.totalPages, start + maxVisible - 1);
-
-  if (end - start < maxVisible - 1) {
-    start = Math.max(1, end - maxVisible + 1);
-  }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-
-  return pages;
-});
-
-const getInitials = (firstName: string, lastName: string) => {
-  if (!firstName || !lastName) return '??';
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-};
-
-const viewClient = (clientId: string) => {
-  navigateTo(`/clients/${clientId}`);
-};
-
-const viewClientCases = (userId: string) => {
-  navigateTo(`/cases?client=${userId}`);
-};
-
-onMounted(() => {
-  loadClients();
-});
-
-onBeforeUnmount(() => {
-  clearTimeout(searchTimeout);
-});
-</script>

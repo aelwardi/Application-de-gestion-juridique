@@ -30,9 +30,7 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    /**
-     * Set authentication data
-     */
+
     setAuth(user: User, accessToken: string, refreshToken: string) {
       this.user = user;
       this.accessToken = accessToken;
@@ -45,9 +43,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Clear authentication data
-     */
+
     clearAuth() {
       this.user = null;
       this.accessToken = null;
@@ -60,9 +56,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Load tokens from localStorage
-     */
+
     loadTokensFromStorage() {
       if (process.client) {
         const accessToken = localStorage.getItem('accessToken');
@@ -76,9 +70,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Register a new user
-     */
+
     async register(data: RegisterData) {
       console.log('AuthStore: register called with data:', data);
       this.isLoading = true;
@@ -116,9 +108,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Login user
-     */
+
     async login(data: LoginData) {
       this.isLoading = true;
       try {
@@ -145,9 +135,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Logout user
-     */
+
     async logout() {
       try {
         const config = useRuntimeConfig();
@@ -165,9 +153,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Fetch current user data
-     */
+
     async fetchUser() {
       try {
         if (!this.user?.id) return;
@@ -185,9 +171,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Refresh access token
-     */
+
     async refreshAccessToken() {
       try {
         if (!this.refreshToken) {
@@ -222,9 +206,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Get current user profile
-     */
+
     async getProfile() {
       this.isLoading = true;
       try {
@@ -260,9 +242,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Update user profile
-     */
+
     async updateProfile(data: UpdateProfileData) {
       this.isLoading = true;
       try {
@@ -291,9 +271,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Change password
-     */
+
     async changePassword(data: ChangePasswordData) {
       this.isLoading = true;
       try {
@@ -321,18 +299,14 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Get auth headers for API requests
-     */
+
     getAuthHeaders() {
       return {
         Authorization: `Bearer ${this.accessToken}`,
       };
     },
 
-    /**
-     * Initialize auth from stored tokens
-     */
+
     async init() {
       if (!process.client) return;
 

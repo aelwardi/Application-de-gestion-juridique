@@ -1,3 +1,30 @@
+<script setup lang="ts">
+const props = defineProps<{
+  isOpen: boolean
+  conflicts: any[]
+  availableSlots?: any[]
+  allowForce?: boolean
+}>()
+
+const emit = defineEmits<{
+  close: []
+  selectSlot: [slot: any]
+  forceCreate: []
+}>()
+
+const close = () => emit('close')
+const selectSlot = (slot: any) => emit('selectSlot', slot)
+const forceCreate = () => emit('forceCreate')
+
+const formatTime = (dateTime: string) => {
+  return new Date(dateTime).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+</script>
+
+
 <template>
   <transition name="modal">
     <div v-if="isOpen" class="fixed inset-0 z-50 overflow-y-auto">
@@ -13,7 +40,7 @@
             </div>
             <div class="flex-1">
               <h3 class="text-xl font-bold text-gray-900 mb-2">
-                ⚠️ Conflit de rendez-vous détecté
+                 Conflit de rendez-vous détecté
               </h3>
               <p class="text-gray-600">
                 Ce créneau chevauche {{ conflicts.length }} rendez-vous existant(s).
@@ -91,31 +118,7 @@
   </transition>
 </template>
 
-<script setup lang="ts">
-const props = defineProps<{
-  isOpen: boolean
-  conflicts: any[]
-  availableSlots?: any[]
-  allowForce?: boolean
-}>()
 
-const emit = defineEmits<{
-  close: []
-  selectSlot: [slot: any]
-  forceCreate: []
-}>()
-
-const close = () => emit('close')
-const selectSlot = (slot: any) => emit('selectSlot', slot)
-const forceCreate = () => emit('forceCreate')
-
-const formatTime = (dateTime: string) => {
-  return new Date(dateTime).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-</script>
 
 <style scoped>
 .modal-enter-active,

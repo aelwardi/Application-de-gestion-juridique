@@ -1,3 +1,14 @@
+<script setup lang="ts">
+defineProps<{
+  show: boolean;
+}>();
+
+defineEmits<{
+  close: [];
+}>();
+</script>
+
+
 <template>
   <transition
     enter-active-class="transition ease-out duration-300"
@@ -8,10 +19,8 @@
     leave-to-class="opacity-0"
   >
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
-      <!-- Overlay -->
       <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="$emit('close')"></div>
 
-      <!-- Modal -->
       <div class="flex min-h-full items-center justify-center p-4">
         <transition
           enter-active-class="transition ease-out duration-300 transform"
@@ -26,7 +35,6 @@
             class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl"
             @click.stop
           >
-            <!-- Header -->
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 rounded-t-2xl">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -51,10 +59,8 @@
               </div>
             </div>
 
-            <!-- Content -->
             <div class="px-8 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
               <div class="space-y-6">
-                <!-- Information -->
                 <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                   <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -67,9 +73,7 @@
                   </div>
                 </div>
 
-                <!-- Preview du formulaire -->
                 <div class="space-y-6 opacity-60 pointer-events-none">
-                  <!-- Informations générales -->
                   <div>
                     <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +117,6 @@
                     </div>
                   </div>
 
-                  <!-- Description -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
                     <textarea
@@ -123,7 +126,6 @@
                     ></textarea>
                   </div>
 
-                  <!-- Priorité et Statut -->
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
@@ -148,7 +150,6 @@
               </div>
             </div>
 
-            <!-- Footer -->
             <div class="bg-gray-50 px-8 py-4 rounded-b-2xl flex items-center justify-between border-t border-gray-200">
               <p class="text-sm text-gray-500">* Champs obligatoires</p>
               <div class="flex gap-3">
@@ -173,15 +174,7 @@
   </transition>
 </template>
 
-<script setup lang="ts">
-defineProps<{
-  show: boolean;
-}>();
 
-defineEmits<{
-  close: [];
-}>();
-</script>
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar {

@@ -1,3 +1,308 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useCase } from '~/composables/useCase'
+import { useDocument } from '~/composables/useDocument'
+import { useAuthStore } from '~/stores/auth'
+import type { CaseWithDetails } from '~/types/case'
+import DocumentRequestModal from '~/components/documents/DocumentRequestModal.vue'
+
+definePageMeta({
+  middleware: 'auth',
+  layout: 'authenticated'
+})
+
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+const { getCaseById, updateCase } = useCase()
+const { getDocumentsByCase, uploadDocument, deleteDocument: deleteDoc, getDownloadUrl } = useDocument()
+
+const caseData = ref<CaseWithDetails | null>(null)
+const documents = ref<any[]>([])
+const loading = ref(true)
+const loadingDocuments = ref(false)
+const statusUpdating = ref(false)
+const uploading = ref(false)
+const error = ref<string | null>(null)
+const showUploadModal = ref(false)
+const showDocumentRequestModal = ref(false)
+
+const uploadForm = ref({
+  title: '',
+  document_type: 'other',
+  is_confidential: false,
+  file: null as File | null
+})
+
+const loadCase = async () => {
+  loading.value = true
+  error.value = null
+
+  try {
+    const caseId = route.params.id as string
+    const response = await getCaseById(caseId)
+
+    if (response.success && response.data) {
+      caseData.value = response.data
+      await loadDocuments()
+    } else {
+      error.value = 'Dossier non trouvé'
+    }
+  } catch (err: any) {
+    console.error('Error loading case:', err)
+    error.value = 'Erreur lors du chargement du dossier'
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadDocuments = async () => {
+  loadingDocuments.value = true
+  try {
+    const caseId = route.params.id as string
+    const response = await getDocumentsByCase(caseId)
+
+    if (Array.isArray(response)) {
+      documents.value = response
+    } else if (response && (response as any).success && (response as any).data) {
+      documents.value = (response as any).data
+    } else {
+      documents.value = []
+    }
+  } catch (err) {
+    console.error('Error loading documents:', err)
+    documents.value = []
+  } finally {
+    loadingDocuments.value = false
+  }
+}
+
+const onFileChange = (e: any) => {
+  const file = e.target.files[0]
+  if (file) {
+    uploadForm.value.file = file
+    if (!uploadForm.value.title) {
+      uploadForm.value.title = file.name.split('.')[0]
+    }
+  }
+}
+
+const handleUpload = async () => {
+  if (!uploadForm.value.file || !caseData.value) return
+
+  uploading.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', uploadForm.value.file)
+    fd.append('title', uploadForm.value.title)
+    fd.append('document_type', uploadForm.value.document_type)
+    fd.append('is_confidential', String(uploadForm.value.is_confidential))
+    fd.append('case_id', caseData.value.id)
+    fd.append('uploaded_by', authStore.user?.id || '')
+
+    await uploadDocument(fd)
+
+    showUploadModal.value = false
+    uploadForm.value = {
+      title: '',
+      document_type: 'other',
+      is_confidential: false,
+      file: null
+    }
+
+    await loadDocuments()
+  } catch (err) {
+    console.error('Upload error:', err)
+    alert("Erreur lors de l'upload du document")
+  } finally {
+    uploading.value = false
+  }
+}
+
+const cancelUpload = () => {
+  showUploadModal.value = false
+  uploadForm.value = {
+    title: '',
+    document_type: 'other',
+    is_confidential: false,
+    file: null
+  }
+}
+
+const scheduleAppointment = () => {
+  if (!caseData.value) return
+  router.push({
+    path: '/appointments',
+    query: {
+      create: 'true',
+      caseId: caseData.value.id,
+      clientId: caseData.value.client_id
+    }
+  })
+}
+
+const contactOtherParty = () => {
+  if (!caseData.value) return
+
+  let recipientId: string
+  let recipientName: string
+
+  if (authStore.user?.role === 'avocat') {
+    recipientId = caseData.value.client_id
+    recipientName = `${caseData.value.client_first_name} ${caseData.value.client_last_name}`
+  } else {
+    recipientId = caseData.value.lawyer_id || ''
+    recipientName = `${caseData.value.lawyer_first_name || ''} ${caseData.value.lawyer_last_name || ''}`.trim()
+  }
+
+
+  router.push({
+    path: '/messages',
+    query: {
+      recipientId,
+      recipientName: encodeURIComponent(recipientName),
+      caseId: caseData.value.id,  // ✅ ID du dossier actuel
+      caseTitle: encodeURIComponent(caseData.value.title),  // Titre pour affichage
+      caseNumber: encodeURIComponent(caseData.value.case_number)  // Numéro du dossier
+    }
+  })
+}
+
+const handleStatusChange = async (event: Event) => {
+  const newStatus = (event.target as HTMLSelectElement).value as any
+  if (!caseData.value || newStatus === caseData.value.status) return
+
+  statusUpdating.value = true
+  try {
+    const caseId = route.params.id as string
+    const response = await updateCase(caseId, { status: newStatus })
+
+    if (response.success) {
+      caseData.value.status = newStatus
+      if (newStatus === 'closed') {
+        caseData.value.closing_date = new Date().toISOString()
+      }
+    } else {
+      alert("Erreur lors de la mise à jour du statut")
+    }
+  } catch (err) {
+    console.error('Update status error:', err)
+    alert("Une erreur est survenue")
+  } finally {
+    statusUpdating.value = false
+  }
+}
+
+const downloadDocument = (doc: any) => {
+  const url = getDownloadUrl(doc.file_url)
+  window.open(url, '_blank')
+}
+
+const deleteDocument = async (docId: string) => {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return
+
+  try {
+    await deleteDoc(docId)
+    documents.value = documents.value.filter(d => d.id !== docId)
+  } catch (err) {
+    console.error('Delete error:', err)
+    alert('Erreur lors de la suppression du document')
+  }
+}
+
+const handleDocumentRequestSuccess = (data: any) => {
+  console.log('Document request created:', data);
+  alert('Demande envoyée avec succès ! Le client recevra un email avec le lien pour uploader les documents.');
+};
+
+const getDocumentTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    contract: 'Contrat',
+    pleading: 'Plaidoirie',
+    evidence: 'Preuve',
+    correspondence: 'Correspondance',
+    judgment: 'Jugement',
+    other: 'Autre'
+  }
+  return labels[type] || type
+}
+
+const formatFileSize = (bytes: number) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const getInitials = (name: string | null | undefined) => {
+  if (!name) return '?'
+  const parts = name.trim().split(' ').filter(p => p.length > 0)
+  if (parts.length >= 2) {
+    const first = parts[0]?.[0]
+    const last = parts[parts.length - 1]?.[0]
+    if (first && last) {
+      return (first + last).toUpperCase()
+    }
+  }
+  if (parts[0] && parts[0].length >= 2) {
+    return parts[0].substring(0, 2).toUpperCase()
+  }
+  if (parts[0] && parts[0][0]) {
+    return parts[0][0].toUpperCase()
+  }
+  return '?'
+}
+
+const getStatusClass = (status: string) => {
+  const classes: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    in_progress: 'bg-indigo-100 text-indigo-800',
+    on_hold: 'bg-gray-100 text-gray-800',
+    closed: 'bg-green-100 text-green-800',
+    archived: 'bg-gray-200 text-gray-600'
+  }
+  return classes[status] || 'bg-gray-100 text-gray-800'
+}
+
+const getPriorityClass = (priority: string) => {
+  const classes: Record<string, string> = {
+    low: 'bg-green-100 text-green-800',
+    medium: 'bg-yellow-100 text-yellow-800',
+    high: 'bg-orange-100 text-orange-800',
+    urgent: 'bg-red-100 text-red-800'
+  }
+  return classes[priority] || 'bg-gray-100 text-gray-800'
+}
+
+const getPriorityLabel = (priority: string) => {
+  const labels: Record<string, string> = {
+    low: 'Faible',
+    medium: 'Moyenne',
+    high: 'Haute',
+    urgent: 'Urgente'
+  }
+  return labels[priority] || priority
+}
+
+onMounted(() => {
+  loadCase()
+})
+</script>
+
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -38,7 +343,6 @@
         </div>
 
         <div v-else-if="caseData">
-          <!-- Header avec titre et badges -->
           <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-8 mb-6 border border-white">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
               <div class="flex-1">
@@ -89,7 +393,6 @@
             </div>
           </div>
 
-          <!-- Info Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-white hover:border-indigo-200 cursor-default transform hover:-translate-y-1">
               <div class="flex items-center gap-3 mb-3">
@@ -118,7 +421,6 @@
             </div>
           </div>
 
-          <!-- Client Info -->
           <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-white">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -161,7 +463,6 @@
               </div>
             </div>
 
-            <!-- Info bulle explicative pour la messagerie -->
             <div class="mt-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-500 rounded-lg p-4">
               <div class="flex items-start gap-3">
                 <div class="flex-shrink-0">
@@ -227,7 +528,6 @@
             </div>
           </div>
 
-          <!-- Description -->
           <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-white">
             <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,7 +538,6 @@
             <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">{{ caseData.description || 'Aucune description disponible' }}</p>
           </div>
 
-          <!-- Informations juridiques et dates -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-white hover:shadow-lg transition-shadow duration-300">
               <h2 class="text-xl font-bold text-gray-900 mb-5 flex items-center gap-2">
@@ -320,7 +619,6 @@
             </div>
           </div>
 
-          <!-- Section Documents -->
           <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-6 mt-6 border border-white">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -480,7 +778,6 @@
       </div>
     </div>
 
-    <!-- Modal Upload Document -->
     <div v-if="showUploadModal" class="fixed inset-0 bg-gray-900/80 flex items-center justify-center z-50 p-4 backdrop-blur-md">
       <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100">
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -523,7 +820,6 @@
             </select>
           </div>
 
-          <!-- Section confidentialité - visible uniquement pour les avocats -->
           <div
             v-if="authStore.user?.role === 'avocat'"
             class="p-4 rounded-xl border-2 transition-all flex items-center justify-between"
@@ -555,14 +851,13 @@
             </label>
           </div>
 
-          <!-- Message pour les clients -->
           <div
             v-else
             class="p-4 rounded-xl bg-blue-50 border-2 border-blue-100"
           >
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                ℹ️
+
               </div>
               <div>
                 <p class="text-sm font-black text-blue-800">Document visible par votre avocat</p>
@@ -597,314 +892,3 @@
   />
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useCase } from '~/composables/useCase'
-import { useDocument } from '~/composables/useDocument'
-import { useAuthStore } from '~/stores/auth'
-import type { CaseWithDetails } from '~/types/case'
-import DocumentRequestModal from '~/components/documents/DocumentRequestModal.vue'
-
-definePageMeta({
-  middleware: 'auth',
-  layout: 'authenticated'
-})
-
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
-const { getCaseById, updateCase } = useCase()
-const { getDocumentsByCase, uploadDocument, deleteDocument: deleteDoc, getDownloadUrl } = useDocument()
-
-const caseData = ref<CaseWithDetails | null>(null)
-const documents = ref<any[]>([])
-const loading = ref(true)
-const loadingDocuments = ref(false)
-const statusUpdating = ref(false)
-const uploading = ref(false)
-const error = ref<string | null>(null)
-const showUploadModal = ref(false)
-const showDocumentRequestModal = ref(false)
-
-const uploadForm = ref({
-  title: '',
-  document_type: 'other',
-  is_confidential: false,
-  file: null as File | null
-})
-
-const loadCase = async () => {
-  loading.value = true
-  error.value = null
-  
-  try {
-    const caseId = route.params.id as string
-    const response = await getCaseById(caseId)
-    
-    if (response.success && response.data) {
-      caseData.value = response.data
-      await loadDocuments()
-    } else {
-      error.value = 'Dossier non trouvé'
-    }
-  } catch (err: any) {
-    console.error('Error loading case:', err)
-    error.value = 'Erreur lors du chargement du dossier'
-  } finally {
-    loading.value = false
-  }
-}
-
-const loadDocuments = async () => {
-  loadingDocuments.value = true
-  try {
-    const caseId = route.params.id as string
-    const response = await getDocumentsByCase(caseId)
-
-    if (Array.isArray(response)) {
-      documents.value = response
-    } else if (response && (response as any).success && (response as any).data) {
-      documents.value = (response as any).data
-    } else {
-      documents.value = []
-    }
-  } catch (err) {
-    console.error('Error loading documents:', err)
-    documents.value = []
-  } finally {
-    loadingDocuments.value = false
-  }
-}
-
-const onFileChange = (e: any) => {
-  const file = e.target.files[0]
-  if (file) {
-    uploadForm.value.file = file
-    if (!uploadForm.value.title) {
-      uploadForm.value.title = file.name.split('.')[0]
-    }
-  }
-}
-
-const handleUpload = async () => {
-  if (!uploadForm.value.file || !caseData.value) return
-
-  uploading.value = true
-  try {
-    const fd = new FormData()
-    fd.append('file', uploadForm.value.file)
-    fd.append('title', uploadForm.value.title)
-    fd.append('document_type', uploadForm.value.document_type)
-    fd.append('is_confidential', String(uploadForm.value.is_confidential))
-    fd.append('case_id', caseData.value.id)
-    fd.append('uploaded_by', authStore.user?.id || '')
-
-    await uploadDocument(fd)
-
-    // Réinitialiser le formulaire
-    showUploadModal.value = false
-    uploadForm.value = {
-      title: '',
-      document_type: 'other',
-      is_confidential: false,
-      file: null
-    }
-
-    // Recharger les documents
-    await loadDocuments()
-  } catch (err) {
-    console.error('Upload error:', err)
-    alert("Erreur lors de l'upload du document")
-  } finally {
-    uploading.value = false
-  }
-}
-
-const cancelUpload = () => {
-  showUploadModal.value = false
-  uploadForm.value = {
-    title: '',
-    document_type: 'other',
-    is_confidential: false,
-    file: null
-  }
-}
-
-const scheduleAppointment = () => {
-  if (!caseData.value) return
-  router.push({
-    path: '/appointments',
-    query: { 
-      create: 'true',
-      caseId: caseData.value.id,
-      clientId: caseData.value.client_id
-    }
-  })
-}
-
-const contactOtherParty = () => {
-  if (!caseData.value) return
-
-  // Déterminer qui contacter selon le rôle
-  let recipientId: string
-  let recipientName: string
-
-  if (authStore.user?.role === 'avocat') {
-    // Avocat contacte le client
-    recipientId = caseData.value.client_id
-    recipientName = `${caseData.value.client_first_name} ${caseData.value.client_last_name}`
-  } else {
-    // Client contacte l'avocat
-    recipientId = caseData.value.lawyer_id || ''
-    recipientName = `${caseData.value.lawyer_first_name || ''} ${caseData.value.lawyer_last_name || ''}`.trim()
-  }
-
-  // ✅ CONVERSATION LIÉE À CE DOSSIER SPÉCIFIQUE
-  // Cette conversation sera automatiquement associée au dossier en cours
-  // et apparaîtra avec un badge violet "Dossier" dans la messagerie
-  router.push({
-    path: '/messages',
-    query: {
-      recipientId,
-      recipientName: encodeURIComponent(recipientName),
-      caseId: caseData.value.id,  // ✅ ID du dossier actuel
-      caseTitle: encodeURIComponent(caseData.value.title),  // Titre pour affichage
-      caseNumber: encodeURIComponent(caseData.value.case_number)  // Numéro du dossier
-    }
-  })
-}
-
-const handleStatusChange = async (event: Event) => {
-  const newStatus = (event.target as HTMLSelectElement).value as any
-  if (!caseData.value || newStatus === caseData.value.status) return
-
-  statusUpdating.value = true
-  try {
-    const caseId = route.params.id as string
-    const response = await updateCase(caseId, { status: newStatus })
-    
-    if (response.success) {
-      caseData.value.status = newStatus
-      if (newStatus === 'closed') {
-        caseData.value.closing_date = new Date().toISOString()
-      }
-    } else {
-      alert("Erreur lors de la mise à jour du statut")
-    }
-  } catch (err) {
-    console.error('Update status error:', err)
-    alert("Une erreur est survenue")
-  } finally {
-    statusUpdating.value = false
-  }
-}
-
-const downloadDocument = (doc: any) => {
-  const url = getDownloadUrl(doc.file_url)
-  window.open(url, '_blank')
-}
-
-const deleteDocument = async (docId: string) => {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return
-
-  try {
-    await deleteDoc(docId)
-    documents.value = documents.value.filter(d => d.id !== docId)
-  } catch (err) {
-    console.error('Delete error:', err)
-    alert('Erreur lors de la suppression du document')
-  }
-}
-
-const handleDocumentRequestSuccess = (data: any) => {
-  console.log('Document request created:', data);
-  alert('✅ Demande envoyée avec succès ! Le client recevra un email avec le lien pour uploader les documents.');
-};
-
-const getDocumentTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    contract: 'Contrat',
-    pleading: 'Plaidoirie',
-    evidence: 'Preuve',
-    correspondence: 'Correspondance',
-    judgment: 'Jugement',
-    other: 'Autre'
-  }
-  return labels[type] || type
-}
-
-const formatFileSize = (bytes: number) => {
-  if (!bytes) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
-}
-
- const formatDate = (dateString: string) => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const getInitials = (name: string | null | undefined) => {
-  if (!name) return '?'
-  const parts = name.trim().split(' ').filter(p => p.length > 0)
-  if (parts.length >= 2) {
-    const first = parts[0]?.[0]
-    const last = parts[parts.length - 1]?.[0]
-    if (first && last) {
-      return (first + last).toUpperCase()
-    }
-  }
-  if (parts[0] && parts[0].length >= 2) {
-    return parts[0].substring(0, 2).toUpperCase()
-  }
-  if (parts[0] && parts[0][0]) {
-    return parts[0][0].toUpperCase()
-  }
-  return '?'
-}
-
-const getStatusClass = (status: string) => {
-  const classes: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    in_progress: 'bg-indigo-100 text-indigo-800',
-    on_hold: 'bg-gray-100 text-gray-800',
-    closed: 'bg-green-100 text-green-800',
-    archived: 'bg-gray-200 text-gray-600'
-  }
-  return classes[status] || 'bg-gray-100 text-gray-800'
-}
-
-const getPriorityClass = (priority: string) => {
-  const classes: Record<string, string> = {
-    low: 'bg-green-100 text-green-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-orange-100 text-orange-800',
-    urgent: 'bg-red-100 text-red-800'
-  }
-  return classes[priority] || 'bg-gray-100 text-gray-800'
-}
-
-const getPriorityLabel = (priority: string) => {
-  const labels: Record<string, string> = {
-    low: 'Faible',
-    medium: 'Moyenne',
-    high: 'Haute',
-    urgent: 'Urgente'
-  }
-  return labels[priority] || priority
-}
-
-onMounted(() => {
-  loadCase()
-})
-</script>

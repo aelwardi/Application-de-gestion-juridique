@@ -1,3 +1,511 @@
+<script setup lang="ts">
+const { searchAddresses } = useGeolocation();
+
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'authenticated',
+});
+
+const authStore = useAuthStore();
+const user = computed(() => authStore.user);
+
+const activeTab = ref('personal');
+const fileInput = ref<HTMLInputElement | null>(null);
+
+const tabs = computed(() => {
+  const baseTabs = [
+    { id: 'personal', label: 'Informations personnelles' },
+  ];
+
+  if (user.value?.role === 'avocat') {
+    baseTabs.push({ id: 'professional', label: 'Informations professionnelles' });
+    baseTabs.push({ id: 'office', label: 'Cabinet & Localisation' });
+    baseTabs.push({ id: 'specialties', label: 'Spécialités & Compétences' });
+  }
+
+  if (user.value?.role === 'client') {
+    baseTabs.push({ id: 'address', label: 'Adresse & Contact' });
+    baseTabs.push({ id: 'emergency', label: 'Contact d\'urgence' });
+  }
+
+  baseTabs.push({ id: 'security', label: 'Sécurité' });
+  baseTabs.push({ id: 'notifications', label: 'Notifications' });
+
+  return baseTabs;
+});
+
+const personalForm = ref({
+  firstName: user.value?.firstName || '',
+  lastName: user.value?.lastName || '',
+  email: user.value?.email || '',
+  phone: user.value?.phone || '',
+});
+
+const personalLoading = ref(false);
+const personalError = ref('');
+const personalSuccess = ref('');
+
+const professionalForm = ref({
+  barNumber: (user.value as any)?.barNumber || '',
+  experienceYears: (user.value as any)?.experienceYears || 0,
+  hourlyRate: (user.value as any)?.hourlyRate || 0,
+  description: (user.value as any)?.description || '',
+  availabilityStatus: (user.value as any)?.availabilityStatus || 'available',
+});
+
+const professionalLoading = ref(false);
+const professionalError = ref('');
+const professionalSuccess = ref('');
+
+const parseOfficeAddress = (value: any): string => {
+  if (!value) return '';
+
+  if (typeof value === 'string') {
+    if (value.startsWith('{') && value.includes('"address"')) {
+      try {
+        const parsed = JSON.parse(value);
+        return parsed.address || '';
+      } catch (e) {
+        console.warn('Erreur parsing JSON address:', e);
+        return value;
+      }
+    }
+    return value;
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return value.address || '';
+  }
+
+  return '';
+};
+
+const officeForm = ref({
+  officeAddress: parseOfficeAddress((user.value as any)?.officeAddress) || '',
+  officeCity: (user.value as any)?.officeCity || '',
+  officePostalCode: (user.value as any)?.officePostalCode || '',
+  latitude: (user.value as any)?.latitude || null,
+  longitude: (user.value as any)?.longitude || null,
+});
+
+const officeLoading = ref(false);
+const officeError = ref('');
+const officeSuccess = ref('');
+
+watch(() => officeForm.value.officeAddress, (newValue) => {
+  if (newValue && typeof newValue === 'object') {
+    console.warn('officeAddress est un objet, conversion en string:', newValue);
+    officeForm.value.officeAddress = (newValue as any).address || '';
+  } else if (newValue && typeof newValue === 'string' && newValue.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(newValue);
+      if (parsed.address) {
+        console.warn('officeAddress est un JSON, extraction de l\'adresse:', parsed);
+        officeForm.value.officeAddress = parsed.address;
+      }
+    } catch (e) {
+    }
+  }
+});
+
+const officeSuggestions = ref<any[]>([]);
+const showOfficeSuggestions = ref(false);
+let officeSearchTimeout: NodeJS.Timeout | null = null;
+
+const handleOfficeAddressSearch = async () => {
+  let query = officeForm.value.officeAddress;
+
+  if (typeof query === 'object') {
+    query = (query as any).address || '';
+    officeForm.value.officeAddress = query;
+  }
+
+  query = (query || '').toString().trim();
+
+  if (!query || query.length < 3) {
+    officeSuggestions.value = [];
+    return;
+  }
+
+  if (officeSearchTimeout) {
+    clearTimeout(officeSearchTimeout);
+  }
+
+  officeSearchTimeout = setTimeout(async () => {
+    try {
+      officeSuggestions.value = await searchAddresses(query, 5);
+      showOfficeSuggestions.value = true;
+    } catch (error) {
+      console.error('Erreur recherche adresse:', error);
+      officeSuggestions.value = [];
+    }
+  }, 300);
+};
+
+const selectOfficeSuggestion = (suggestion: any) => {
+  console.log('🏢 Adresse cabinet sélectionnée:', suggestion);
+
+  officeForm.value.officeAddress = suggestion.formattedAddress || suggestion.address;
+
+  const addressParts = (suggestion.formattedAddress || suggestion.address || '').split(',');
+
+  let city = '';
+  let postalCode = '';
+
+  for (const part of addressParts) {
+    const trimmedPart = part.trim();
+
+    const postalMatch = trimmedPart.match(/\b(\d{5})\b/);
+    if (postalMatch && !postalCode) {
+      postalCode = postalMatch[1];
+      const cityMatch = trimmedPart.replace(postalCode, '').trim();
+      if (cityMatch) {
+        city = cityMatch;
+      }
+    }
+  }
+
+  if (!city && addressParts.length > 1) {
+    city = addressParts[1].trim().replace(/\d{5}/, '').trim();
+  }
+
+  officeForm.value.officeCity = city;
+  officeForm.value.officePostalCode = postalCode;
+
+  officeForm.value.latitude = suggestion.latitude || null;
+  officeForm.value.longitude = suggestion.longitude || null;
+
+  showOfficeSuggestions.value = false;
+  officeSuggestions.value = [];
+
+  console.log('Formulaire cabinet mis à jour:', {
+    address: officeForm.value.officeAddress,
+    city: officeForm.value.officeCity,
+    postalCode: officeForm.value.officePostalCode,
+    latitude: officeForm.value.latitude,
+    longitude: officeForm.value.longitude
+  });
+};
+
+const hideOfficeSuggestions = () => {
+  setTimeout(() => {
+    showOfficeSuggestions.value = false;
+  }, 200);
+};
+
+const parseArray = (value: any) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    return value.replace(/[{}"]/g, '').split(',').filter(s => s.trim());
+  }
+  return [];
+};
+
+const specialtiesForm = ref({
+  specialties: parseArray((user.value as any)?.specialties).length > 0
+      ? parseArray((user.value as any)?.specialties)
+      : [''],
+  languages: parseArray((user.value as any)?.languages).length > 0
+      ? parseArray((user.value as any)?.languages)
+      : [''],
+});
+
+const specialtiesLoading = ref(false);
+const specialtiesError = ref('');
+const specialtiesSuccess = ref('');
+
+const addressForm = ref({
+  address: (user.value as any)?.address || '',
+  city: (user.value as any)?.city || '',
+  postalCode: (user.value as any)?.postalCode || '',
+  notes: (user.value as any)?.notes || '',
+});
+
+const addressLoading = ref(false);
+const addressError = ref('');
+const addressSuccess = ref('');
+
+const emergencyForm = ref({
+  emergencyContactName: (user.value as any)?.emergencyContactName || '',
+  emergencyContactPhone: (user.value as any)?.emergencyContactPhone || '',
+});
+
+const emergencyLoading = ref(false);
+const emergencyError = ref('');
+const emergencySuccess = ref('');
+
+const securityForm = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+});
+
+const securityLoading = ref(false);
+const securityError = ref('');
+const securitySuccess = ref('');
+
+const notificationForm = ref({
+  emailNotifications: true,
+  appointmentReminders: true,
+  caseUpdates: true,
+  messageAlerts: true,
+});
+
+const notificationLoading = ref(false);
+
+const getRoleLabel = (role: string | undefined) => {
+  const labels: Record<string, string> = {
+    client: 'Client',
+    avocat: 'Avocat',
+    collaborateur: 'Collaborateur',
+    admin: 'Administrateur',
+  };
+  return labels[role || ''] || role;
+};
+
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+const handleFileUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  console.log('File to upload:', file);
+};
+
+const updatePersonalInfo = async () => {
+  personalLoading.value = true;
+  personalError.value = '';
+  personalSuccess.value = '';
+
+  try {
+    const config = useRuntimeConfig();
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
+      method: 'PUT',
+      headers: authStore.getAuthHeaders(),
+      body: {
+        first_name: personalForm.value.firstName,
+        last_name: personalForm.value.lastName,
+        email: personalForm.value.email,
+        phone: personalForm.value.phone,
+      },
+    });
+
+    if (response.success && response.data) {
+      authStore.user = response.data;
+    }
+    personalSuccess.value = 'Informations personnelles mises à jour avec succès';
+    setTimeout(() => personalSuccess.value = '', 3000);
+  } catch (error: any) {
+    personalError.value = error.message || 'Une erreur est survenue';
+  } finally {
+    personalLoading.value = false;
+  }
+};
+
+const updateProfessionalInfo = async () => {
+  professionalLoading.value = true;
+  professionalError.value = '';
+  professionalSuccess.value = '';
+
+  try {
+    const config = useRuntimeConfig();
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
+      method: 'PUT',
+      headers: authStore.getAuthHeaders(),
+      body: {
+        bar_number: professionalForm.value.barNumber,
+        experience_years: professionalForm.value.experienceYears,
+        hourly_rate: professionalForm.value.hourlyRate,
+        description: professionalForm.value.description,
+        availability_status: professionalForm.value.availabilityStatus,
+      },
+    });
+
+    if (response.success && response.data) {
+      authStore.user = response.data;
+    }
+    professionalSuccess.value = 'Informations professionnelles mises à jour avec succès';
+    setTimeout(() => professionalSuccess.value = '', 3000);
+  } catch (error: any) {
+    professionalError.value = error.message || 'Une erreur est survenue';
+  } finally {
+    professionalLoading.value = false;
+  }
+};
+
+const updateOfficeInfo = async () => {
+  officeLoading.value = true;
+  officeError.value = '';
+  officeSuccess.value = '';
+
+  try {
+    const config = useRuntimeConfig();
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
+      method: 'PUT',
+      headers: authStore.getAuthHeaders(),
+      body: {
+        office_address: officeForm.value.officeAddress,
+        office_city: officeForm.value.officeCity,
+        office_postal_code: officeForm.value.officePostalCode,
+        latitude: officeForm.value.latitude,
+        longitude: officeForm.value.longitude,
+      },
+    });
+
+    if (response.success && response.data) {
+      authStore.user = response.data;
+    }
+    officeSuccess.value = 'Informations du cabinet mises à jour avec succès';
+    setTimeout(() => officeSuccess.value = '', 3000);
+  } catch (error: any) {
+    officeError.value = error.message || 'Une erreur est survenue';
+  } finally {
+    officeLoading.value = false;
+  }
+};
+
+const updateSpecialties = async () => {
+  specialtiesLoading.value = true;
+  specialtiesError.value = '';
+  specialtiesSuccess.value = '';
+
+  try {
+    const config = useRuntimeConfig();
+    const cleanSpecialties = specialtiesForm.value.specialties.filter(s => s.trim());
+    const cleanLanguages = specialtiesForm.value.languages.filter(l => l.trim());
+
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
+      method: 'PUT',
+      headers: authStore.getAuthHeaders(),
+      body: {
+        specialties: cleanSpecialties,
+        languages: cleanLanguages,
+      },
+    });
+
+    if (response.success && response.data) {
+      authStore.user = response.data;
+    }
+    specialtiesSuccess.value = 'Spécialités et langues mises à jour avec succès';
+    setTimeout(() => specialtiesSuccess.value = '', 3000);
+  } catch (error: any) {
+    specialtiesError.value = error.message || 'Une erreur est survenue';
+  } finally {
+    specialtiesLoading.value = false;
+  }
+};
+
+const updateAddressInfo = async () => {
+  addressLoading.value = true;
+  addressError.value = '';
+  addressSuccess.value = '';
+
+  try {
+    const config = useRuntimeConfig();
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
+      method: 'PUT',
+      headers: authStore.getAuthHeaders(),
+      body: {
+        address: addressForm.value.address,
+        city: addressForm.value.city,
+        postal_code: addressForm.value.postalCode,
+        notes: addressForm.value.notes,
+      },
+    });
+
+    if (response.success && response.data) {
+      authStore.user = response.data;
+    }
+    addressSuccess.value = 'Adresse mise à jour avec succès';
+    setTimeout(() => addressSuccess.value = '', 3000);
+  } catch (error: any) {
+    addressError.value = error.message || 'Une erreur est survenue';
+  } finally {
+    addressLoading.value = false;
+  }
+};
+
+const updateEmergencyContact = async () => {
+  emergencyLoading.value = true;
+  emergencyError.value = '';
+  emergencySuccess.value = '';
+
+  try {
+    const config = useRuntimeConfig();
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
+      method: 'PUT',
+      headers: authStore.getAuthHeaders(),
+      body: {
+        emergency_contact_name: emergencyForm.value.emergencyContactName,
+        emergency_contact_phone: emergencyForm.value.emergencyContactPhone,
+      },
+    });
+
+    if (response.success && response.data) {
+      authStore.user = response.data;
+    }
+    emergencySuccess.value = 'Contact d\'urgence mis à jour avec succès';
+    setTimeout(() => emergencySuccess.value = '', 3000);
+  } catch (error: any) {
+    emergencyError.value = error.message || 'Une erreur est survenue';
+  } finally {
+    emergencyLoading.value = false;
+  }
+};
+
+const updatePassword = async () => {
+  securityLoading.value = true;
+  securityError.value = '';
+  securitySuccess.value = '';
+
+  if (securityForm.value.newPassword !== securityForm.value.confirmPassword) {
+    securityError.value = 'Les mots de passe ne correspondent pas';
+    securityLoading.value = false;
+    return;
+  }
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    securitySuccess.value = 'Mot de passe modifié avec succès';
+    securityForm.value = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    };
+  } catch (error: any) {
+    securityError.value = error.message || 'Une erreur est survenue';
+  } finally {
+    securityLoading.value = false;
+  }
+};
+
+const updateNotificationPreferences = async () => {
+  notificationLoading.value = true;
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  } catch (error) {
+    console.error('Error updating notification preferences:', error);
+  } finally {
+    notificationLoading.value = false;
+  }
+};
+
+watch(user, (newUser) => {
+  if (newUser) {
+    personalForm.value = {
+      firstName: newUser.firstName || '',
+      lastName: newUser.lastName || '',
+      email: newUser.email || '',
+      phone: newUser.phone || '',
+    };
+  }
+}, { immediate: true });
+</script>
+
 <template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -135,14 +643,13 @@
             </form>
           </div>
 
-          <!-- Section Avocat : Informations professionnelles -->
           <div v-if="user?.role === 'avocat'" v-show="activeTab === 'professional'" class="space-y-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">⚖️ Informations professionnelles</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Informations professionnelles</h2>
             <form @submit.prevent="updateProfessionalInfo" class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Numéro du barreau *
+                    Numéro du barreau
                   </label>
                   <input
                     v-model="professionalForm.barNumber"
@@ -202,9 +709,9 @@
                   v-model="professionalForm.availabilityStatus"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="available">🟢 Disponible</option>
-                  <option value="busy">🟡 Occupé</option>
-                  <option value="unavailable">🔴 Indisponible</option>
+                  <option value="available">Disponible</option>
+                  <option value="busy">Occupé</option>
+                  <option value="unavailable">Indisponible</option>
                 </select>
               </div>
 
@@ -227,13 +734,12 @@
             </form>
           </div>
 
-          <!-- Section Avocat : Cabinet & Localisation -->
           <div v-if="user?.role === 'avocat'" v-show="activeTab === 'office'" class="space-y-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">🏢 Cabinet & Localisation</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Cabinet & Localisation</h2>
             <form @submit.prevent="updateOfficeInfo" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Adresse du cabinet *
+                  Adresse du cabinet
                 </label>
                 <div class="relative">
                   <input
@@ -246,7 +752,6 @@
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
 
-                  <!-- Suggestions dropdown -->
                   <div
                     v-if="showOfficeSuggestions && officeSuggestions.length > 0"
                     class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
@@ -266,14 +771,14 @@
                         <div class="flex-1">
                           <p class="font-medium text-gray-900 text-sm">{{ suggestion.formattedAddress }}</p>
                           <p class="text-xs text-gray-500 mt-0.5">
-                            📍 GPS: {{ suggestion.latitude.toFixed(4) }}, {{ suggestion.longitude.toFixed(4) }}
+                             GPS: {{ suggestion.latitude.toFixed(4) }}, {{ suggestion.longitude.toFixed(4) }}
                           </p>
                         </div>
                       </div>
                     </button>
                   </div>
                 </div>
-                <p class="mt-1 text-xs text-gray-500">💡 Tapez au moins 3 caractères pour voir les suggestions</p>
+                <p class="mt-1 text-xs text-gray-500">Tapez au moins 3 caractères pour voir les suggestions</p>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -304,18 +809,16 @@
                 </div>
               </div>
 
-              <!-- Champs cachés pour latitude et longitude (remplis automatiquement) -->
               <input type="hidden" v-model="officeForm.latitude" />
               <input type="hidden" v-model="officeForm.longitude" />
 
-              <!-- Message info géolocalisation -->
               <div v-if="officeForm.latitude && officeForm.longitude" class="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <div class="flex items-center gap-2">
                   <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                   </svg>
                   <span class="text-sm text-blue-800 font-medium">
-                    ✅ Cabinet géolocalisé - Visible sur la carte pour les clients
+                     Cabinet géolocalisé - Visible sur la carte pour les clients
                   </span>
                 </div>
               </div>
@@ -339,7 +842,6 @@
             </form>
           </div>
 
-          <!-- Section Avocat : Spécialités & Compétences -->
           <div v-if="user?.role === 'avocat'" v-show="activeTab === 'specialties'" class="space-y-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">🎓 Spécialités & Compétences</h2>
             <form @submit.prevent="updateSpecialties" class="space-y-4">
@@ -422,9 +924,8 @@
             </form>
           </div>
 
-          <!-- Section Client : Adresse & Contact -->
           <div v-if="user?.role === 'client'" v-show="activeTab === 'address'" class="space-y-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">📍 Adresse & Contact</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Adresse & Contact</h2>
             <form @submit.prevent="updateAddressInfo" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -495,9 +996,8 @@
             </form>
           </div>
 
-          <!-- Section Client : Contact d'urgence -->
           <div v-if="user?.role === 'client'" v-show="activeTab === 'emergency'" class="space-y-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">🚨 Contact d'urgence</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Contact d'urgence</h2>
             <form @submit.prevent="updateEmergencyContact" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -525,7 +1025,7 @@
 
               <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                 <p class="text-sm text-yellow-800">
-                  ℹ️ Ce contact sera utilisé en cas d'urgence nécessitant de vous joindre rapidement.
+                   Ce contact sera utilisé en cas d'urgence nécessitant de vous joindre rapidement.
                 </p>
               </div>
 
@@ -668,536 +1168,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-const { searchAddresses } = useGeolocation();
-
-definePageMeta({
-  middleware: ['auth'],
-  layout: 'authenticated',
-});
-
-const authStore = useAuthStore();
-const user = computed(() => authStore.user);
-
-const activeTab = ref('personal');
-const fileInput = ref<HTMLInputElement | null>(null);
-
-const tabs = computed(() => {
-  const baseTabs = [
-    { id: 'personal', label: '👤 Informations personnelles' },
-  ];
-
-  if (user.value?.role === 'avocat') {
-    baseTabs.push({ id: 'professional', label: '⚖️ Informations professionnelles' });
-    baseTabs.push({ id: 'office', label: '🏢 Cabinet & Localisation' });
-    baseTabs.push({ id: 'specialties', label: '🎓 Spécialités & Compétences' });
-  }
-
-  if (user.value?.role === 'client') {
-    baseTabs.push({ id: 'address', label: '📍 Adresse & Contact' });
-    baseTabs.push({ id: 'emergency', label: '🚨 Contact d\'urgence' });
-  }
-
-  baseTabs.push({ id: 'security', label: '🔒 Sécurité' });
-  baseTabs.push({ id: 'notifications', label: '🔔 Notifications' });
-
-  return baseTabs;
-});
-
-const personalForm = ref({
-  firstName: user.value?.firstName || '',
-  lastName: user.value?.lastName || '',
-  email: user.value?.email || '',
-  phone: user.value?.phone || '',
-});
-
-const personalLoading = ref(false);
-const personalError = ref('');
-const personalSuccess = ref('');
-
-// Formulaire avocat - Professionnel
-const professionalForm = ref({
-  barNumber: (user.value as any)?.barNumber || '',
-  experienceYears: (user.value as any)?.experienceYears || 0,
-  hourlyRate: (user.value as any)?.hourlyRate || 0,
-  description: (user.value as any)?.description || '',
-  availabilityStatus: (user.value as any)?.availabilityStatus || 'available',
-});
-
-const professionalLoading = ref(false);
-const professionalError = ref('');
-const professionalSuccess = ref('');
-
-// Formulaire avocat - Cabinet
-const parseOfficeAddress = (value: any): string => {
-  if (!value) return '';
-
-  // Si c'est déjà une string simple, la retourner
-  if (typeof value === 'string') {
-    // Vérifier si c'est un JSON stringifié
-    if (value.startsWith('{') && value.includes('"address"')) {
-      try {
-        const parsed = JSON.parse(value);
-        return parsed.address || '';
-      } catch (e) {
-        console.warn('Erreur parsing JSON address:', e);
-        return value;
-      }
-    }
-    return value;
-  }
-
-  // Si c'est un objet, extraire l'adresse
-  if (typeof value === 'object' && value !== null) {
-    return value.address || '';
-  }
-
-  return '';
-};
-
-const officeForm = ref({
-  officeAddress: parseOfficeAddress((user.value as any)?.officeAddress) || '',
-  officeCity: (user.value as any)?.officeCity || '',
-  officePostalCode: (user.value as any)?.officePostalCode || '',
-  latitude: (user.value as any)?.latitude || null,
-  longitude: (user.value as any)?.longitude || null,
-});
-
-const officeLoading = ref(false);
-const officeError = ref('');
-const officeSuccess = ref('');
-
-// Watcher pour nettoyer l'adresse si elle devient un objet
-watch(() => officeForm.value.officeAddress, (newValue) => {
-  if (newValue && typeof newValue === 'object') {
-    console.warn('⚠️ officeAddress est un objet, conversion en string:', newValue);
-    officeForm.value.officeAddress = (newValue as any).address || '';
-  } else if (newValue && typeof newValue === 'string' && newValue.startsWith('{')) {
-    // C'est un JSON stringifié
-    try {
-      const parsed = JSON.parse(newValue);
-      if (parsed.address) {
-        console.warn('⚠️ officeAddress est un JSON, extraction de l\'adresse:', parsed);
-        officeForm.value.officeAddress = parsed.address;
-      }
-    } catch (e) {
-      // Pas un JSON valide, laisser tel quel
-    }
-  }
-});
-
-// Autocomplétion adresse cabinet
-const officeSuggestions = ref<any[]>([]);
-const showOfficeSuggestions = ref(false);
-let officeSearchTimeout: NodeJS.Timeout | null = null;
-
-const handleOfficeAddressSearch = async () => {
-  // S'assurer que l'adresse est une string
-  let query = officeForm.value.officeAddress;
-
-  if (typeof query === 'object') {
-    query = (query as any).address || '';
-    officeForm.value.officeAddress = query;
-  }
-
-  query = (query || '').toString().trim();
-
-  if (!query || query.length < 3) {
-    officeSuggestions.value = [];
-    return;
-  }
-
-  // Debounce
-  if (officeSearchTimeout) {
-    clearTimeout(officeSearchTimeout);
-  }
-
-  officeSearchTimeout = setTimeout(async () => {
-    try {
-      officeSuggestions.value = await searchAddresses(query, 5);
-      showOfficeSuggestions.value = true;
-    } catch (error) {
-      console.error('Erreur recherche adresse:', error);
-      officeSuggestions.value = [];
-    }
-  }, 300);
-};
-
-const selectOfficeSuggestion = (suggestion: any) => {
-  console.log('🏢 Adresse cabinet sélectionnée:', suggestion);
-
-  // Remplir l'adresse complète
-  officeForm.value.officeAddress = suggestion.formattedAddress || suggestion.address;
-
-  // Parser la ville et le code postal depuis formattedAddress
-  // Format Nominatim: "Rue, Code Postal Ville, Région, Pays"
-  const addressParts = (suggestion.formattedAddress || suggestion.address || '').split(',');
-
-  // Essayer de trouver le code postal et la ville
-  let city = '';
-  let postalCode = '';
-
-  for (const part of addressParts) {
-    const trimmedPart = part.trim();
-
-    // Chercher un code postal (5 chiffres en France)
-    const postalMatch = trimmedPart.match(/\b(\d{5})\b/);
-    if (postalMatch && !postalCode) {
-      postalCode = postalMatch[1];
-      // La ville est souvent après le code postal
-      const cityMatch = trimmedPart.replace(postalCode, '').trim();
-      if (cityMatch) {
-        city = cityMatch;
-      }
-    }
-  }
-
-  // Si on n'a pas trouvé la ville dans la partie avec le code postal, essayer la 2ème partie
-  if (!city && addressParts.length > 1) {
-    city = addressParts[1].trim().replace(/\d{5}/, '').trim();
-  }
-
-  officeForm.value.officeCity = city;
-  officeForm.value.officePostalCode = postalCode;
-
-  // Coordonnées GPS (directement disponibles depuis Nominatim)
-  officeForm.value.latitude = suggestion.latitude || null;
-  officeForm.value.longitude = suggestion.longitude || null;
-
-  showOfficeSuggestions.value = false;
-  officeSuggestions.value = [];
-
-  console.log('✅ Formulaire cabinet mis à jour:', {
-    address: officeForm.value.officeAddress,
-    city: officeForm.value.officeCity,
-    postalCode: officeForm.value.officePostalCode,
-    latitude: officeForm.value.latitude,
-    longitude: officeForm.value.longitude
-  });
-};
-
-const hideOfficeSuggestions = () => {
-  setTimeout(() => {
-    showOfficeSuggestions.value = false;
-  }, 200);
-};
-
-// Formulaire avocat - Spécialités
-const parseArray = (value: any) => {
-  if (Array.isArray(value)) return value;
-  if (typeof value === 'string') {
-    return value.replace(/[{}"]/g, '').split(',').filter(s => s.trim());
-  }
-  return [];
-};
-
-const specialtiesForm = ref({
-  specialties: parseArray((user.value as any)?.specialties).length > 0
-    ? parseArray((user.value as any)?.specialties)
-    : [''],
-  languages: parseArray((user.value as any)?.languages).length > 0
-    ? parseArray((user.value as any)?.languages)
-    : [''],
-});
-
-const specialtiesLoading = ref(false);
-const specialtiesError = ref('');
-const specialtiesSuccess = ref('');
-
-// Formulaire client - Adresse
-const addressForm = ref({
-  address: (user.value as any)?.address || '',
-  city: (user.value as any)?.city || '',
-  postalCode: (user.value as any)?.postalCode || '',
-  notes: (user.value as any)?.notes || '',
-});
-
-const addressLoading = ref(false);
-const addressError = ref('');
-const addressSuccess = ref('');
-
-// Formulaire client - Urgence
-const emergencyForm = ref({
-  emergencyContactName: (user.value as any)?.emergencyContactName || '',
-  emergencyContactPhone: (user.value as any)?.emergencyContactPhone || '',
-});
-
-const emergencyLoading = ref(false);
-const emergencyError = ref('');
-const emergencySuccess = ref('');
-
-const securityForm = ref({
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: '',
-});
-
-const securityLoading = ref(false);
-const securityError = ref('');
-const securitySuccess = ref('');
-
-const notificationForm = ref({
-  emailNotifications: true,
-  appointmentReminders: true,
-  caseUpdates: true,
-  messageAlerts: true,
-});
-
-const notificationLoading = ref(false);
-
-const getRoleLabel = (role: string | undefined) => {
-  const labels: Record<string, string> = {
-    client: 'Client',
-    avocat: 'Avocat',
-    collaborateur: 'Collaborateur',
-    admin: 'Administrateur',
-  };
-  return labels[role || ''] || role;
-};
-
-const triggerFileUpload = () => {
-  fileInput.value?.click();
-};
-
-const handleFileUpload = async (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file) return;
-
-  // TODO: Implémenter l'upload de la photo de profil
-  console.log('File to upload:', file);
-};
-
-const updatePersonalInfo = async () => {
-  personalLoading.value = true;
-  personalError.value = '';
-  personalSuccess.value = '';
-
-  try {
-    const config = useRuntimeConfig();
-    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
-      method: 'PUT',
-      headers: authStore.getAuthHeaders(),
-      body: {
-        first_name: personalForm.value.firstName,
-        last_name: personalForm.value.lastName,
-        email: personalForm.value.email,
-        phone: personalForm.value.phone,
-      },
-    });
-
-    if (response.success && response.data) {
-      authStore.user = response.data;
-    }
-    personalSuccess.value = '✅ Informations personnelles mises à jour avec succès';
-    setTimeout(() => personalSuccess.value = '', 3000);
-  } catch (error: any) {
-    personalError.value = error.message || 'Une erreur est survenue';
-  } finally {
-    personalLoading.value = false;
-  }
-};
-
-const updateProfessionalInfo = async () => {
-  professionalLoading.value = true;
-  professionalError.value = '';
-  professionalSuccess.value = '';
-
-  try {
-    const config = useRuntimeConfig();
-    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
-      method: 'PUT',
-      headers: authStore.getAuthHeaders(),
-      body: {
-        bar_number: professionalForm.value.barNumber,
-        experience_years: professionalForm.value.experienceYears,
-        hourly_rate: professionalForm.value.hourlyRate,
-        description: professionalForm.value.description,
-        availability_status: professionalForm.value.availabilityStatus,
-      },
-    });
-
-    if (response.success && response.data) {
-      authStore.user = response.data;
-    }
-    professionalSuccess.value = '✅ Informations professionnelles mises à jour avec succès';
-    setTimeout(() => professionalSuccess.value = '', 3000);
-  } catch (error: any) {
-    professionalError.value = error.message || 'Une erreur est survenue';
-  } finally {
-    professionalLoading.value = false;
-  }
-};
-
-const updateOfficeInfo = async () => {
-  officeLoading.value = true;
-  officeError.value = '';
-  officeSuccess.value = '';
-
-  try {
-    const config = useRuntimeConfig();
-    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
-      method: 'PUT',
-      headers: authStore.getAuthHeaders(),
-      body: {
-        office_address: officeForm.value.officeAddress,
-        office_city: officeForm.value.officeCity,
-        office_postal_code: officeForm.value.officePostalCode,
-        latitude: officeForm.value.latitude,
-        longitude: officeForm.value.longitude,
-      },
-    });
-
-    if (response.success && response.data) {
-      authStore.user = response.data;
-    }
-    officeSuccess.value = '✅ Informations du cabinet mises à jour avec succès';
-    setTimeout(() => officeSuccess.value = '', 3000);
-  } catch (error: any) {
-    officeError.value = error.message || 'Une erreur est survenue';
-  } finally {
-    officeLoading.value = false;
-  }
-};
-
-const updateSpecialties = async () => {
-  specialtiesLoading.value = true;
-  specialtiesError.value = '';
-  specialtiesSuccess.value = '';
-
-  try {
-    const config = useRuntimeConfig();
-    // Filtrer les valeurs vides
-    const cleanSpecialties = specialtiesForm.value.specialties.filter(s => s.trim());
-    const cleanLanguages = specialtiesForm.value.languages.filter(l => l.trim());
-
-    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
-      method: 'PUT',
-      headers: authStore.getAuthHeaders(),
-      body: {
-        specialties: cleanSpecialties,
-        languages: cleanLanguages,
-      },
-    });
-
-    if (response.success && response.data) {
-      authStore.user = response.data;
-    }
-    specialtiesSuccess.value = '✅ Spécialités et langues mises à jour avec succès';
-    setTimeout(() => specialtiesSuccess.value = '', 3000);
-  } catch (error: any) {
-    specialtiesError.value = error.message || 'Une erreur est survenue';
-  } finally {
-    specialtiesLoading.value = false;
-  }
-};
-
-const updateAddressInfo = async () => {
-  addressLoading.value = true;
-  addressError.value = '';
-  addressSuccess.value = '';
-
-  try {
-    const config = useRuntimeConfig();
-    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
-      method: 'PUT',
-      headers: authStore.getAuthHeaders(),
-      body: {
-        address: addressForm.value.address,
-        city: addressForm.value.city,
-        postal_code: addressForm.value.postalCode,
-        notes: addressForm.value.notes,
-      },
-    });
-
-    if (response.success && response.data) {
-      authStore.user = response.data;
-    }
-    addressSuccess.value = '✅ Adresse mise à jour avec succès';
-    setTimeout(() => addressSuccess.value = '', 3000);
-  } catch (error: any) {
-    addressError.value = error.message || 'Une erreur est survenue';
-  } finally {
-    addressLoading.value = false;
-  }
-};
-
-const updateEmergencyContact = async () => {
-  emergencyLoading.value = true;
-  emergencyError.value = '';
-  emergencySuccess.value = '';
-
-  try {
-    const config = useRuntimeConfig();
-    const response: any = await $fetch(`${config.public.apiBaseUrl}/users/${user.value?.id}`, {
-      method: 'PUT',
-      headers: authStore.getAuthHeaders(),
-      body: {
-        emergency_contact_name: emergencyForm.value.emergencyContactName,
-        emergency_contact_phone: emergencyForm.value.emergencyContactPhone,
-      },
-    });
-
-    if (response.success && response.data) {
-      authStore.user = response.data;
-    }
-    emergencySuccess.value = '✅ Contact d\'urgence mis à jour avec succès';
-    setTimeout(() => emergencySuccess.value = '', 3000);
-  } catch (error: any) {
-    emergencyError.value = error.message || 'Une erreur est survenue';
-  } finally {
-    emergencyLoading.value = false;
-  }
-};
-
-const updatePassword = async () => {
-  securityLoading.value = true;
-  securityError.value = '';
-  securitySuccess.value = '';
-
-  if (securityForm.value.newPassword !== securityForm.value.confirmPassword) {
-    securityError.value = 'Les mots de passe ne correspondent pas';
-    securityLoading.value = false;
-    return;
-  }
-
-  try {
-    // TODO: Implémenter la mise à jour du mot de passe
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    securitySuccess.value = 'Mot de passe modifié avec succès';
-    securityForm.value = {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    };
-  } catch (error: any) {
-    securityError.value = error.message || 'Une erreur est survenue';
-  } finally {
-    securityLoading.value = false;
-  }
-};
-
-const updateNotificationPreferences = async () => {
-  notificationLoading.value = true;
-
-  try {
-    // TODO: Implémenter la mise à jour des préférences
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  } catch (error) {
-    console.error('Error updating notification preferences:', error);
-  } finally {
-    notificationLoading.value = false;
-  }
-};
-
-watch(user, (newUser) => {
-  if (newUser) {
-    personalForm.value = {
-      firstName: newUser.firstName || '',
-      lastName: newUser.lastName || '',
-      email: newUser.email || '',
-      phone: newUser.phone || '',
-    };
-  }
-}, { immediate: true });
-</script>

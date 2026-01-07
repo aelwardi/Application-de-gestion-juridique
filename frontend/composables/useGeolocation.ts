@@ -7,17 +7,12 @@ interface GeocodingResult {
   formattedAddress?: string
 }
 
-/**
- * Service de géolocalisation et géocodage
- */
+
 export const useGeolocation = () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  /**
-   * Géocoder une adresse en coordonnées GPS
-   * Utilise l'API Nominatim d'OpenStreetMap (gratuite)
-   */
+
   const geocodeAddress = async (address: string): Promise<GeocodingResult | null> => {
     if (!address || address.trim().length === 0) {
       error.value = 'Adresse vide'
@@ -64,9 +59,7 @@ export const useGeolocation = () => {
     }
   }
 
-  /**
-   * Géocoder inversement des coordonnées en adresse
-   */
+
   const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
     loading.value = true
     error.value = null
@@ -96,9 +89,7 @@ export const useGeolocation = () => {
     }
   }
 
-  /**
-   * Obtenir la position actuelle de l'utilisateur
-   */
+
   const getCurrentPosition = (): Promise<GeolocationPosition> => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -114,9 +105,7 @@ export const useGeolocation = () => {
     })
   }
 
-  /**
-   * Rechercher des adresses avec suggestions (autocomplete)
-   */
+
   const searchAddresses = async (query: string, limit: number = 5): Promise<GeocodingResult[]> => {
     if (!query || query.trim().length < 3) {
       return []
@@ -156,10 +145,7 @@ export const useGeolocation = () => {
     }
   }
 
-  /**
-   * Calculer la distance entre deux points (en km)
-   * Utilise la formule de Haversine
-   */
+
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371 // Rayon de la Terre en km
     const dLat = toRad(lat2 - lat1)
@@ -178,16 +164,12 @@ export const useGeolocation = () => {
     return degrees * (Math.PI / 180)
   }
 
-  /**
-   * Générer un lien Google Maps pour un itinéraire
-   */
+
   const getGoogleMapsDirectionsUrl = (origin: { lat: number, lng: number }, destination: { lat: number, lng: number }): string => {
     return `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&travelmode=driving`
   }
 
-  /**
-   * Générer un lien Google Maps pour une position
-   */
+
   const getGoogleMapsUrl = (lat: number, lng: number, label?: string): string => {
     if (label) {
       return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${encodeURIComponent(label)}`

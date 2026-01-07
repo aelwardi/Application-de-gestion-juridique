@@ -14,9 +14,7 @@ export const useSupport = () => {
     return headers;
   };
 
-  /**
-   * Créer un ticket support
-   */
+
   const createTicket = async (data: {
     subject: string;
     description: string;
@@ -36,9 +34,7 @@ export const useSupport = () => {
     }
   };
 
-  /**
-   * Récupérer mes tickets
-   */
+
   const getMyTickets = async () => {
     try {
       const response = await $fetch<any>(`${baseURL}/support/my-tickets`, {
@@ -52,9 +48,7 @@ export const useSupport = () => {
     }
   };
 
-  /**
-   * Récupérer les détails d'un ticket
-   */
+
   const getTicketDetails = async (ticketId: string) => {
     try {
       const response = await $fetch<any>(`${baseURL}/support/tickets/${ticketId}`, {
@@ -68,9 +62,7 @@ export const useSupport = () => {
     }
   };
 
-  /**
-   * Ajouter un message à un ticket
-   */
+
   const addTicketMessage = async (ticketId: string, message: string) => {
     try {
       const response = await $fetch<any>(`${baseURL}/support/tickets/${ticketId}/messages`, {

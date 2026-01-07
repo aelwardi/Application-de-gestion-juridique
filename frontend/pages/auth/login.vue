@@ -1,6 +1,58 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'guest',
+  layout: false,
+});
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const form = ref({
+  email: '',
+  password: '',
+});
+
+const isLoading = ref(false);
+const errorMessage = ref('');
+const showPassword = ref(false);
+const rememberMe = ref(false);
+const showRegisterModal = ref(false);
+
+watch(showRegisterModal, (newVal) => {
+  console.log('Register modal state:', newVal);
+});
+
+const handleLogin = async () => {
+  isLoading.value = true;
+  errorMessage.value = '';
+
+  try {
+    const result = await authStore.login(form.value);
+
+    if (result.success) {
+      const user = authStore.user;
+      if (user?.role === 'admin') {
+        await router.push('/admin/stats');
+      } else if (user?.role === 'avocat') {
+        await router.push('/dashboard');
+      } else {
+        await router.push('/dashboard');
+      }
+    } else {
+      errorMessage.value = result.message || 'Échec de la connexion';
+    }
+  } catch (error: any) {
+    console.error('Login error:', error);
+    errorMessage.value = 'Une erreur est survenue lors de la connexion';
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
+
+
 <template>
   <div class="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex">
-    <!-- Left Side - Image/Branding -->
     <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 to-secondary-600 relative overflow-hidden">
       <div class="absolute inset-0 opacity-10">
         <div class="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
@@ -49,10 +101,8 @@
       </div>
     </div>
 
-    <!-- Right Side - Login Form -->
     <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
       <div class="max-w-md w-full">
-        <!-- Mobile Logo -->
         <div class="lg:hidden text-center mb-8">
           <NuxtLink to="/">
             <h1 class="text-3xl font-heading font-bold">
@@ -61,7 +111,6 @@
           </NuxtLink>
         </div>
 
-        <!-- Form Header -->
         <div class="text-center mb-8">
           <h2 class="text-3xl font-heading font-bold text-neutral-900 mb-2">
             Connexion
@@ -71,9 +120,7 @@
           </p>
         </div>
 
-        <!-- Form -->
         <form @submit.prevent="handleLogin" class="space-y-6">
-          <!-- Error Message -->
           <div v-if="errorMessage" class="bg-accent-50 border border-accent-200 rounded-lg p-4">
             <div class="flex">
               <svg class="w-5 h-5 text-accent-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -83,7 +130,6 @@
             </div>
           </div>
 
-          <!-- Email Field -->
           <div>
             <label for="email" class="block text-sm font-medium text-neutral-700 mb-2">
               Adresse email
@@ -106,7 +152,6 @@
             </div>
           </div>
 
-          <!-- Password Field -->
           <div>
             <label for="password" class="block text-sm font-medium text-neutral-700 mb-2">
               Mot de passe
@@ -142,7 +187,6 @@
             </div>
           </div>
 
-          <!-- Remember Me & Forgot Password -->
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <input
@@ -161,7 +205,6 @@
             </NuxtLink>
           </div>
 
-          <!-- Submit Button -->
           <button
             type="submit"
             :disabled="isLoading"
@@ -177,7 +220,6 @@
             <span v-else>Se connecter</span>
           </button>
 
-          <!-- Divider -->
           <div class="relative my-6">
             <div class="absolute inset-0 flex items-center">
               <div class="w-full border-t border-neutral-300"></div>
@@ -187,14 +229,12 @@
             </div>
           </div>
 
-          <!-- Sign Up Link -->
           <div class="text-center">
             <button type="button" @click="showRegisterModal = true" class="btn-secondary w-full">
               Créer un compte
             </button>
           </div>
 
-          <!-- Back to Home -->
           <div class="text-center pt-4">
             <NuxtLink to="/" class="text-sm text-neutral-600 hover:text-neutral-900 inline-flex items-center transition-colors">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,64 +247,10 @@
       </div>
     </div>
 
-    <!-- Register Modal -->
     <AuthRegisterModal v-model="showRegisterModal" />
   </div>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-  middleware: 'guest',
-  layout: false,
-});
-
-const authStore = useAuthStore();
-const router = useRouter();
-
-const form = ref({
-  email: '',
-  password: '',
-});
-
-const isLoading = ref(false);
-const errorMessage = ref('');
-const showPassword = ref(false);
-const rememberMe = ref(false);
-const showRegisterModal = ref(false);
-
-// Debug: Log when modal state changes
-watch(showRegisterModal, (newVal) => {
-  console.log('Register modal state:', newVal);
-});
-
-const handleLogin = async () => {
-  isLoading.value = true;
-  errorMessage.value = '';
-
-  try {
-    const result = await authStore.login(form.value);
-
-    if (result.success) {
-      // Redirect based on role
-      const user = authStore.user;
-      if (user?.role === 'admin') {
-        await router.push('/admin/stats');
-      } else if (user?.role === 'avocat') {
-        await router.push('/dashboard');
-      } else {
-        await router.push('/dashboard');
-      }
-    } else {
-      errorMessage.value = result.message || 'Échec de la connexion';
-    }
-  } catch (error: any) {
-    console.error('Login error:', error);
-    errorMessage.value = 'Une erreur est survenue lors de la connexion';
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
 
 <style scoped>
 </style>

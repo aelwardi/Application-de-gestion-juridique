@@ -1,3 +1,74 @@
+
+<script setup lang="ts">
+definePageMeta({
+  middleware: ['auth', 'client'],
+  layout: 'authenticated'
+});
+
+const { getLawyers } = useCase();
+const lawyers = ref<any[]>([]);
+const loadingLawyers = ref(true);
+const selectedLawyer = ref<any>(null);
+const lawyerDetails = ref<any>(null);
+const activeFilter = ref('Tous');
+const viewMode = ref<'grid' | 'list'>('grid');
+const searchQuery = ref('');
+const expandedCards = ref<Set<string>>(new Set());
+
+const toggleCardExpansion = (lawyerId: string) => {
+  if (expandedCards.value.has(lawyerId)) {
+    expandedCards.value.delete(lawyerId);
+  } else {
+    expandedCards.value.add(lawyerId);
+  }
+};
+
+const formatSpecs = (specs: any) => {
+  if (!specs) return [];
+  if (Array.isArray(specs)) return specs;
+  return specs.replace(/[{}"]/g, '').split(',');
+};
+
+const categories = computed(() => {
+  const specs = new Set(['Tous']);
+  lawyers.value.forEach(l => {
+    const s = formatSpecs(l.specialties);
+    s.forEach((spec: string) => {
+      if(spec.trim()) specs.add(spec.trim());
+    });
+  });
+  return Array.from(specs);
+});
+
+
+const filteredLawyers = computed(() => {
+  if (activeFilter.value === 'Tous') return lawyers.value;
+  return lawyers.value.filter(l => {
+    const s = formatSpecs(l.specialties);
+    return s.some((spec: string) => spec.trim() === activeFilter.value);
+  });
+});
+
+const loadLawyers = async () => {
+  try {
+    const data = await getLawyers();
+    lawyers.value = data;
+  } catch (e) {
+    console.error(e);
+  } finally {
+    loadingLawyers.value = false;
+  }
+};
+
+const onDemandeSuccess = () => {
+  selectedLawyer.value = null;
+  alert("Votre demande a été envoyée avec succès !");
+};
+
+onMounted(loadLawyers);
+</script>
+
+
 <template>
   <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen">
     <div class="mb-8">
@@ -7,11 +78,11 @@
 
     <div class="mb-10 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
       <button
-        v-for="cat in categories"
-        :key="cat"
-        @click="activeFilter = cat"
-        :class="activeFilter === cat ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'"
-        class="px-5 py-2 rounded-xl border text-sm font-bold whitespace-nowrap transition-all shadow-sm"
+          v-for="cat in categories"
+          :key="cat"
+          @click="activeFilter = cat"
+          :class="activeFilter === cat ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'"
+          class="px-5 py-2 rounded-xl border text-sm font-bold whitespace-nowrap transition-all shadow-sm"
       >
         {{ cat }}
       </button>
@@ -28,7 +99,6 @@
         <!-- Header avec badges -->
         <div class="relative h-24 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-4">
           <div class="absolute top-3 right-3 flex flex-wrap gap-2 justify-end">
-            <!-- Badge de vérification - PROMINENT -->
             <span v-if="lawyer.verified_by_admin" class="px-3 py-1.5 bg-green-500 text-white rounded-full text-xs font-black flex items-center gap-1 shadow-lg animate-pulse">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -39,7 +109,6 @@
               NON VÉRIFIÉ
             </span>
 
-            <!-- Statut de disponibilité -->
             <span class="px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1" :class="{
               'bg-green-500 text-white': lawyer.availability_status === 'available',
               'bg-yellow-500 text-white': lawyer.availability_status === 'busy',
@@ -52,7 +121,6 @@
             </span>
           </div>
 
-          <!-- Badge IS ACTIVE -->
           <div class="absolute bottom-3 left-3">
             <span v-if="lawyer.is_active" class="px-2 py-1 bg-white/20 backdrop-blur-sm text-white rounded-lg text-xs font-bold flex items-center gap-1">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +148,6 @@
           </div>
         </div>
 
-        <!-- Contenu détaillé -->
         <div class="px-6 pb-6 flex-1 flex flex-col">
           <!-- Nom et localisation -->
           <div class="mb-3">
@@ -96,7 +163,6 @@
             </div>
           </div>
 
-          <!-- Stats en 3 colonnes -->
           <div class="grid grid-cols-3 gap-2 mb-3">
             <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-2 text-center border border-yellow-100">
               <svg class="w-5 h-5 mx-auto text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -121,7 +187,6 @@
             </div>
           </div>
 
-          <!-- Spécialités -->
           <div class="mb-3">
             <p class="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,22 +196,21 @@
             </p>
             <div class="flex flex-wrap gap-2">
               <span
-                v-for="spec in formatSpecs(lawyer.specialties).slice(0, 3)"
-                :key="spec"
-                class="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold"
+                  v-for="spec in formatSpecs(lawyer.specialties).slice(0, 3)"
+                  :key="spec"
+                  class="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold"
               >
                 {{ spec }}
               </span>
               <span
-                v-if="formatSpecs(lawyer.specialties).length > 3"
-                class="px-2 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold"
+                  v-if="formatSpecs(lawyer.specialties).length > 3"
+                  class="px-2 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold"
               >
                 +{{ formatSpecs(lawyer.specialties).length - 3 }}
               </span>
             </div>
           </div>
 
-          <!-- Tarif (toujours visible) -->
           <div v-if="lawyer.hourly_rate" class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 mb-3">
             <div class="flex items-center justify-between">
               <div>
@@ -159,29 +223,26 @@
             </div>
           </div>
 
-          <!-- Bouton "Voir plus de détails" -->
           <button
-            @click.stop="toggleCardExpansion(lawyer.id)"
-            class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm transition-all mb-3 flex items-center justify-between"
+              @click.stop="toggleCardExpansion(lawyer.id)"
+              class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm transition-all mb-3 flex items-center justify-between"
           >
             <span>{{ expandedCards.has(lawyer.id) ? '▲ Masquer les détails' : '▼ Voir plus de détails' }}</span>
             <svg
-              class="w-5 h-5 transition-transform"
-              :class="{ 'rotate-180': expandedCards.has(lawyer.id) }"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+                class="w-5 h-5 transition-transform"
+                :class="{ 'rotate-180': expandedCards.has(lawyer.id) }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
             >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
-          <!-- Section détails CACHÉE par défaut -->
           <div
-            v-if="expandedCards.has(lawyer.id)"
-            class="space-y-3 mb-3 animate-fadeIn"
+              v-if="expandedCards.has(lawyer.id)"
+              class="space-y-3 mb-3 animate-fadeIn"
           >
-            <!-- Langues -->
             <div v-if="lawyer.languages && formatSpecs(lawyer.languages).length > 0" class="bg-purple-50 rounded-lg p-3 border border-purple-100">
               <p class="text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,16 +252,15 @@
               </p>
               <div class="flex flex-wrap gap-2">
                 <span
-                  v-for="lang in formatSpecs(lawyer.languages)"
-                  :key="lang"
-                  class="px-2 py-1 bg-purple-200 text-purple-800 rounded-lg text-xs font-semibold"
+                    v-for="lang in formatSpecs(lawyer.languages)"
+                    :key="lang"
+                    class="px-2 py-1 bg-purple-200 text-purple-800 rounded-lg text-xs font-semibold"
                 >
                   {{ lang }}
                 </span>
               </div>
             </div>
 
-            <!-- Description complète -->
             <div v-if="lawyer.description" class="bg-blue-50 rounded-lg p-3 border border-blue-100">
               <p class="text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +273,6 @@
               </p>
             </div>
 
-            <!-- Contact -->
             <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
               <p class="text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +303,6 @@
               </div>
             </div>
 
-            <!-- Dossiers actifs -->
             <div v-if="lawyer.active_cases > 0" class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
               <div class="flex items-center justify-between">
                 <div>
@@ -259,7 +317,6 @@
               </div>
             </div>
 
-            <!-- Informations vérification -->
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p class="text-xs font-bold text-gray-700 uppercase mb-2">Informations de vérification</p>
               <div class="space-y-1 text-xs text-gray-600">
@@ -287,11 +344,10 @@
             </div>
           </div>
 
-          <!-- Boutons d'action -->
           <div class="mt-auto">
             <button
-              @click="selectedLawyer = lawyer"
-              class="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:shadow-xl transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                @click="selectedLawyer = lawyer"
+                class="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:shadow-xl transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -395,100 +451,33 @@
     </div>
 
     <div v-if="selectedLawyer" class="fixed inset-0 bg-gray-900/80 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[95vh] overflow-y-auto shadow-2xl">
+      <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[95vh] overflow-y-auto shadow-2xl">
 
 
-            <div class="p-6 bg-blue-600 text-white flex items-center gap-4 relative">
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-xl font-bold border border-white/30">
-                    {{ selectedLawyer.first_name?.[0] }}
-                </div>
-                <div>
-                    <p class="text-[10px] font-bold uppercase opacity-80">Nouvelle demande pour</p>
-                    <h3 class="text-lg font-black uppercase italic">Me {{ selectedLawyer.first_name }} {{ selectedLawyer.last_name }}</h3>
-                </div>
-                <button @click="selectedLawyer = null" class="absolute top-6 right-6 text-white hover:bg-white/10 w-8 h-8 rounded-full">✕</button>
-            </div>
-
-            <div class="p-8">
-                <ClientsClientRequestForm
-                  :preselected-lawyer-id="selectedLawyer.id"
-                  @success="onDemandeSuccess"
-                  @cancel="selectedLawyer = null"
-                />
-            </div>
+        <div class="p-6 bg-blue-600 text-white flex items-center gap-4 relative">
+          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-xl font-bold border border-white/30">
+            {{ selectedLawyer.first_name?.[0] }}
+          </div>
+          <div>
+            <p class="text-[10px] font-bold uppercase opacity-80">Nouvelle demande pour</p>
+            <h3 class="text-lg font-black uppercase italic">Me {{ selectedLawyer.first_name }} {{ selectedLawyer.last_name }}</h3>
+          </div>
+          <button @click="selectedLawyer = null" class="absolute top-6 right-6 text-white hover:bg-white/10 w-8 h-8 rounded-full">✕</button>
         </div>
+
+        <div class="p-8">
+          <ClientsClientRequestForm
+              :preselected-lawyer-id="selectedLawyer.id"
+              @success="onDemandeSuccess"
+              @cancel="selectedLawyer = null"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-  middleware: ['auth', 'client'],
-  layout: 'authenticated'
-});
 
-const { getLawyers } = useCase();
-const lawyers = ref<any[]>([]);
-const loadingLawyers = ref(true);
-const selectedLawyer = ref<any>(null);
-const lawyerDetails = ref<any>(null);
-const activeFilter = ref('Tous');
-const viewMode = ref<'grid' | 'list'>('grid');
-const searchQuery = ref('');
-const expandedCards = ref<Set<string>>(new Set());
-
-const toggleCardExpansion = (lawyerId: string) => {
-  if (expandedCards.value.has(lawyerId)) {
-    expandedCards.value.delete(lawyerId);
-  } else {
-    expandedCards.value.add(lawyerId);
-  }
-};
-
-const formatSpecs = (specs: any) => {
-  if (!specs) return [];
-  if (Array.isArray(specs)) return specs;
-  return specs.replace(/[{}"]/g, '').split(',');
-};
-
-const categories = computed(() => {
-  const specs = new Set(['Tous']);
-  lawyers.value.forEach(l => {
-    const s = formatSpecs(l.specialties);
-    s.forEach((spec: string) => {
-      if(spec.trim()) specs.add(spec.trim());
-    });
-  });
-  return Array.from(specs);
-});
-
-
-const filteredLawyers = computed(() => {
-  if (activeFilter.value === 'Tous') return lawyers.value;
-  return lawyers.value.filter(l => {
-    const s = formatSpecs(l.specialties);
-    return s.some((spec: string) => spec.trim() === activeFilter.value);
-  });
-});
-
-const loadLawyers = async () => {
-  try {
-    const data = await getLawyers();
-    lawyers.value = data;
-  } catch (e) {
-    console.error(e);
-  } finally {
-    loadingLawyers.value = false;
-  }
-};
-
-const onDemandeSuccess = () => {
-  selectedLawyer.value = null;
-  alert("Votre demande a été envoyée avec succès !");
-};
-
-onMounted(loadLawyers);
-</script>
 
 <style scoped>
 @keyframes fadeIn {

@@ -1,3 +1,116 @@
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useAuthStore } from '~/stores/auth'
+import { useNotificationStore } from '~/stores/notifications'
+import { useRouter } from 'vue-router'
+import Footer from '~/components/Footer.vue'
+
+const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
+const router = useRouter()
+
+const showProfileMenu = ref(false)
+const showNotifications = ref(false)
+const activeTab = ref('toutes')
+
+const fullJournalLink = computed(() => authStore.isClient ? '/clients/notifications' : '/notifications')
+
+const goToNotificationJournal = () => {
+  showNotifications.value = false
+  router.push(fullJournalLink.value)
+}
+
+const filteredNotifications = computed(() => {
+  const all = notificationStore.notifications
+  if (activeTab.value === 'toutes') return all
+  return all.filter(n => n.type === activeTab.value || (activeTab.value === 'offres' && n.type === 'offer'))
+})
+
+const notificationCount = computed(() => notificationStore.unreadCount)
+
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value
+  showProfileMenu.value = false
+  if (showNotifications.value) notificationStore.fetchNotifications()
+}
+
+const toggleProfileMenu = () => {
+  showProfileMenu.value = !showProfileMenu.value
+  showNotifications.value = false
+}
+
+const markAllAsRead = () => {
+  notificationStore.markAllAsRead()
+}
+
+const getNotificationIcon = (type: string) => {
+  const icons: Record<string, string> = {
+    'message_received': '',
+    'document_uploaded': '',
+    'appointment_reminder': '',
+    'case_update': '',
+    'offer': ''
+  }
+  return icons[type] || ''
+}
+
+const handleNotificationClick = (notif: any) => {
+  showNotifications.value = false
+  notificationStore.markAsRead(notif.id)
+
+  if (notif.type === 'message_received') {
+    const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
+    if (data && data.conversation_id) {
+      router.push(`/messages?conversationId=${data.conversation_id}`)
+    } else {
+      router.push('/messages')
+    }
+  } else if (notif.type === 'document_uploaded') {
+    const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
+    if (data && data.case_id) {
+      router.push(`/cases/${data.case_id}`)
+    }
+  } else {
+    goToNotificationJournal()
+  }
+}
+
+const handleLogout = async () => {
+  await authStore.logout()
+}
+
+const getInitials = () => {
+  if (!authStore.user) return '?'
+  return `${authStore.user.firstName?.charAt(0)}${authStore.user.lastName?.charAt(0)}`.toUpperCase()
+}
+
+watch(() => authStore.user, (newUser) => {
+  if (newUser) notificationStore.fetchNotifications()
+}, { immediate: true })
+
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.relative')) {
+    showNotifications.value = false
+    showProfileMenu.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+  if (authStore.user) {
+    notificationStore.fetchNotifications()
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+</script>sssssss
+
+
+
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col">
     <nav v-if="authStore.isAdmin" class="bg-gradient-to-r from-purple-700 to-indigo-800 shadow-lg">
@@ -258,123 +371,10 @@
 
     <main class="flex-1"><slot /></main>
 
-    <!-- Footer -->
     <Footer />
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useAuthStore } from '~/stores/auth'
-import { useNotificationStore } from '~/stores/notifications'
-import { useRouter } from 'vue-router'
-import Footer from '~/components/Footer.vue'
-
-const authStore = useAuthStore()
-const notificationStore = useNotificationStore()
-const router = useRouter()
-
-const showProfileMenu = ref(false)
-const showNotifications = ref(false)
-const activeTab = ref('toutes')
-
-const fullJournalLink = computed(() => authStore.isClient ? '/clients/notifications' : '/notifications')
-
-const goToNotificationJournal = () => {
-  showNotifications.value = false
-  router.push(fullJournalLink.value)
-}
-
-const filteredNotifications = computed(() => {
-  const all = notificationStore.notifications
-  if (activeTab.value === 'toutes') return all
-  return all.filter(n => n.type === activeTab.value || (activeTab.value === 'offres' && n.type === 'offer'))
-})
-
-const notificationCount = computed(() => notificationStore.unreadCount)
-
-const toggleNotifications = () => {
-  showNotifications.value = !showNotifications.value
-  showProfileMenu.value = false
-  if (showNotifications.value) notificationStore.fetchNotifications()
-}
-
-const toggleProfileMenu = () => {
-  showProfileMenu.value = !showProfileMenu.value
-  showNotifications.value = false
-}
-
-const markAllAsRead = () => {
-  notificationStore.markAllAsRead()
-}
-
-const getNotificationIcon = (type: string) => {
-  const icons: Record<string, string> = {
-    'message_received': '💬',
-    'document_uploaded': '📄',
-    'appointment_reminder': '📅',
-    'case_update': '⚖️',
-    'offer': '📋'
-  }
-  return icons[type] || '🔔'
-}
-
-const handleNotificationClick = (notif: any) => {
-  showNotifications.value = false
-  notificationStore.markAsRead(notif.id)
-
-  // Redirection selon le type de notification
-  if (notif.type === 'message_received') {
-    // Extraire l'ID de la conversation depuis data
-    const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
-    if (data && data.conversation_id) {
-      router.push(`/messages?conversationId=${data.conversation_id}`)
-    } else {
-      router.push('/messages')
-    }
-  } else if (notif.type === 'document_uploaded') {
-    const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
-    if (data && data.case_id) {
-      router.push(`/cases/${data.case_id}`)
-    }
-  } else {
-    // Par défaut, aller au journal des notifications
-    goToNotificationJournal()
-  }
-}
-
-const handleLogout = async () => {
-  await authStore.logout()
-}
-
-const getInitials = () => {
-  if (!authStore.user) return '?'
-  return `${authStore.user.firstName?.charAt(0)}${authStore.user.lastName?.charAt(0)}`.toUpperCase()
-}
-
-watch(() => authStore.user, (newUser) => {
-  if (newUser) notificationStore.fetchNotifications()
-}, { immediate: true })
-
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.relative')) {
-    showNotifications.value = false
-    showProfileMenu.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-  if (authStore.user) {
-    notificationStore.fetchNotifications()
-  }
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
-</script>
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar {

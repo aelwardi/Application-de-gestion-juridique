@@ -1,3 +1,59 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'auth',
+  layout: 'authenticated',
+});
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const form = ref({
+  currentPassword: '',
+  newPassword: '',
+});
+
+const confirmPassword = ref('');
+const isLoading = ref(false);
+const successMessage = ref('');
+const errorMessage = ref('');
+
+const handleChangePassword = async () => {
+  isLoading.value = true;
+  successMessage.value = '';
+  errorMessage.value = '';
+
+  if (form.value.newPassword !== confirmPassword.value) {
+    errorMessage.value = 'Les nouveaux mots de passe ne correspondent pas';
+    isLoading.value = false;
+    return;
+  }
+
+  try {
+    const result = await authStore.changePassword(form.value);
+
+    if (result.success) {
+      successMessage.value = 'Mot de passe changé avec succès';
+      form.value.currentPassword = '';
+      form.value.newPassword = '';
+      confirmPassword.value = '';
+
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000);
+    } else {
+      errorMessage.value = result.message || 'Échec du changement de mot de passe';
+    }
+  } catch (error: any) {
+    console.error('Change password error:', error);
+    errorMessage.value = 'Une erreur est survenue lors du changement de mot de passe';
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
+
+
+
 <template>
   <div class="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
@@ -90,58 +146,4 @@
       </div>
     </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({
-  middleware: 'auth',
-  layout: 'authenticated',
-});
-
-const authStore = useAuthStore();
-const router = useRouter();
-
-const form = ref({
-  currentPassword: '',
-  newPassword: '',
-});
-
-const confirmPassword = ref('');
-const isLoading = ref(false);
-const successMessage = ref('');
-const errorMessage = ref('');
-
-const handleChangePassword = async () => {
-  isLoading.value = true;
-  successMessage.value = '';
-  errorMessage.value = '';
-
-  if (form.value.newPassword !== confirmPassword.value) {
-    errorMessage.value = 'Les nouveaux mots de passe ne correspondent pas';
-    isLoading.value = false;
-    return;
-  }
-
-  try {
-    const result = await authStore.changePassword(form.value);
-
-    if (result.success) {
-      successMessage.value = 'Mot de passe changé avec succès';
-      form.value.currentPassword = '';
-      form.value.newPassword = '';
-      confirmPassword.value = '';
-
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000);
-    } else {
-      errorMessage.value = result.message || 'Échec du changement de mot de passe';
-    }
-  } catch (error: any) {
-    console.error('Change password error:', error);
-    errorMessage.value = 'Une erreur est survenue lors du changement de mot de passe';
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
 

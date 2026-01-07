@@ -1,25 +1,25 @@
 export type AppointmentType = 
-  | 'consultation'
-  | 'tribunal'
-  | 'rencontre_client'
-  | 'expertise'
-  | 'mediation'
-  | 'signature'
-  | 'autre';
+   'consultation'
+   'tribunal'
+   'rencontre_client'
+   'expertise'
+   'mediation'
+   'signature'
+   'autre';
 
 export type AppointmentLocationType = 
-  | 'office'
-  | 'court'
-  | 'client_location'
-  | 'online'
-  | 'other';
+   'office'
+   'court'
+   'client_location'
+   'online'
+   'other';
 
 export type AppointmentStatus = 
-  | 'scheduled'
-  | 'confirmed'
-  | 'cancelled'
-  | 'completed'
-  | 'no_show';
+   'scheduled'
+   'confirmed'
+   'cancelled'
+   'completed'
+   'no_show';
 
 export interface Appointment {
   id: string;
@@ -144,7 +144,6 @@ export interface AppointmentStatsResponse {
   error?: string;
 }
 
-// Labels et couleurs pour l'UI
 export const AppointmentStatusLabels: Record<AppointmentStatus, string> = {
   scheduled: 'Planifié',
   confirmed: 'Confirmé',
@@ -154,11 +153,11 @@ export const AppointmentStatusLabels: Record<AppointmentStatus, string> = {
 };
 
 export const AppointmentStatusColors: Record<AppointmentStatus, string> = {
-  scheduled: '#FCD34D', // yellow
-  confirmed: '#60A5FA', // blue
-  cancelled: '#F87171', // red
-  completed: '#34D399', // green
-  no_show: '#F59E0B'    // orange
+  scheduled: '#FCD34D',
+  confirmed: '#60A5FA',
+  cancelled: '#F87171',
+  completed: '#34D399',
+  no_show: '#F59E0B'
 };
 
 export const AppointmentTypeLabels: Record<AppointmentType, string> = {

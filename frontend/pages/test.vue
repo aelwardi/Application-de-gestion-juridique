@@ -1,3 +1,12 @@
+<script setup lang="ts">
+const config = useRuntimeConfig();
+const apiUrl = config.public.apiBaseUrl;
+
+console.log('Test page loaded successfully');
+console.log('API URL:', apiUrl);
+</script>
+
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="text-center p-8">
@@ -18,10 +27,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-const config = useRuntimeConfig();
-const apiUrl = config.public.apiBaseUrl;
-
-console.log('Test page loaded successfully');
-console.log('API URL:', apiUrl);
-</script>

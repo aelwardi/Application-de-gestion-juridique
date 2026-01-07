@@ -10,9 +10,7 @@ import type { ApiResponse, PaginatedResponse } from '~/types/api';
 export const useLawyer = () => {
   const { apiFetch } = useApi();
 
-  /**
-   * Créer une demande vers un avocat
-   */
+
   const createLawyerRequest = async (data: CreateLawyerRequestInput): Promise<LawyerRequest> => {
     const response = await apiFetch<ApiResponse<LawyerRequest>>('/lawyer-requests', {
       method: 'POST',
@@ -21,9 +19,7 @@ export const useLawyer = () => {
     return response.data!;
   };
 
-  /**
-   * Récupérer les demandes d'un client
-   */
+
   const getClientRequests = async (
     clientId: string,
     limit = 20,
@@ -39,9 +35,7 @@ export const useLawyer = () => {
     };
   };
 
-  /**
-   * Récupérer les demandes reçues par un avocat
-   */
+
   const getLawyerRequests = async (
     lawyerId: string,
     status?: string,
@@ -63,17 +57,13 @@ export const useLawyer = () => {
     };
   };
 
-  /**
-   * Récupérer une demande par ID
-   */
+
   const getRequestById = async (requestId: string): Promise<LawyerRequest> => {
     const response = await apiFetch<ApiResponse<LawyerRequest>>(`/lawyer-requests/${requestId}`);
     return response.data!;
   };
 
-  /**
-   * Accepter une demande (avocat)
-   */
+
   const acceptRequest = async (requestId: string): Promise<any> => {
     const response = await apiFetch<ApiResponse<any>>(`/lawyer-requests/${requestId}/accept`, {
       method: 'POST',
@@ -81,9 +71,7 @@ export const useLawyer = () => {
     return response.data!;
   };
 
-  /**
-   * Rejeter une demande (avocat)
-   */
+
   const rejectRequest = async (requestId: string, reason?: string): Promise<LawyerRequest> => {
     const response = await apiFetch<ApiResponse<LawyerRequest>>(`/lawyer-requests/${requestId}/reject`, {
       method: 'POST',
@@ -92,9 +80,7 @@ export const useLawyer = () => {
     return response.data!;
   };
 
-  /**
-   * Annuler une demande (client)
-   */
+
   const cancelRequest = async (requestId: string): Promise<LawyerRequest> => {
     const response = await apiFetch<ApiResponse<LawyerRequest>>(`/lawyer-requests/${requestId}/cancel`, {
       method: 'POST',
@@ -102,25 +88,19 @@ export const useLawyer = () => {
     return response.data!;
   };
 
-  /**
-   * Statistiques des demandes pour un client
-   */
+
   const getClientRequestStats = async (clientId: string): Promise<LawyerRequestStats> => {
     const response = await apiFetch<ApiResponse<LawyerRequestStats>>(`/lawyer-requests/client/${clientId}/stats`);
     return response.data!;
   };
 
-  /**
-   * Statistiques des demandes pour un avocat
-   */
+
   const getLawyerRequestStats = async (lawyerId: string): Promise<LawyerRequestStats> => {
     const response = await apiFetch<ApiResponse<LawyerRequestStats>>(`/lawyer-requests/lawyer/${lawyerId}/stats`);
     return response.data!;
   };
 
-  /**
-   * Récupérer la liste des avocats
-   */
+
   const searchLawyers = async (filters: LawyerSearchFilters = {}): Promise<PaginatedResponse<Lawyer>> => {
     const params = new URLSearchParams();
 
@@ -157,17 +137,13 @@ export const useLawyer = () => {
     return result;
   };
 
-  /**
-   * Récupérer les détails d'un avocat
-   */
+
   const getLawyerById = async (lawyerId: string): Promise<Lawyer> => {
     const response = await apiFetch<ApiResponse<Lawyer>>(`/lawyers/${lawyerId}`);
     return response.data!;
   };
 
-  /**
-   * Récupérer les spécialités disponibles
-   */
+
   const getSpecialties = async (): Promise<any[]> => {
     console.log('[useLawyer] 📡 Fetching specialties...');
     const response = await apiFetch<ApiResponse<any[]>>('/lawyers/specialties/list');

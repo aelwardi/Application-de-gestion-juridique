@@ -1,3 +1,34 @@
+
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'auth',
+  layout: 'authenticated',
+});
+
+const authStore = useAuthStore();
+
+onMounted(() => {
+  if (authStore.isAdmin) {
+    navigateTo('/admin/stats');
+  } else if (authStore.user?.role === 'client') {
+    navigateTo('/dashboard/client');
+  } else if (authStore.user?.role === 'avocat') {
+    navigateTo('/dashboard/avocat');
+  }
+});
+
+const roleLabel = computed(() => {
+  if (!authStore.user) return '';
+  const roles: Record<string, string> = {
+    admin: 'Administrateur',
+    avocat: 'Avocat',
+    client: 'Client',
+    collaborateur: 'Collaborateur',
+  };
+  return roles[authStore.user.role] || authStore.user.role;
+});
+</script>
+
 <template>
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
@@ -86,33 +117,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({
-  middleware: 'auth',
-  layout: 'authenticated',
-});
-
-const authStore = useAuthStore();
-
-onMounted(() => {
-  if (authStore.isAdmin) {
-    navigateTo('/admin/stats');
-  } else if (authStore.user?.role === 'client') {
-    navigateTo('/dashboard/client');
-  } else if (authStore.user?.role === 'avocat') {
-    navigateTo('/dashboard/avocat');
-  }
-});
-
-const roleLabel = computed(() => {
-  if (!authStore.user) return '';
-  const roles: Record<string, string> = {
-    admin: 'Administrateur',
-    avocat: 'Avocat',
-    client: 'Client',
-    collaborateur: 'Collaborateur',
-  };
-  return roles[authStore.user.role] || authStore.user.role;
-});
-</script>

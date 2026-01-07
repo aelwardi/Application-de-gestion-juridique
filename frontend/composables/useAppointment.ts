@@ -14,7 +14,6 @@ export const useAppointment = () => {
   const baseURL = config.public.apiBaseUrl;
   const authStore = useAuthStore();
 
-  // Helper pour obtenir les headers avec le token
   const getHeaders = () => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
@@ -27,9 +26,7 @@ export const useAppointment = () => {
     return headers;
   };
 
-  /**
-   * Créer un nouveau rendez-vous
-   */
+
   const createAppointment = async (appointmentData: CreateAppointmentDTO): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments`, {
@@ -44,9 +41,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer tous les rendez-vous avec filtres optionnels
-   */
+
   const getAllAppointments = async (filters?: AppointmentFilters): Promise<AppointmentsResponse> => {
     try {
       const params = new URLSearchParams();
@@ -77,9 +72,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer un rendez-vous par ID
-   */
+
   const getAppointmentById = async (id: string): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}`, {
@@ -93,9 +86,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Mettre à jour un rendez-vous
-   */
+
   const updateAppointment = async (id: string, updates: UpdateAppointmentDTO): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}`, {
@@ -110,9 +101,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Supprimer un rendez-vous
-   */
+
   const deleteAppointment = async (id: string): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}`, {
@@ -126,9 +115,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer les rendez-vous d'un avocat
-   */
+
   const getAppointmentsByLawyer = async (lawyerId: string, filters?: AppointmentFilters): Promise<AppointmentsResponse> => {
     try {
       const params = new URLSearchParams();
@@ -157,9 +144,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer les rendez-vous d'un client
-   */
+
   const getAppointmentsByClient = async (clientId: string, filters?: AppointmentFilters): Promise<AppointmentsResponse> => {
     try {
       const params = new URLSearchParams();
@@ -188,9 +173,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer les rendez-vous d'un dossier
-   */
+
   const getAppointmentsByCase = async (caseId: string): Promise<AppointmentsResponse> => {
     try {
       const response = await $fetch<AppointmentsResponse>(`${baseURL}/appointments/case/${caseId}`, {
@@ -204,9 +187,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer les rendez-vous à venir
-   */
+
   const getUpcomingAppointments = async (lawyerId?: string, clientId?: string, options?: { limit?: number }): Promise<AppointmentsResponse> => {
     try {
       const params = new URLSearchParams();
@@ -230,9 +211,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer les rendez-vous du jour
-   */
+
   const getTodayAppointments = async (lawyerId?: string, clientId?: string): Promise<AppointmentsResponse> => {
     try {
       const params = new URLSearchParams();
@@ -255,9 +234,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Récupérer les statistiques des rendez-vous
-   */
+
   const getAppointmentStats = async (lawyerId?: string, clientId?: string): Promise<AppointmentStatsResponse> => {
     try {
       const params = new URLSearchParams();
@@ -280,9 +257,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Annuler un rendez-vous
-   */
+
   const cancelAppointment = async (id: string, options?: { suggestion?: { start_time: string; end_time: string } }): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}/cancel`, {
@@ -297,9 +272,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Confirmer un rendez-vous
-   */
+
   const confirmAppointment = async (id: string, options?: { suggestion?: { start_time: string; end_time: string } }): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}/confirm`, {
@@ -314,9 +287,7 @@ export const useAppointment = () => {
     }
   };
 
-  /**
-   * Marquer un rendez-vous comme complété
-   */
+
   const completeAppointment = async (id: string): Promise<AppointmentResponse> => {
     try {
       const response = await $fetch<AppointmentResponse>(`${baseURL}/appointments/${id}/complete`, {

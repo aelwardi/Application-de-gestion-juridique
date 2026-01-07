@@ -1,8 +1,544 @@
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+
+
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
+
+const props = defineProps<{
+  appointments: any[]
+  selectedAppointmentId?: string
+}>()
+
+const emit = defineEmits<{
+  selectAppointment: [id: string]
+}>()
+
+const loading = ref(true)
+let map: L.Map | null = null
+const markers: L.Marker[] = []
+let routePolyline: L.Polyline | null = null
+const showRouteModal = ref(false)
+const routeStats = ref<{ count: number; distance: string; route: any[] } | null>(null)
+
+onMounted(() => {
+  initMap()
+
+  window.addEventListener('view-appointment', (event: any) => {
+    const appointmentId = event.detail
+    navigateTo(`/appointments/${appointmentId}`)
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('view-appointment', () => {})
+})
+
+watch(() => props.appointments, () => {
+  updateMarkers()
+}, { deep: true })
+
+watch(() => props.selectedAppointmentId, (newId) => {
+  if (newId) {
+    highlightMarker(newId)
+  }
+})
+
+const initMap = () => {
+  try {
+
+    const mapElement = document.getElementById('appointment-map');
+    if (!mapElement) {
+      loading.value = false;
+      return;
+    }
+
+
+    map = L.map('appointment-map').setView([48.8566, 2.3522], 12)
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map)
+
+    updateMarkers()
+
+    loading.value = false
+  } catch (error) {
+    console.error('Erreur lors de l\'initialisation de la carte:', error)
+    loading.value = false
+  }
+}
+
+const updateMarkers = () => {
+  if (!map) return
+
+
+
+  markers.forEach(marker => marker.remove())
+  markers.length = 0
+
+  let appointmentsWithCoords = 0
+  props.appointments.forEach(appointment => {
+    if (appointment.status === 'cancelled' || appointment.status === 'completed') {
+      console.log(`Skipping ${appointment.status} appointment: "${appointment.title}"`)
+      return
+    }
+
+    const hasCoords = !!(appointment.location_latitude && appointment.location_longitude)
+
+
+    if (hasCoords) {
+      appointmentsWithCoords++
+      const marker = createMarker(appointment)
+      markers.push(marker)
+    }
+  })
+
+
+
+  if (markers.length > 0) {
+    fitAllMarkers()
+  }
+}
+
+const createMarker = (appointment: any) => {
+  const lat = parseFloat(appointment.location_latitude)
+  const lng = parseFloat(appointment.location_longitude)
+
+  const color = getAppointmentColor(appointment.appointment_type)
+
+  const icon = L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: ${color};
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+      ">${getAppointmentIcon(appointment.appointment_type)}</div>
+    `,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  })
+
+  const marker = L.marker([lat, lng], { icon })
+      .addTo(map!)
+      .bindPopup(createPopupContent(appointment))
+      .on('click', () => {
+        emit('selectAppointment', appointment.id)
+      })
+
+  return marker
+}
+
+const createPopupContent = (appointment: any) => {
+  const date = new Date(appointment.start_time).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+
+  const time = new Date(appointment.start_time).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  const statusColors: Record<string, string> = {
+    scheduled: '#3b82f6',
+    confirmed: '#10b981',
+    completed: '#6b7280',
+    cancelled: '#ef4444'
+  }
+
+  const statusLabels: Record<string, string> = {
+    scheduled: 'Prévu',
+    confirmed: 'Confirmé',
+    completed: 'Terminé',
+    cancelled: 'Annulé'
+  }
+
+  const statusColor = statusColors[appointment.status] || '#6b7280'
+  const statusLabel = statusLabels[appointment.status] || appointment.status
+
+  return `
+    <div style="padding: 16px; min-width: 280px; max-width: 320px; font-family: system-ui, -apple-system, sans-serif;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <span style="
+          background-color: ${statusColor}15;
+          color: ${statusColor};
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        ">${statusLabel}</span>
+      </div>
+
+      <h3 style="
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 12px 0;
+        line-height: 1.4;
+      ">${appointment.title}</h3>
+
+      <div style="
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-left: 3px solid #3b82f6;
+      ">
+        <div style="display: flex; align-items: start; margin-bottom: 8px;">
+          <span style="font-size: 16px; margin-right: 8px;"></span>
+          <div style="flex: 1;">
+            <div style="font-size: 13px; font-weight: 600; color: #1e40af;">${date}</div>
+            <div style="font-size: 12px; color: #3b82f6; font-weight: 500;">${time}</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 14px; margin-right: 8px;"></span>
+          <span style="font-size: 12px; color: #374151; line-height: 1.4;">
+            ${appointment.location_address || 'Adresse non spécifiée'}
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center;">
+          <span style="font-size: 14px; margin-right: 8px;"></span>
+          <span style="font-size: 13px; color: #111827; font-weight: 500;">
+            ${appointment.client_first_name} ${appointment.client_last_name}
+          </span>
+        </div>
+      </div>
+
+      <div style="
+        display: inline-block;
+        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+        color: #6b21a8;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        text-transform: capitalize;
+      ">
+        ${appointment.appointment_type}
+      </div>
+
+      <button
+        onclick="window.dispatchEvent(new CustomEvent('view-appointment', {detail: '${appointment.id}'}))"
+        style="
+          width: 100%;
+          padding: 12px;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        "
+        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.4)'"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(37, 99, 235, 0.3)'"
+      >
+        <span style="font-size: 16px;"></span>
+        Voir les détails
+      </button>
+    </div>
+  `
+}
+
+const getAppointmentColor = (type: string): string => {
+  const colors: Record<string, string> = {
+    consultation: '#2563eb',
+    court: '#dc2626',
+    meeting: '#16a34a',
+    phone: '#9333ea',
+    video: '#ea580c',
+    other: '#4b5563'
+  }
+  return type in colors ? colors[type]! : colors.other!
+}
+
+const getAppointmentIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    consultation: '',
+    court: '',
+    meeting: '',
+    phone: '',
+    video: '',
+    other: ''
+  }
+  return type in icons ? icons[type]! : icons.other!
+}
+
+const highlightMarker = (appointmentId: string) => {
+  const appointment = props.appointments.find(a => a.id === appointmentId)
+  if (!appointment || !appointment.location_latitude || !appointment.location_longitude) return
+
+  const lat = parseFloat(appointment.location_latitude)
+  const lng = parseFloat(appointment.location_longitude)
+  map?.setView([lat, lng], 15, { animate: true })
+
+  const markerIndex = props.appointments.findIndex(a => a.id === appointmentId)
+  if (markerIndex !== -1 && markers[markerIndex]) {
+    markers[markerIndex].openPopup()
+  }
+}
+
+const centerOnUser = () => {
+  if (!navigator.geolocation) {
+    alert('La géolocalisation n\'est pas supportée par votre navigateur')
+    return
+  }
+
+  loading.value = true
+  navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+
+        map?.setView([lat, lng], 13, { animate: true })
+
+        L.marker([lat, lng], {
+          icon: L.divIcon({
+            className: 'user-marker',
+            html: `
+            <div style="
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background-color: #3b82f6;
+              border: 3px solid white;
+              box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            "></div>
+          `,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          })
+        }).addTo(map!).bindPopup('Vous êtes ici')
+
+        loading.value = false
+      },
+      (error) => {
+        console.error('Erreur de géolocalisation:', error)
+        alert('Impossible de récupérer votre position')
+        loading.value = false
+      }
+  )
+}
+
+const fitAllMarkers = () => {
+  if (!map || markers.length === 0) return
+
+  const group = L.featureGroup(markers)
+  map.fitBounds(group.getBounds(), { padding: [50, 50] })
+}
+
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371 // Rayon de la Terre en km
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+  return R * c
+}
+
+
+const optimizeRoute = () => {
+  if (!map || markers.length < 2) {
+    alert('Il faut au moins 2 rendez-vous pour calculer un itinéraire')
+    return
+  }
+
+  if (routePolyline) {
+    map.removeLayer(routePolyline)
+    routePolyline = null
+  }
+
+  const activeAppointments = props.appointments.filter(apt =>
+      apt.location_latitude &&
+      apt.location_longitude &&
+      apt.status !== 'cancelled' &&
+      apt.status !== 'completed'
+  )
+
+  if (activeAppointments.length < 2) return
+
+  const sortedByTime = [...activeAppointments].sort((a, b) =>
+      new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+  )
+
+  const visited = new Set<number>()
+  const route: number[] = []
+
+  route.push(0)
+  visited.add(0)
+
+  while (visited.size < sortedByTime.length) {
+    const currentIdx = route[route.length - 1]
+    if (currentIdx === undefined) break
+
+    const current = sortedByTime[currentIdx]
+    if (!current) break
+
+    let nearestIdx = -1
+    let nearestDist = Infinity
+
+    for (let i = 0; i < sortedByTime.length; i++) {
+      if (!visited.has(i)) {
+        const nextApt = sortedByTime[i]
+        if (!nextApt) continue
+
+        const dist = calculateDistance(
+            parseFloat(current.location_latitude),
+            parseFloat(current.location_longitude),
+            parseFloat(nextApt.location_latitude),
+            parseFloat(nextApt.location_longitude)
+        )
+
+        if (dist < nearestDist) {
+          nearestDist = dist
+          nearestIdx = i
+        }
+      }
+    }
+
+    if (nearestIdx !== -1) {
+      route.push(nearestIdx)
+      visited.add(nearestIdx)
+    } else {
+      break
+    }
+  }
+
+  const routeCoords: [number, number][] = route
+      .map(idx => {
+        const apt = sortedByTime[idx]
+        if (!apt || !apt.location_latitude || !apt.location_longitude) return null
+        return [parseFloat(apt.location_latitude), parseFloat(apt.location_longitude)] as [number, number]
+      })
+      .filter((coord): coord is [number, number] => coord !== null)
+
+  let totalDistance = 0
+  for (let i = 0; i < routeCoords.length - 1; i++) {
+    const current = routeCoords[i]
+    const next = routeCoords[i + 1]
+    if (current && next) {
+      totalDistance += calculateDistance(
+          current[0], current[1],
+          next[0], next[1]
+      )
+    }
+  }
+
+  routePolyline = L.polyline(routeCoords, {
+    color: '#3b82f6',
+    weight: 4,
+    opacity: 0.7,
+    dashArray: '10, 10',
+    lineJoin: 'round'
+  }).addTo(map)
+
+  route.forEach((idx, order) => {
+    const apt = sortedByTime[idx]
+    if (!apt || !map) return
+
+    const lat = parseFloat(apt.location_latitude)
+    const lng = parseFloat(apt.location_longitude)
+
+    L.marker([lat, lng], {
+      icon: L.divIcon({
+        className: 'route-number',
+        html: `
+          <div style="
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-left: -12px;
+            margin-top: -35px;
+          ">${order + 1}</div>
+        `,
+        iconSize: [24, 24]
+      })
+    }).addTo(map)
+  })
+
+  showRouteModal.value = true
+  routeStats.value = {
+    count: sortedByTime.length,
+    distance: totalDistance.toFixed(2),
+    route: route.map(idx => sortedByTime[idx])
+  }
+
+  fitAllMarkers()
+}
+
+
+const clearRoute = () => {
+  if (routePolyline && map) {
+    map.removeLayer(routePolyline)
+    routePolyline = null
+
+    map.eachLayer((layer: any) => {
+      if (layer.options?.icon?.options?.className === 'route-number') {
+        map?.removeLayer(layer)
+      }
+    })
+  }
+}
+
+if (process.client) {
+  window.addEventListener('view-appointment', (e: any) => {
+    emit('selectAppointment', e.detail)
+  })
+}
+</script>
+
+
+
+
 <template>
   <div class="h-full w-full relative">
     <div id="appointment-map" class="h-full w-full rounded-lg shadow-lg"></div>
 
-    <!-- No markers message -->
     <div v-if="!loading && props.appointments.length > 0 && markers.length === 0" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-95 rounded-lg z-50">
       <div class="text-center p-8 max-w-lg">
         <svg class="w-20 h-20 text-blue-400 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,7 +551,7 @@
 
         <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 text-left">
           <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
-            <span class="text-xl">💡</span>
+            <span class="text-xl"></span>
             Pour ajouter une adresse géolocalisée :
           </h4>
           <ol class="space-y-2 text-sm text-blue-800">
@@ -44,7 +580,6 @@
       </div>
     </div>
 
-    <!-- Loading overlay -->
     <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -52,7 +587,6 @@
       </div>
     </div>
 
-    <!-- Map controls -->
     <div class="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 space-y-2 z-[1000]">
       <button
         @click="centerOnUser"
@@ -99,7 +633,6 @@
       </button>
     </div>
 
-    <!-- Legend -->
     <div class="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-[1000]">
       <h4 class="font-semibold text-gray-900 mb-2 text-sm">Légende</h4>
       <div class="space-y-1 text-xs">
@@ -130,15 +663,13 @@
       </div>
       <div class="mt-3 pt-3 border-t border-gray-200">
         <p class="text-xs text-gray-500 italic">
-          ℹ️ Les RDV annulés et terminés ne sont pas affichés
+          Les RDV annulés et terminés ne sont pas affichés
         </p>
       </div>
     </div>
 
-    <!-- Modal d'itinéraire optimisé -->
     <div v-if="showRouteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-2 sm:p-4 animate-fadeIn" @click="showRouteModal = false">
       <div class="bg-white rounded-xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl animate-slideUp" @click.stop>
-        <!-- Header -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 sm:p-4 rounded-t-xl sm:rounded-t-2xl flex-shrink-0">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2 sm:gap-3">
@@ -148,7 +679,7 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h3 class="text-lg sm:text-xl font-bold truncate">🗺️ Itinéraire Optimisé</h3>
+                <h3 class="text-lg sm:text-xl font-bold truncate">Itinéraire Optimisé</h3>
                 <p class="text-blue-100 text-xs sm:text-sm truncate">Ordre de visite calculé</p>
               </div>
             </div>
@@ -160,9 +691,7 @@
           </div>
         </div>
 
-        <!-- Content scrollable -->
         <div class="flex-1 overflow-y-auto p-3 sm:p-4">
-          <!-- Stats Cards -->
           <div class="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-blue-100">
               <div class="flex items-center gap-2">
@@ -193,7 +722,6 @@
             </div>
           </div>
 
-          <!-- Liste des rendez-vous dans l'ordre -->
           <div class="mb-3 sm:mb-4">
             <h4 class="text-sm sm:text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
               <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,14 +742,13 @@
                   <p class="font-semibold text-gray-900 text-xs sm:text-sm truncate">{{ apt.title }}</p>
                   <p class="text-[10px] sm:text-xs text-gray-600 truncate">{{ apt.location_address }}</p>
                   <p class="text-[10px] sm:text-xs text-blue-600 font-medium mt-0.5">
-                    🕐 {{ new Date(apt.start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}
+                     {{ new Date(apt.start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Info -->
           <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-2.5 sm:p-3">
             <div class="flex items-start gap-2">
               <svg class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -236,7 +763,6 @@
           </div>
         </div>
 
-        <!-- Footer -->
         <div class="bg-gray-50 px-3 py-2.5 sm:px-4 sm:py-3 rounded-b-xl sm:rounded-b-2xl flex items-center justify-between gap-2 flex-shrink-0 border-t border-gray-100">
           <button
             @click="clearRoute(); showRouteModal = false"
@@ -255,610 +781,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-
-// Fix pour les icônes par défaut de Leaflet
-// @ts-ignore
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-})
-
-const props = defineProps<{
-  appointments: any[]
-  selectedAppointmentId?: string
-}>()
-
-const emit = defineEmits<{
-  selectAppointment: [id: string]
-}>()
-
-const loading = ref(true)
-let map: L.Map | null = null
-const markers: L.Marker[] = []
-let routePolyline: L.Polyline | null = null
-const showRouteModal = ref(false)
-const routeStats = ref<{ count: number; distance: string; route: any[] } | null>(null)
-
-onMounted(() => {
-  initMap()
-
-  // Écouter l'événement de visualisation des détails
-  window.addEventListener('view-appointment', (event: any) => {
-    const appointmentId = event.detail
-    navigateTo(`/appointments/${appointmentId}`)
-  })
-})
-
-onUnmounted(() => {
-  // Nettoyer l'écouteur d'événements
-  window.removeEventListener('view-appointment', () => {})
-})
-
-watch(() => props.appointments, () => {
-  updateMarkers()
-}, { deep: true })
-
-watch(() => props.selectedAppointmentId, (newId) => {
-  if (newId) {
-    highlightMarker(newId)
-  }
-})
-
-const initMap = () => {
-  try {
-    console.log('🗺️ Initialisation de la carte Leaflet...');
-    console.log('📦 Leaflet version:', L.version);
-
-    const mapElement = document.getElementById('appointment-map');
-    if (!mapElement) {
-      console.error('❌ Élément #appointment-map introuvable !');
-      loading.value = false;
-      return;
-    }
-
-    console.log('✅ Élément DOM trouvé:', mapElement);
-
-    // Initialiser la carte centrée sur Paris par défaut
-    map = L.map('appointment-map').setView([48.8566, 2.3522], 12)
-    console.log('✅ Carte initialisée');
-
-    // Ajouter le layer OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(map)
-    console.log('✅ Tuiles OSM ajoutées');
-
-    // Ajouter les marqueurs
-    console.log(`🎯 Ajout des marqueurs pour ${props.appointments.length} rendez-vous`);
-    updateMarkers()
-
-    loading.value = false
-    console.log('✅ Carte chargée avec succès');
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation de la carte:', error)
-    loading.value = false
-  }
-}
-
-const updateMarkers = () => {
-  if (!map) return
-
-  console.log('🗺️ Updating markers with appointments:', props.appointments)
-  console.log(`📊 Total appointments received: ${props.appointments.length}`)
-
-  // Supprimer les anciens marqueurs
-  markers.forEach(marker => marker.remove())
-  markers.length = 0
-
-  // Ajouter les nouveaux marqueurs (sauf annulés et terminés)
-  let appointmentsWithCoords = 0
-  props.appointments.forEach(appointment => {
-    // Filtrer les rendez-vous annulés et terminés
-    if (appointment.status === 'cancelled' || appointment.status === 'completed') {
-      console.log(`⏭️ Skipping ${appointment.status} appointment: "${appointment.title}"`)
-      return
-    }
-
-    const hasCoords = !!(appointment.location_latitude && appointment.location_longitude)
-
-    console.log(`📍 Appointment "${appointment.title}":`, {
-      id: appointment.id,
-      address: appointment.location_address || 'Pas d\'adresse',
-      lat: appointment.location_latitude,
-      lng: appointment.location_longitude,
-      hasCoords: hasCoords,
-      type: appointment.appointment_type,
-      locationType: appointment.location_type,
-      status: appointment.status
-    })
-
-    if (hasCoords) {
-      appointmentsWithCoords++
-      const marker = createMarker(appointment)
-      markers.push(marker)
-    }
-  })
-
-  console.log(`✅ Created ${appointmentsWithCoords} markers out of ${props.appointments.length} appointments`)
-
-  if (appointmentsWithCoords === 0 && props.appointments.length > 0) {
-    console.warn('⚠️ No markers to display - no appointments have coordinates')
-    console.info('💡 To fix this:')
-    console.info('   1. Edit an existing appointment')
-    console.info('   2. In the address field, type an address and SELECT a suggestion from the dropdown')
-    console.info('   3. You should see "✓ Adresse géolocalisée" with coordinates')
-    console.info('   4. Save the appointment')
-    console.info('   5. The marker should now appear on the map')
-  }
-
-  // Ajuster la vue pour afficher tous les marqueurs
-  if (markers.length > 0) {
-    fitAllMarkers()
-  }
-}
-
-const createMarker = (appointment: any) => {
-  const lat = parseFloat(appointment.location_latitude)
-  const lng = parseFloat(appointment.location_longitude)
-
-  // Couleur selon le type
-  const color = getAppointmentColor(appointment.appointment_type)
-
-  // Créer l'icône personnalisée
-  const icon = L.divIcon({
-    className: 'custom-marker',
-    html: `
-      <div style="
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background-color: ${color};
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 14px;
-        cursor: pointer;
-      ">${getAppointmentIcon(appointment.appointment_type)}</div>
-    `,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
-  })
-
-  const marker = L.marker([lat, lng], { icon })
-    .addTo(map!)
-    .bindPopup(createPopupContent(appointment))
-    .on('click', () => {
-      emit('selectAppointment', appointment.id)
-    })
-
-  return marker
-}
-
-const createPopupContent = (appointment: any) => {
-  const date = new Date(appointment.start_time).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-
-  const time = new Date(appointment.start_time).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-
-  const statusColors: Record<string, string> = {
-    scheduled: '#3b82f6',
-    confirmed: '#10b981',
-    completed: '#6b7280',
-    cancelled: '#ef4444'
-  }
-
-  const statusLabels: Record<string, string> = {
-    scheduled: 'Prévu',
-    confirmed: 'Confirmé',
-    completed: 'Terminé',
-    cancelled: 'Annulé'
-  }
-
-  const statusColor = statusColors[appointment.status] || '#6b7280'
-  const statusLabel = statusLabels[appointment.status] || appointment.status
-
-  return `
-    <div style="padding: 16px; min-width: 280px; max-width: 320px; font-family: system-ui, -apple-system, sans-serif;">
-      <!-- En-tête avec badge de statut -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-        <span style="
-          background-color: ${statusColor}15;
-          color: ${statusColor};
-          padding: 4px 12px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        ">${statusLabel}</span>
-      </div>
-
-      <!-- Titre -->
-      <h3 style="
-        font-size: 16px;
-        font-weight: 700;
-        color: #111827;
-        margin: 0 0 12px 0;
-        line-height: 1.4;
-      ">${appointment.title}</h3>
-
-      <!-- Informations -->
-      <div style="
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 12px;
-        border-left: 3px solid #3b82f6;
-      ">
-        <div style="display: flex; align-items: start; margin-bottom: 8px;">
-          <span style="font-size: 16px; margin-right: 8px;">📅</span>
-          <div style="flex: 1;">
-            <div style="font-size: 13px; font-weight: 600; color: #1e40af;">${date}</div>
-            <div style="font-size: 12px; color: #3b82f6; font-weight: 500;">🕐 ${time}</div>
-          </div>
-        </div>
-
-        <div style="display: flex; align-items: center; margin-bottom: 6px;">
-          <span style="font-size: 14px; margin-right: 8px;">📍</span>
-          <span style="font-size: 12px; color: #374151; line-height: 1.4;">
-            ${appointment.location_address || 'Adresse non spécifiée'}
-          </span>
-        </div>
-
-        <div style="display: flex; align-items: center;">
-          <span style="font-size: 14px; margin-right: 8px;">👤</span>
-          <span style="font-size: 13px; color: #111827; font-weight: 500;">
-            ${appointment.client_first_name} ${appointment.client_last_name}
-          </span>
-        </div>
-      </div>
-
-      <!-- Type de rendez-vous -->
-      <div style="
-        display: inline-block;
-        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-        color: #6b21a8;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        text-transform: capitalize;
-      ">
-        ${appointment.appointment_type}
-      </div>
-
-      <!-- Bouton d'action -->
-      <button
-        onclick="window.dispatchEvent(new CustomEvent('view-appointment', {detail: '${appointment.id}'}))"
-        style="
-          width: 100%;
-          padding: 12px;
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-        "
-        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.4)'"
-        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(37, 99, 235, 0.3)'"
-      >
-        <span style="font-size: 16px;">👁️</span>
-        Voir les détails
-      </button>
-    </div>
-  `
-}
-
-const getAppointmentColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    consultation: '#2563eb', // blue-600
-    court: '#dc2626', // red-600 (tribunal)
-    meeting: '#16a34a', // green-600 (réunion)
-    phone: '#9333ea', // purple-600 (téléphone)
-    video: '#ea580c', // orange-600 (visioconférence)
-    other: '#4b5563' // gray-600
-  }
-  return type in colors ? colors[type]! : colors.other!
-}
-
-const getAppointmentIcon = (type: string): string => {
-  const icons: Record<string, string> = {
-    consultation: '📋',
-    court: '⚖️',
-    meeting: '👤',
-    phone: '📞',
-    video: '💻',
-    other: '📌'
-  }
-  return type in icons ? icons[type]! : icons.other!
-}
-
-const highlightMarker = (appointmentId: string) => {
-  // Trouver le rendez-vous correspondant
-  const appointment = props.appointments.find(a => a.id === appointmentId)
-  if (!appointment || !appointment.location_latitude || !appointment.location_longitude) return
-
-  // Centrer la carte sur le marqueur
-  const lat = parseFloat(appointment.location_latitude)
-  const lng = parseFloat(appointment.location_longitude)
-  map?.setView([lat, lng], 15, { animate: true })
-
-  // Trouver et ouvrir le popup du marqueur
-  const markerIndex = props.appointments.findIndex(a => a.id === appointmentId)
-  if (markerIndex !== -1 && markers[markerIndex]) {
-    markers[markerIndex].openPopup()
-  }
-}
-
-const centerOnUser = () => {
-  if (!navigator.geolocation) {
-    alert('La géolocalisation n\'est pas supportée par votre navigateur')
-    return
-  }
-
-  loading.value = true
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const lat = position.coords.latitude
-      const lng = position.coords.longitude
-
-      map?.setView([lat, lng], 13, { animate: true })
-
-      // Ajouter un marqueur pour la position de l'utilisateur
-      L.marker([lat, lng], {
-        icon: L.divIcon({
-          className: 'user-marker',
-          html: `
-            <div style="
-              width: 20px;
-              height: 20px;
-              border-radius: 50%;
-              background-color: #3b82f6;
-              border: 3px solid white;
-              box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-            "></div>
-          `,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10]
-        })
-      }).addTo(map!).bindPopup('Vous êtes ici')
-
-      loading.value = false
-    },
-    (error) => {
-      console.error('Erreur de géolocalisation:', error)
-      alert('Impossible de récupérer votre position')
-      loading.value = false
-    }
-  )
-}
-
-const fitAllMarkers = () => {
-  if (!map || markers.length === 0) return
-
-  const group = L.featureGroup(markers)
-  map.fitBounds(group.getBounds(), { padding: [50, 50] })
-}
-
-/**
- * Calculer la distance entre deux points (formule de Haversine)
- */
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371 // Rayon de la Terre en km
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
-  const a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-  return R * c
-}
-
-/**
- * Optimiser l'itinéraire en utilisant l'algorithme du plus proche voisin
- */
-const optimizeRoute = () => {
-  if (!map || markers.length < 2) {
-    alert('Il faut au moins 2 rendez-vous pour calculer un itinéraire')
-    return
-  }
-
-  // Effacer l'ancien itinéraire
-  if (routePolyline) {
-    map.removeLayer(routePolyline)
-    routePolyline = null
-  }
-
-  // Récupérer les coordonnées des rendez-vous actifs
-  const activeAppointments = props.appointments.filter(apt =>
-    apt.location_latitude &&
-    apt.location_longitude &&
-    apt.status !== 'cancelled' &&
-    apt.status !== 'completed'
-  )
-
-  if (activeAppointments.length < 2) return
-
-  // Trier par heure de début
-  const sortedByTime = [...activeAppointments].sort((a, b) =>
-    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-  )
-
-  // Algorithme du plus proche voisin
-  const visited = new Set<number>()
-  const route: number[] = []
-
-  // Commencer par le premier rendez-vous (le plus tôt)
-  route.push(0)
-  visited.add(0)
-
-  while (visited.size < sortedByTime.length) {
-    const currentIdx = route[route.length - 1]
-    if (currentIdx === undefined) break
-
-    const current = sortedByTime[currentIdx]
-    if (!current) break
-
-    let nearestIdx = -1
-    let nearestDist = Infinity
-
-    // Trouver le prochain rendez-vous le plus proche non visité
-    for (let i = 0; i < sortedByTime.length; i++) {
-      if (!visited.has(i)) {
-        const nextApt = sortedByTime[i]
-        if (!nextApt) continue
-
-        const dist = calculateDistance(
-          parseFloat(current.location_latitude),
-          parseFloat(current.location_longitude),
-          parseFloat(nextApt.location_latitude),
-          parseFloat(nextApt.location_longitude)
-        )
-
-        if (dist < nearestDist) {
-          nearestDist = dist
-          nearestIdx = i
-        }
-      }
-    }
-
-    if (nearestIdx !== -1) {
-      route.push(nearestIdx)
-      visited.add(nearestIdx)
-    } else {
-      break
-    }
-  }
-
-  // Créer les coordonnées de l'itinéraire optimisé
-  const routeCoords: [number, number][] = route
-    .map(idx => {
-      const apt = sortedByTime[idx]
-      if (!apt || !apt.location_latitude || !apt.location_longitude) return null
-      return [parseFloat(apt.location_latitude), parseFloat(apt.location_longitude)] as [number, number]
-    })
-    .filter((coord): coord is [number, number] => coord !== null)
-
-  // Calculer la distance totale
-  let totalDistance = 0
-  for (let i = 0; i < routeCoords.length - 1; i++) {
-    const current = routeCoords[i]
-    const next = routeCoords[i + 1]
-    if (current && next) {
-      totalDistance += calculateDistance(
-        current[0], current[1],
-        next[0], next[1]
-      )
-    }
-  }
-
-  // Dessiner l'itinéraire sur la carte
-  routePolyline = L.polyline(routeCoords, {
-    color: '#3b82f6',
-    weight: 4,
-    opacity: 0.7,
-    dashArray: '10, 10',
-    lineJoin: 'round'
-  }).addTo(map)
-
-  // Ajouter des numéros d'ordre sur les marqueurs
-  route.forEach((idx, order) => {
-    const apt = sortedByTime[idx]
-    if (!apt || !map) return
-
-    const lat = parseFloat(apt.location_latitude)
-    const lng = parseFloat(apt.location_longitude)
-
-    L.marker([lat, lng], {
-      icon: L.divIcon({
-        className: 'route-number',
-        html: `
-          <div style="
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background-color: #3b82f6;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            margin-left: -12px;
-            margin-top: -35px;
-          ">${order + 1}</div>
-        `,
-        iconSize: [24, 24]
-      })
-    }).addTo(map)
-  })
-
-  // Afficher le résumé dans une belle modal
-  showRouteModal.value = true
-  routeStats.value = {
-    count: sortedByTime.length,
-    distance: totalDistance.toFixed(2),
-    route: route.map(idx => sortedByTime[idx])
-  }
-
-  // Ajuster la vue pour voir tout l'itinéraire
-  fitAllMarkers()
-}
-
-/**
- * Effacer l'itinéraire
- */
-const clearRoute = () => {
-  if (routePolyline && map) {
-    map.removeLayer(routePolyline)
-    routePolyline = null
-
-    // Retirer les numéros d'ordre
-    map.eachLayer((layer: any) => {
-      if (layer.options?.icon?.options?.className === 'route-number') {
-        map?.removeLayer(layer)
-      }
-    })
-  }
-}
-
-// Event listener pour les clics depuis les popups
-if (process.client) {
-  window.addEventListener('view-appointment', (e: any) => {
-    emit('selectAppointment', e.detail)
-  })
-}
-</script>
 
 <style scoped>
 #appointment-map {
@@ -888,13 +810,11 @@ if (process.client) {
   border: none !important;
 }
 
-/* Animation au survol des marqueurs */
 :deep(.custom-marker:hover) {
   transform: scale(1.15);
   transition: transform 0.2s ease-out;
 }
 
-/* Animations pour la modal */
 @keyframes fadeIn {
   from {
     opacity: 0;

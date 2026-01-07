@@ -1,3 +1,111 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: ['auth', 'admin'],
+  layout: 'admin',
+});
+
+const route = useRoute();
+const { apiFetch } = useApi();
+
+const user = ref<any>(null);
+const loading = ref(true);
+
+const fetchUser = async () => {
+  loading.value = true;
+  try {
+    const response = await apiFetch<any>(`/admin/users/${route.params.id}`, {
+      method: 'GET',
+    });
+
+    if (response.success) {
+      user.value = response.data;
+    }
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const toggleStatus = async () => {
+  if (!confirm(`Voulez-vous vraiment ${user.value.is_active ? 'désactiver' : 'activer'} cet utilisateur ?`)) {
+    return;
+  }
+
+  try {
+    const response = await apiFetch(`/admin/users/${user.value.id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isActive: !user.value.is_active }),
+    });
+
+    if (response.success) {
+      user.value.is_active = !user.value.is_active;
+    }
+  } catch (error) {
+    console.error('Failed to toggle user status:', error);
+    alert('Erreur lors de la mise à jour');
+  }
+};
+
+const verifyUser = async () => {
+  if (!confirm('Voulez-vous vraiment vérifier cet utilisateur ?')) {
+    return;
+  }
+
+  try {
+    const response = await apiFetch(`/admin/users/${user.value.id}/verify`, {
+      method: 'PATCH',
+    });
+
+    if (response.success) {
+      user.value.is_verified = true;
+    }
+  } catch (error) {
+    console.error('Failed to verify user:', error);
+    alert('Erreur lors de la vérification');
+  }
+};
+
+const deleteUser = async () => {
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer ${user.value.first_name} ${user.value.last_name} ? Cette action est irréversible.`)) {
+    return;
+  }
+
+  try {
+    const response = await apiFetch(`/admin/users/${user.value.id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.success) {
+      alert('Utilisateur supprimé avec succès');
+      navigateTo('/admin/users');
+    }
+  } catch (error) {
+    console.error('Failed to delete user:', error);
+    alert('Erreur lors de la suppression');
+  }
+};
+
+const getRoleLabel = (role: string) => {
+  const labels: Record<string, string> = {
+    admin: 'Administrateur',
+    avocat: 'Avocat',
+    client: 'Client',
+    collaborateur: 'Collaborateur',
+  };
+  return labels[role] || role;
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleString('fr-FR');
+};
+
+onMounted(() => {
+  fetchUser();
+});
+</script>
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="bg-white shadow">
@@ -143,110 +251,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-  middleware: ['auth', 'admin'],
-  layout: 'admin',
-});
-
-const route = useRoute();
-const { apiFetch } = useApi();
-
-const user = ref<any>(null);
-const loading = ref(true);
-
-const fetchUser = async () => {
-  loading.value = true;
-  try {
-    const response = await apiFetch<any>(`/admin/users/${route.params.id}`, {
-      method: 'GET',
-    });
-
-    if (response.success) {
-      user.value = response.data;
-    }
-  } catch (error) {
-    console.error('Failed to fetch user:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const toggleStatus = async () => {
-  if (!confirm(`Voulez-vous vraiment ${user.value.is_active ? 'désactiver' : 'activer'} cet utilisateur ?`)) {
-    return;
-  }
-
-  try {
-    const response = await apiFetch(`/admin/users/${user.value.id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ isActive: !user.value.is_active }),
-    });
-
-    if (response.success) {
-      user.value.is_active = !user.value.is_active;
-    }
-  } catch (error) {
-    console.error('Failed to toggle user status:', error);
-    alert('Erreur lors de la mise à jour');
-  }
-};
-
-const verifyUser = async () => {
-  if (!confirm('Voulez-vous vraiment vérifier cet utilisateur ?')) {
-    return;
-  }
-
-  try {
-    const response = await apiFetch(`/admin/users/${user.value.id}/verify`, {
-      method: 'PATCH',
-    });
-
-    if (response.success) {
-      user.value.is_verified = true;
-    }
-  } catch (error) {
-    console.error('Failed to verify user:', error);
-    alert('Erreur lors de la vérification');
-  }
-};
-
-const deleteUser = async () => {
-  if (!confirm(`Êtes-vous sûr de vouloir supprimer ${user.value.first_name} ${user.value.last_name} ? Cette action est irréversible.`)) {
-    return;
-  }
-
-  try {
-    const response = await apiFetch(`/admin/users/${user.value.id}`, {
-      method: 'DELETE',
-    });
-
-    if (response.success) {
-      alert('Utilisateur supprimé avec succès');
-      navigateTo('/admin/users');
-    }
-  } catch (error) {
-    console.error('Failed to delete user:', error);
-    alert('Erreur lors de la suppression');
-  }
-};
-
-const getRoleLabel = (role: string) => {
-  const labels: Record<string, string> = {
-    admin: 'Administrateur',
-    avocat: 'Avocat',
-    client: 'Client',
-    collaborateur: 'Collaborateur',
-  };
-  return labels[role] || role;
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleString('fr-FR');
-};
-
-onMounted(() => {
-  fetchUser();
-});
-</script>

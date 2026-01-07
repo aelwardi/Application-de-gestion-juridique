@@ -15,9 +15,7 @@ export interface ApiNotification {
 export const useNotifications = () => {
   const { apiFetch } = useApi();
 
-  /**
-   * Récupérer les notifications d'un utilisateur
-   */
+
   const getUserNotifications = async (
     userId: string,
     limit = 20,
@@ -33,44 +31,33 @@ export const useNotifications = () => {
     };
   };
 
-  /**
-   * Récupérer les notifications non lues
-   */
+
   const getUnreadNotifications = async (userId: string): Promise<ApiNotification[]> => {
     const response = await apiFetch<ApiResponse<ApiNotification[]>>(`/notifications/user/${userId}/unread`);
     return response.data || [];
   };
 
-  /**
-   * Marquer une notification comme lue
-   */
   const markAsRead = async (notificationId: string): Promise<void> => {
     await apiFetch(`/notifications/${notificationId}/read`, {
       method: 'PATCH',
     });
   };
 
-  /**
-   * Marquer toutes les notifications comme lues
-   */
+
   const markAllAsRead = async (userId: string): Promise<void> => {
     await apiFetch(`/notifications/user/${userId}/read-all`, {
       method: 'PATCH',
     });
   };
 
-  /**
-   * Supprimer une notification
-   */
+
   const deleteNotification = async (notificationId: string): Promise<void> => {
     await apiFetch(`/notifications/${notificationId}`, {
       method: 'DELETE',
     });
   };
 
-  /**
-   * Compter les notifications non lues
-   */
+
   const countUnread = async (userId: string): Promise<number> => {
     const response = await apiFetch<ApiResponse<{ count: number }>>(`/notifications/user/${userId}/unread/count`);
     return response.data?.count || 0;

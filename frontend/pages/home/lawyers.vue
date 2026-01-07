@@ -1,10 +1,20 @@
+
+<script setup lang="ts">
+import RegisterModal from '~/components/auth/RegisterModal.vue';
+
+definePageMeta({
+  layout: false,
+});
+
+const showRegisterModal = ref(false);
+</script>
+
+
 <template>
   <div class="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
-    <!-- Navigation -->
     <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed w-full top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
-          <!-- Logo -->
           <NuxtLink to="/" class="flex items-center">
             <h1 class="text-2xl font-heading font-bold text-primary-700">
               <span class="text-primary-600">Lex</span><span class="text-neutral-800">Manager</span>
@@ -14,7 +24,6 @@
             </span>
           </NuxtLink>
 
-          <!-- Navigation Links -->
           <div class="hidden md:flex items-center space-x-8">
             <a href="#avantages" class="text-neutral-600 hover:text-primary-600 font-medium transition-colors">
               Avantages
@@ -27,7 +36,6 @@
             </a>
           </div>
 
-          <!-- Auth Buttons -->
           <div class="flex items-center space-x-4">
             <NuxtLink to="/auth/login" class="btn-outline">
               Connexion
@@ -40,7 +48,6 @@
       </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
@@ -107,7 +114,6 @@
                 </div>
               </div>
             </div>
-            <!-- Decorative elements -->
             <div class="absolute -top-4 -right-4 w-24 h-24 bg-primary-200 rounded-full opacity-20 blur-2xl"></div>
             <div class="absolute -bottom-4 -left-4 w-32 h-32 bg-secondary-200 rounded-full opacity-20 blur-2xl"></div>
           </div>
@@ -115,7 +121,6 @@
       </div>
     </section>
 
-    <!-- Avantages Section -->
     <section id="avantages" class="py-20 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
@@ -204,7 +209,6 @@
       </div>
     </section>
 
-    <!-- Fonctionnalités Section -->
     <section id="fonctionnalites" class="py-20 bg-gradient-to-br from-neutral-50 to-primary-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
@@ -217,7 +221,6 @@
         </div>
 
         <div class="space-y-16">
-          <!-- Feature 1 -->
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div class="inline-block px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">
@@ -256,7 +259,6 @@
             </div>
           </div>
 
-          <!-- Feature 2 -->
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div class="order-2 lg:order-1 card p-6 bg-white">
               <img src="https://via.placeholder.com/600x400/f3e8ff/7e22ce?text=Gestion+Dossiers" alt="Dossiers" class="rounded-lg w-full" />
@@ -295,7 +297,6 @@
             </div>
           </div>
 
-          <!-- Feature 3 -->
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div class="inline-block px-3 py-1 bg-success-100 text-success-700 rounded-full text-sm font-semibold mb-4">
@@ -337,7 +338,6 @@
       </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="py-20 bg-gradient-to-r from-primary-600 to-secondary-600">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-display-sm font-heading text-white mb-6">
@@ -357,7 +357,6 @@
       </div>
     </section>
 
-    <!-- Footer -->
     <footer class="bg-neutral-900 text-white py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid md:grid-cols-4 gap-8">
@@ -400,17 +399,6 @@
       </div>
     </footer>
 
-    <!-- Register Modal -->
     <RegisterModal v-model="showRegisterModal" user-type="avocat" />
   </div>
 </template>
-
-<script setup lang="ts">
-import RegisterModal from '~/components/auth/RegisterModal.vue';
-
-definePageMeta({
-  layout: false,
-});
-
-const showRegisterModal = ref(false);
-</script>

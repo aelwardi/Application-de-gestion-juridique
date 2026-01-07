@@ -11,7 +11,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Palette professionnelle pour application juridique
         primary: {
           50: '#f0f5ff',
           100: '#e0eaff',

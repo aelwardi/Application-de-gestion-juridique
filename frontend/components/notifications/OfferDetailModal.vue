@@ -1,3 +1,131 @@
+<script setup lang="ts">
+const props = defineProps({
+  show: { type: Boolean, required: true },
+  offer: { type: Object, required: true }
+});
+
+const emit = defineEmits(['close', 'accept', 'reject']);
+
+const loading = computed(() => accepting.value || rejecting.value);
+const accepting = ref(false);
+const rejecting = ref(false);
+
+const closeModal = () => {
+  if (!loading.value) {
+    emit('close');
+  }
+};
+
+const handleAccept = async () => {
+  if (!confirm('Êtes-vous sûr de vouloir accepter cette demande ?\n\nUn nouveau dossier sera automatiquement créé.')) return;
+
+  accepting.value = true;
+  try {
+    emit('accept');
+  } finally {
+    accepting.value = false;
+  }
+};
+
+const handleReject = async () => {
+  if (!confirm('Êtes-vous sûr de vouloir refuser cette demande ?\n\nCette action est irréversible.')) return;
+
+  rejecting.value = true;
+  try {
+    emit('reject');
+  } finally {
+    rejecting.value = false;
+  }
+};
+
+const getRequestTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    consultation: 'Consultation',
+    new_case: 'Nouveau dossier',
+    second_opinion: 'Second avis',
+    urgent: 'Urgent',
+  };
+  return labels[type] || type || 'Non spécifié';
+};
+
+const getUrgencyLabel = (urgency: string) => {
+  const labels: Record<string, string> = {
+    low: 'Faible',
+    normal: 'Normal',
+    medium: 'Normal',
+    high: 'Élevée',
+    urgent: 'Très Urgent',
+  };
+  return labels[urgency] || 'Normal';
+};
+
+const getUrgencyIcon = (urgency: string) => {
+  const icons: Record<string, string> = {
+    low: '',
+    normal: '',
+    medium: '',
+    high: '',
+    urgent: '',
+  };
+  return icons[urgency] || '';
+};
+
+const getUrgencyClasses = (urgency: string) => {
+  const classes: Record<string, string> = {
+    low: 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800',
+    normal: 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300 text-yellow-800',
+    medium: 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300 text-yellow-800',
+    high: 'bg-gradient-to-br from-orange-50 to-red-50 border-orange-300 text-orange-800',
+    urgent: 'bg-gradient-to-br from-red-50 to-rose-50 border-red-400 text-red-900',
+  };
+  return classes[urgency] || classes.normal;
+};
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return 'Non spécifiée';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(amount);
+};
+
+const getClientInitials = () => {
+  const first = props.offer.client_first_name?.charAt(0) || '';
+  const last = props.offer.client_last_name?.charAt(0) || '';
+  return (first + last).toUpperCase() || '??';
+};
+
+onMounted(() => {
+  const handleEsc = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && props.show && !loading.value) {
+      closeModal();
+    }
+  };
+  window.addEventListener('keydown', handleEsc);
+
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleEsc);
+  });
+});
+</script>
+
+
+
+
+
+
 <template>
   <Teleport to="body">
     <Transition name="modal">
@@ -6,16 +134,13 @@
         class="fixed inset-0 z-50 overflow-y-auto"
         @click.self="closeModal"
       >
-        <!-- Backdrop -->
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
 
-        <!-- Modal Container -->
         <div class="flex min-h-screen items-center justify-center p-4">
           <div
             class="relative w-full max-w-2xl transform overflow-hidden rounded-xl bg-white shadow-2xl transition-all"
             @click.stop
           >
-            <!-- Header compact -->
             <div class="relative bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -44,9 +169,7 @@
               </div>
             </div>
 
-            <!-- Corps du modal -->
             <div class="max-h-[65vh] overflow-y-auto px-6 py-4 space-y-4">
-              <!-- Titre et description -->
               <div class="space-y-3">
                 <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
                   <label class="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1 block">
@@ -69,9 +192,7 @@
                 </div>
               </div>
 
-              <!-- Grid d'informations compact -->
               <div class="grid grid-cols-2 gap-3">
-                <!-- Type de demande -->
                 <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
                   <div class="flex items-center gap-2 mb-1">
                     <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
@@ -86,7 +207,6 @@
                   </p>
                 </div>
 
-                <!-- Catégorie -->
                 <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
                   <div class="flex items-center gap-2 mb-1">
                     <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -101,7 +221,6 @@
                   </p>
                 </div>
 
-                <!-- Urgence -->
                 <div
                   class="rounded-lg p-3 border-2"
                   :class="getUrgencyClasses(offer.urgency)"
@@ -117,7 +236,6 @@
                   </p>
                 </div>
 
-                <!-- Date de création -->
                 <div class="bg-green-50 rounded-lg p-3 border border-green-200">
                   <div class="flex items-center gap-2 mb-1">
                     <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +251,6 @@
                 </div>
               </div>
 
-              <!-- Budget compact -->
               <div
                 v-if="offer.budget_min || offer.budget_max"
                 class="bg-amber-50 rounded-lg p-3 border border-amber-300"
@@ -159,7 +276,6 @@
                 </div>
               </div>
 
-              <!-- Date préférée compact -->
               <div
                 v-if="offer.preferred_date"
                 class="bg-indigo-50 rounded-lg p-3 border border-indigo-200"
@@ -179,7 +295,6 @@
                 </div>
               </div>
 
-              <!-- Informations client compact -->
               <div class="border-t border-gray-200 pt-3">
                 <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
                   Informations Client
@@ -228,7 +343,6 @@
               </div>
             </div>
 
-            <!-- Footer avec actions compact -->
             <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-3">
               <div class="flex gap-2">
                 <button
@@ -281,129 +395,6 @@
   </Teleport>
 </template>
 
-<script setup lang="ts">
-const props = defineProps({
-  show: { type: Boolean, required: true },
-  offer: { type: Object, required: true }
-});
-
-const emit = defineEmits(['close', 'accept', 'reject']);
-
-const loading = computed(() => accepting.value || rejecting.value);
-const accepting = ref(false);
-const rejecting = ref(false);
-
-const closeModal = () => {
-  if (!loading.value) {
-    emit('close');
-  }
-};
-
-const handleAccept = async () => {
-  if (!confirm('✅ Êtes-vous sûr de vouloir accepter cette demande ?\n\nUn nouveau dossier sera automatiquement créé.')) return;
-
-  accepting.value = true;
-  try {
-    emit('accept');
-  } finally {
-    accepting.value = false;
-  }
-};
-
-const handleReject = async () => {
-  if (!confirm('❌ Êtes-vous sûr de vouloir refuser cette demande ?\n\nCette action est irréversible.')) return;
-
-  rejecting.value = true;
-  try {
-    emit('reject');
-  } finally {
-    rejecting.value = false;
-  }
-};
-
-const getRequestTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    consultation: 'Consultation',
-    new_case: 'Nouveau dossier',
-    second_opinion: 'Second avis',
-    urgent: 'Urgent',
-  };
-  return labels[type] || type || 'Non spécifié';
-};
-
-const getUrgencyLabel = (urgency: string) => {
-  const labels: Record<string, string> = {
-    low: 'Faible',
-    normal: 'Normal',
-    medium: 'Normal',
-    high: 'Élevée',
-    urgent: 'Très Urgent',
-  };
-  return labels[urgency] || 'Normal';
-};
-
-const getUrgencyIcon = (urgency: string) => {
-  const icons: Record<string, string> = {
-    low: '●',
-    normal: '●',
-    medium: '●',
-    high: '●',
-    urgent: '●',
-  };
-  return icons[urgency] || '⚪';
-};
-
-const getUrgencyClasses = (urgency: string) => {
-  const classes: Record<string, string> = {
-    low: 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800',
-    normal: 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300 text-yellow-800',
-    medium: 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300 text-yellow-800',
-    high: 'bg-gradient-to-br from-orange-50 to-red-50 border-orange-300 text-orange-800',
-    urgent: 'bg-gradient-to-br from-red-50 to-rose-50 border-red-400 text-red-900',
-  };
-  return classes[urgency] || classes.normal;
-};
-
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return 'Non spécifiée';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount);
-};
-
-const getClientInitials = () => {
-  const first = props.offer.client_first_name?.charAt(0) || '';
-  const last = props.offer.client_last_name?.charAt(0) || '';
-  return (first + last).toUpperCase() || '??';
-};
-
-// Fermer avec Échap
-onMounted(() => {
-  const handleEsc = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && props.show && !loading.value) {
-      closeModal();
-    }
-  };
-  window.addEventListener('keydown', handleEsc);
-
-  onUnmounted(() => {
-    window.removeEventListener('keydown', handleEsc);
-  });
-});
-</script>
 
 <style scoped>
 .modal-enter-active,

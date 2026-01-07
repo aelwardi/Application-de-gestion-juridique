@@ -17,9 +17,6 @@ export const useSuggestion = () => {
     return headers;
   };
 
-  /**
-   * Créer une proposition de créneau
-   */
   const createSuggestion = async (data: CreateSuggestionDTO): Promise<{ success: boolean; data?: AppointmentSuggestion; message?: string }> => {
     try {
       const response = await $fetch<any>(`${baseURL}/appointment-suggestions`, {
@@ -34,9 +31,7 @@ export const useSuggestion = () => {
     }
   };
 
-  /**
-   * Récupérer mes suggestions envoyées
-   */
+
   const getSentSuggestions = async (): Promise<{ success: boolean; data: AppointmentSuggestion[] }> => {
     try {
       const response = await $fetch<any>(`${baseURL}/appointment-suggestions/sent`, {
@@ -50,9 +45,7 @@ export const useSuggestion = () => {
     }
   };
 
-  /**
-   * Récupérer mes suggestions reçues
-   */
+
   const getReceivedSuggestions = async (): Promise<{ success: boolean; data: AppointmentSuggestion[] }> => {
     try {
       const response = await $fetch<any>(`${baseURL}/appointment-suggestions/received`, {
@@ -66,9 +59,7 @@ export const useSuggestion = () => {
     }
   };
 
-  /**
-   * Accepter une suggestion
-   */
+
   const acceptSuggestion = async (suggestionId: string): Promise<{ success: boolean; data?: any; message?: string }> => {
     try {
       const response = await $fetch<any>(`${baseURL}/appointment-suggestions/${suggestionId}/accept`, {
@@ -82,9 +73,7 @@ export const useSuggestion = () => {
     }
   };
 
-  /**
-   * Refuser une suggestion
-   */
+
   const rejectSuggestion = async (suggestionId: string, reason?: string): Promise<{ success: boolean; data?: any; message?: string }> => {
     try {
       const response = await $fetch<any>(`${baseURL}/appointment-suggestions/${suggestionId}/reject`, {
@@ -99,9 +88,7 @@ export const useSuggestion = () => {
     }
   };
 
-  /**
-   * Contre-proposer
-   */
+
   const counterSuggestion = async (
     suggestionId: string,
     suggested_start_time: string,
@@ -121,9 +108,7 @@ export const useSuggestion = () => {
     }
   };
 
-  /**
-   * Récupérer les créneaux disponibles d'un avocat
-   */
+
   const getAvailableSlots = async (lawyerId: string, date: string, duration: number = 60): Promise<{ success: boolean; data: AvailableSlot[] }> => {
     try {
       const response = await $fetch<any>(`${baseURL}/appointment-suggestions/available-slots/${lawyerId}?date=${date}&duration=${duration}`, {
@@ -137,9 +122,7 @@ export const useSuggestion = () => {
     }
   };
 
-  /**
-   * Récupérer les suggestions liées à un rendez-vous
-   */
+
   const getAppointmentSuggestions = async (appointmentId: string): Promise<{ success: boolean; data: AppointmentSuggestion[] }> => {
     try {
       const response = await $fetch<any>(`${baseURL}/appointment-suggestions/appointment/${appointmentId}`, {

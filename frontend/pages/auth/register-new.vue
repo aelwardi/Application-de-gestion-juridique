@@ -1,3 +1,210 @@
+
+<script setup lang="ts">
+import AddressAutocomplete from '~/components/common/AddressAutocomplete.vue'
+
+definePageMeta({
+  middleware: 'guest',
+  layout: false,
+});
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const form = ref({
+  email: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+  role: 'client' as 'admin' | 'avocat' | 'client' | 'collaborateur',
+  lawyerData: {
+    barNumber: '',
+    specialties: [] as string[],
+    officeAddress: '',
+    officeCity: '',
+    officeLatitude: null as number | null,
+    officeLongitude: null as number | null,
+    yearsOfExperience: undefined as number | undefined,
+    bio: '',
+  },
+  clientData: {
+    address: '',
+    city: '',
+    postalCode: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
+  },
+});
+
+const lawyerLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
+const clientLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
+const specialtiesInput = ref('');
+const confirmPassword = ref('');
+const isLoading = ref(false);
+const errorMessage = ref('');
+const validationErrors = ref<string[]>([]);
+const showPassword = ref(false);
+const acceptTerms = ref(false);
+
+watch(lawyerLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.lawyerData.officeAddress = newValue.address
+    form.value.lawyerData.officeLatitude = newValue.latitude
+    form.value.lawyerData.officeLongitude = newValue.longitude
+
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      if (parts.length > 1) {
+        form.value.lawyerData.officeCity = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
+
+watch(clientLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.clientData.address = newValue.address
+    form.value.clientData.latitude = newValue.latitude
+    form.value.clientData.longitude = newValue.longitude
+
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      if (parts.length > 1) {
+        const postalMatch = newValue.formattedAddress.match(/\b\d{5}\b/)
+        if (postalMatch) {
+          form.value.clientData.postalCode = postalMatch[0]
+        }
+        form.value.clientData.city = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
+
+watch(specialtiesInput, (value) => {
+  if (value) {
+    form.value.lawyerData.specialties = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+  } else {
+    form.value.lawyerData.specialties = [];
+  }
+});
+
+const passwordStrength = computed(() => {
+  const password = form.value.password;
+  if (!password) return 0;
+
+  let strength = 0;
+  if (password.length >= 8) strength += 25;
+  if (password.length >= 12) strength += 25;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
+  if (/\d/.test(password)) strength += 12.5;
+  if (/[^a-zA-Z\d]/.test(password)) strength += 12.5;
+
+  return Math.min(strength, 100);
+});
+
+const passwordStrengthText = computed(() => {
+  if (passwordStrength.value < 25) return 'Très faible';
+  if (passwordStrength.value < 50) return 'Faible';
+  if (passwordStrength.value < 75) return 'Moyen';
+  if (passwordStrength.value < 100) return 'Fort';
+  return 'Très fort';
+});
+
+const passwordStrengthColor = computed(() => {
+  if (passwordStrength.value < 25) return 'bg-accent-500 text-accent-600';
+  if (passwordStrength.value < 50) return 'bg-amber-500 text-amber-600';
+  if (passwordStrength.value < 75) return 'bg-primary-500 text-primary-600';
+  return 'bg-success-500 text-success-600';
+});
+
+const handleRegister = async () => {
+  isLoading.value = true;
+  errorMessage.value = '';
+  validationErrors.value = [];
+
+  if (form.value.password !== confirmPassword.value) {
+    errorMessage.value = 'Les mots de passe ne correspondent pas';
+    isLoading.value = false;
+    return;
+  }
+
+  if (form.value.role === 'avocat') {
+    if (!form.value.lawyerData.barNumber) {
+      errorMessage.value = 'Le numéro du barreau est requis pour les avocats';
+      isLoading.value = false;
+      return;
+    }
+  }
+
+  try {
+    const registrationData: any = {
+      email: form.value.email,
+      password: form.value.password,
+      firstName: form.value.firstName,
+      lastName: form.value.lastName,
+      phone: form.value.phone,
+      role: form.value.role,
+    };
+
+    if (form.value.role === 'avocat') {
+      registrationData.lawyerData = {
+        barNumber: form.value.lawyerData.barNumber,
+        specialties: form.value.lawyerData.specialties,
+        officeAddress: form.value.lawyerData.officeAddress || undefined,
+        officeCity: form.value.lawyerData.officeCity || undefined,
+        yearsOfExperience: form.value.lawyerData.yearsOfExperience || undefined,
+        bio: form.value.lawyerData.bio || undefined,
+      };
+    }
+
+    if (form.value.role === 'client') {
+      registrationData.clientData = {
+        address: form.value.clientData.address || undefined,
+        city: form.value.clientData.city || undefined,
+        postalCode: form.value.clientData.postalCode || undefined,
+      };
+    }
+
+    const result = await authStore.register(registrationData);
+
+    if (result.success) {
+      await router.push('/dashboard');
+    } else {
+      errorMessage.value = result.message || 'Échec de l\'inscription';
+      if (result.errors) {
+        validationErrors.value = result.errors.map((err: any) => err.message);
+      }
+    }
+  } catch (error: any) {
+    console.error('Register exception:', error);
+    errorMessage.value = 'Une erreur est survenue lors de l\'inscription';
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
+
+
 <template>
   <div class="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
     <!-- Navigation Header -->
@@ -20,7 +227,6 @@
     </nav>
 
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <!-- Header -->
       <div class="text-center mb-12">
         <h2 class="text-4xl font-heading font-bold text-neutral-900 mb-3">
           Créer votre compte
@@ -30,7 +236,6 @@
         </p>
       </div>
 
-      <!-- Role Selection Cards -->
       <div class="grid md:grid-cols-3 gap-6 mb-12">
         <button
           @click="form.role = 'client'"
@@ -105,9 +310,7 @@
         </button>
       </div>
 
-      <!-- Form -->
       <form @submit.prevent="handleRegister" class="max-w-3xl mx-auto">
-        <!-- Error Message -->
         <div v-if="errorMessage" class="bg-accent-50 border border-accent-200 rounded-lg p-4 mb-6">
           <div class="flex">
             <svg class="w-5 h-5 text-accent-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -126,7 +329,6 @@
         </div>
 
         <div class="card p-8 space-y-6">
-          <!-- Section: Informations Personnelles -->
           <div>
             <h3 class="text-lg font-heading font-semibold text-neutral-900 mb-4 flex items-center">
               <span class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3 text-primary-600 font-bold text-sm">1</span>
@@ -191,7 +393,6 @@
             </div>
           </div>
 
-          <!-- Section: Informations Avocat -->
           <div v-if="form.role === 'avocat'" class="pt-6 border-t border-neutral-200">
             <h3 class="text-lg font-heading font-semibold text-neutral-900 mb-4 flex items-center">
               <span class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3 text-primary-600 font-bold text-sm">2</span>
@@ -266,7 +467,6 @@
             </div>
           </div>
 
-          <!-- Section: Informations Client -->
           <div v-if="form.role === 'client'" class="pt-6 border-t border-neutral-200">
             <h3 class="text-lg font-heading font-semibold text-neutral-900 mb-4 flex items-center">
               <span class="w-8 h-8 bg-secondary-100 rounded-full flex items-center justify-center mr-3 text-secondary-600 font-bold text-sm">2</span>
@@ -283,7 +483,6 @@
             </div>
           </div>
 
-          <!-- Section: Mot de passe -->
           <div class="pt-6 border-t border-neutral-200">
             <h3 class="text-lg font-heading font-semibold text-neutral-900 mb-4 flex items-center">
               <span class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3 text-primary-600 font-bold text-sm">
@@ -355,7 +554,6 @@
               </div>
             </div>
 
-            <!-- Password Strength Indicator -->
             <div v-if="form.password" class="mt-4">
               <div class="flex items-center justify-between text-xs text-neutral-600 mb-1">
                 <span>Force du mot de passe</span>
@@ -367,7 +565,6 @@
             </div>
           </div>
 
-          <!-- Terms & Conditions -->
           <div class="pt-6 border-t border-neutral-200">
             <label class="flex items-start cursor-pointer">
               <input
@@ -385,7 +582,6 @@
             </label>
           </div>
 
-          <!-- Submit Button -->
           <div class="pt-6">
             <button
               type="submit"
@@ -405,7 +601,6 @@
         </div>
       </form>
 
-      <!-- Back to Login -->
       <div class="text-center mt-8">
         <p class="text-neutral-600">
           Vous avez déjà un compte ?
@@ -418,224 +613,6 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import AddressAutocomplete from '~/components/common/AddressAutocomplete.vue'
-
-definePageMeta({
-  middleware: 'guest',
-  layout: false,
-});
-
-const authStore = useAuthStore();
-const router = useRouter();
-
-const form = ref({
-  email: '',
-  password: '',
-  firstName: '',
-  lastName: '',
-  phone: '',
-  role: 'client' as 'admin' | 'avocat' | 'client' | 'collaborateur',
-  lawyerData: {
-    barNumber: '',
-    specialties: [] as string[],
-    officeAddress: '',
-    officeCity: '',
-    officeLatitude: null as number | null,
-    officeLongitude: null as number | null,
-    yearsOfExperience: undefined as number | undefined,
-    bio: '',
-  },
-  clientData: {
-    address: '',
-    city: '',
-    postalCode: '',
-    latitude: null as number | null,
-    longitude: null as number | null,
-  },
-});
-
-// Variables pour l'autocomplete d'adresse
-const lawyerLocationData = ref<{
-  address: string
-  latitude: number | null
-  longitude: number | null
-  formattedAddress?: string
-}>({
-  address: '',
-  latitude: null,
-  longitude: null
-});
-
-const clientLocationData = ref<{
-  address: string
-  latitude: number | null
-  longitude: number | null
-  formattedAddress?: string
-}>({
-  address: '',
-  latitude: null,
-  longitude: null
-});
-
-const specialtiesInput = ref('');
-const confirmPassword = ref('');
-const isLoading = ref(false);
-const errorMessage = ref('');
-const validationErrors = ref<string[]>([]);
-const showPassword = ref(false);
-const acceptTerms = ref(false);
-
-// Watcher pour synchroniser les données d'adresse de l'avocat
-watch(lawyerLocationData, (newValue) => {
-  if (newValue.address) {
-    form.value.lawyerData.officeAddress = newValue.address
-    form.value.lawyerData.officeLatitude = newValue.latitude
-    form.value.lawyerData.officeLongitude = newValue.longitude
-
-    // Extraire la ville depuis l'adresse formatée si disponible
-    if (newValue.formattedAddress) {
-      const parts = newValue.formattedAddress.split(',')
-      // Généralement la ville est dans les dernières parties
-      if (parts.length > 1) {
-        form.value.lawyerData.officeCity = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
-      }
-    }
-  }
-}, { deep: true });
-
-// Watcher pour synchroniser les données d'adresse du client
-watch(clientLocationData, (newValue) => {
-  if (newValue.address) {
-    form.value.clientData.address = newValue.address
-    form.value.clientData.latitude = newValue.latitude
-    form.value.clientData.longitude = newValue.longitude
-
-    // Extraire ville et code postal depuis l'adresse formatée
-    if (newValue.formattedAddress) {
-      const parts = newValue.formattedAddress.split(',')
-      if (parts.length > 1) {
-        // Chercher le code postal dans l'adresse
-        const postalMatch = newValue.formattedAddress.match(/\b\d{5}\b/)
-        if (postalMatch) {
-          form.value.clientData.postalCode = postalMatch[0]
-        }
-        // Extraire la ville
-        form.value.clientData.city = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
-      }
-    }
-  }
-}, { deep: true });
-
-// Watch specialties input to update the array
-watch(specialtiesInput, (value) => {
-  if (value) {
-    form.value.lawyerData.specialties = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-  } else {
-    form.value.lawyerData.specialties = [];
-  }
-});
-
-// Password strength calculator
-const passwordStrength = computed(() => {
-  const password = form.value.password;
-  if (!password) return 0;
-  
-  let strength = 0;
-  if (password.length >= 8) strength += 25;
-  if (password.length >= 12) strength += 25;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
-  if (/\d/.test(password)) strength += 12.5;
-  if (/[^a-zA-Z\d]/.test(password)) strength += 12.5;
-  
-  return Math.min(strength, 100);
-});
-
-const passwordStrengthText = computed(() => {
-  if (passwordStrength.value < 25) return 'Très faible';
-  if (passwordStrength.value < 50) return 'Faible';
-  if (passwordStrength.value < 75) return 'Moyen';
-  if (passwordStrength.value < 100) return 'Fort';
-  return 'Très fort';
-});
-
-const passwordStrengthColor = computed(() => {
-  if (passwordStrength.value < 25) return 'bg-accent-500 text-accent-600';
-  if (passwordStrength.value < 50) return 'bg-amber-500 text-amber-600';
-  if (passwordStrength.value < 75) return 'bg-primary-500 text-primary-600';
-  return 'bg-success-500 text-success-600';
-});
-
-const handleRegister = async () => {
-  isLoading.value = true;
-  errorMessage.value = '';
-  validationErrors.value = [];
-
-  if (form.value.password !== confirmPassword.value) {
-    errorMessage.value = 'Les mots de passe ne correspondent pas';
-    isLoading.value = false;
-    return;
-  }
-
-  // Validate lawyer required fields
-  if (form.value.role === 'avocat') {
-    if (!form.value.lawyerData.barNumber) {
-      errorMessage.value = 'Le numéro du barreau est requis pour les avocats';
-      isLoading.value = false;
-      return;
-    }
-  }
-
-  try {
-    // Prepare data to send - only include relevant fields based on role
-    const registrationData: any = {
-      email: form.value.email,
-      password: form.value.password,
-      firstName: form.value.firstName,
-      lastName: form.value.lastName,
-      phone: form.value.phone,
-      role: form.value.role,
-    };
-
-    // Add lawyerData only if role is avocat
-    if (form.value.role === 'avocat') {
-      registrationData.lawyerData = {
-        barNumber: form.value.lawyerData.barNumber,
-        specialties: form.value.lawyerData.specialties,
-        officeAddress: form.value.lawyerData.officeAddress || undefined,
-        officeCity: form.value.lawyerData.officeCity || undefined,
-        yearsOfExperience: form.value.lawyerData.yearsOfExperience || undefined,
-        bio: form.value.lawyerData.bio || undefined,
-      };
-    }
-
-    // Add clientData only if role is client
-    if (form.value.role === 'client') {
-      registrationData.clientData = {
-        address: form.value.clientData.address || undefined,
-        city: form.value.clientData.city || undefined,
-        postalCode: form.value.clientData.postalCode || undefined,
-      };
-    }
-
-    const result = await authStore.register(registrationData);
-
-    if (result.success) {
-      await router.push('/dashboard');
-    } else {
-      errorMessage.value = result.message || 'Échec de l\'inscription';
-      if (result.errors) {
-        validationErrors.value = result.errors.map((err: any) => err.message);
-      }
-    }
-  } catch (error: any) {
-    console.error('Register exception:', error);
-    errorMessage.value = 'Une erreur est survenue lors de l\'inscription';
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
 
 <style scoped>
 </style>

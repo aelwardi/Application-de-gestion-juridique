@@ -1,3 +1,67 @@
+<script setup lang="ts">
+import type { LawyerRequest } from '~/types/lawyer';
+
+defineProps<{
+  request: LawyerRequest;
+}>();
+
+defineEmits<{
+  (e: 'cancel', requestId: string): void;
+  (e: 'view', request: LawyerRequest): void;
+}>();
+
+const getStatusClass = (status: string) => {
+  const classes = {
+    pending: 'bg-orange-100 text-orange-800',
+    accepted: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    cancelled: 'bg-gray-100 text-gray-800',
+  };
+  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
+};
+
+const getStatusLabel = (status: string) => {
+  const labels = {
+    pending: 'En attente',
+    accepted: 'Acceptée',
+    rejected: 'Rejetée',
+    cancelled: 'Annulée',
+  };
+  return labels[status as keyof typeof labels] || status;
+};
+
+const getUrgencyClass = (urgency: string) => {
+  const classes = {
+    low: 'bg-blue-100 text-blue-800',
+    medium: 'bg-yellow-100 text-yellow-800',
+    high: 'bg-orange-100 text-orange-800',
+    urgent: 'bg-red-100 text-red-800',
+  };
+  return classes[urgency as keyof typeof classes] || 'bg-gray-100 text-gray-800';
+};
+
+const getUrgencyLabel = (urgency: string) => {
+  const labels = {
+    low: 'Faible',
+    medium: 'Moyen',
+    high: 'Élevé',
+    urgent: 'Urgent',
+  };
+  return labels[urgency as keyof typeof labels] || urgency;
+};
+
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+</script>
+
+
 <template>
   <div class="bg-white rounded-lg shadow-md p-6">
     <div class="flex flex-col md:flex-row gap-4">
@@ -106,65 +170,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import type { LawyerRequest } from '~/types/lawyer';
-
-defineProps<{
-  request: LawyerRequest;
-}>();
-
-defineEmits<{
-  (e: 'cancel', requestId: string): void;
-  (e: 'view', request: LawyerRequest): void;
-}>();
-
-const getStatusClass = (status: string) => {
-  const classes = {
-    pending: 'bg-orange-100 text-orange-800',
-    accepted: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    cancelled: 'bg-gray-100 text-gray-800',
-  };
-  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
-};
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    pending: 'En attente',
-    accepted: 'Acceptée',
-    rejected: 'Rejetée',
-    cancelled: 'Annulée',
-  };
-  return labels[status as keyof typeof labels] || status;
-};
-
-const getUrgencyClass = (urgency: string) => {
-  const classes = {
-    low: 'bg-blue-100 text-blue-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-orange-100 text-orange-800',
-    urgent: 'bg-red-100 text-red-800',
-  };
-  return classes[urgency as keyof typeof classes] || 'bg-gray-100 text-gray-800';
-};
-
-const getUrgencyLabel = (urgency: string) => {
-  const labels = {
-    low: 'Faible',
-    medium: 'Moyen',
-    high: 'Élevé',
-    urgent: 'Urgent',
-  };
-  return labels[urgency as keyof typeof labels] || urgency;
-};
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-</script>

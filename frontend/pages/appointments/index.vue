@@ -1,442 +1,3 @@
-<template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Header moderne avec gradient -->
-      <div class="mb-8">
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 border border-white/20">
-          <div class="flex items-center justify-between">
-            <div>
-              <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                Mes Rendez-vous
-              </h1>
-              <p class="text-gray-600 mt-2 text-lg">Gérez vos rendez-vous et consultations</p>
-            </div>
-            <div class="flex gap-3">
-              <button
-                  @click="openRouteOptimizer"
-                  class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                Optimiser
-              </button>
-              <button
-                  @click="openCreateModal"
-                  class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Nouveau rendez-vous
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Boutons de vue modernes -->
-      <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 mb-8 border border-white/20">
-        <div class="flex gap-2">
-          <button
-              @click="viewMode = 'list'"
-              :class="[
-              viewMode === 'list' 
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-              'px-4 py-2 rounded-xl transition-all duration-200 flex items-center font-semibold'
-            ]"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            Liste
-          </button>
-          <button
-              @click="viewMode = 'calendar'"
-              :class="[
-              viewMode === 'calendar' 
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-              'px-4 py-2 rounded-xl transition-all duration-200 flex items-center font-semibold'
-            ]"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Calendrier
-          </button>
-          <button
-              @click="viewMode = 'map'"
-              :class="[
-              viewMode === 'map' 
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-              'px-4 py-2 rounded-xl transition-all duration-200 flex items-center font-semibold'
-            ]"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-            </svg>
-            Carte
-          </button>
-        </div>
-      </div>
-
-      <!-- Stats Cards modernes avec animations -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
-          <p class="text-sm font-medium text-gray-600 mb-1">Aujourd'hui</p>
-          <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-            {{ stats.today || 0 }}
-          </p>
-          <div class="mt-2 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
-        </div>
-        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
-          <p class="text-sm font-medium text-gray-600 mb-1">Cette semaine</p>
-          <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-            {{ stats.thisWeek || 0 }}
-          </p>
-          <div class="mt-2 h-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
-        </div>
-        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
-          <p class="text-sm font-medium text-gray-600 mb-1">À venir</p>
-          <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
-            {{ stats.upcoming || 0 }}
-          </p>
-          <div class="mt-2 h-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
-        </div>
-        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-gray-400 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
-          <p class="text-sm font-medium text-gray-600 mb-1">Complétés</p>
-          <p class="text-4xl font-black text-gray-700">{{ stats.completed || 0 }}</p>
-          <div class="mt-2 h-1 bg-gray-400 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
-        </div>
-      </div>
-
-      <!-- Loading state moderne -->
-      <div v-if="loading" class="flex items-center justify-center py-20">
-        <div class="relative">
-          <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
-          <div class="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600 absolute top-0"></div>
-        </div>
-      </div>
-
-      <div v-else>
-        <!-- Vue Liste modernisée -->
-        <div v-if="viewMode === 'list'" class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/20">
-          <div v-if="appointments.length === 0" class="text-center py-20">
-            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p class="text-gray-500 text-lg">Aucun rendez-vous trouvé</p>
-          </div>
-          <div v-else class="divide-y divide-gray-100">
-            <div
-                v-for="apt in appointments"
-                :key="apt.id"
-                class="p-6 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 flex items-center justify-between group"
-            >
-              <div class="flex gap-4">
-                <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex flex-col items-center justify-center border border-blue-200 shadow-sm group-hover:shadow-md transition-shadow">
-                  <span class="text-xl font-bold text-blue-700">{{ getDay(apt.start_time) }}</span>
-                  <span class="text-xs text-blue-600 uppercase font-semibold">{{ getMonth(apt.start_time) }}</span>
-                </div>
-                <div>
-                  <div class="flex items-center gap-3 mb-1">
-                    <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ apt.title }}</h3>
-                    <span :class="getStatusClass(apt.status)" class="px-3 py-1 text-xs rounded-full font-semibold shadow-sm">
-                      {{ getStatusLabel(apt.status) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-wrap gap-x-4 text-sm text-gray-600">
-                    <span class="font-medium">{{ formatTime(apt.start_time) }} - {{ formatTime(apt.end_time) }}</span>
-                    <span class="px-2 py-0.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-md font-semibold text-xs">
-                      {{ getTypeLabel(apt.appointment_type) }}
-                    </span>
-                    <span v-if="apt.client_first_name" class="flex items-center gap-1">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      {{ apt.client_first_name }} {{ apt.client_last_name }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-4">
-                <button
-                    v-if="!isLocked(apt.start_time)"
-                    @click="openEditModal(apt)"
-                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                    title="Modifier"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <span v-else class="text-[10px] text-gray-400 italic px-2 py-1 bg-gray-100 rounded">Verrouillé</span>
-
-                <button
-                    @click="viewAppointment(apt.id)"
-                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold text-sm"
-                >
-                  Détails →
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Vue Calendrier modernisée -->
-        <div v-else-if="viewMode === 'calendar'" class="space-y-6">
-          <div v-if="appointments.length === 0" class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-12 text-center border border-white/20">
-            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p class="text-gray-500 text-lg">Aucun rendez-vous à afficher dans l'agenda</p>
-          </div>
-          <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 space-y-4">
-              <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 flex items-center gap-2">
-                Agenda chronologique
-              </h3>
-              <div
-                  v-for="apt in sortedAppointments"
-                  :key="apt.id"
-                  class="bg-white/80 backdrop-blur-sm border-l-4 border-blue-500 rounded-r-xl shadow-lg p-4 flex items-center justify-between hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 group"
-              >
-                <div class="flex items-center gap-4">
-                  <div class="text-center min-w-[60px] bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2">
-                    <p class="text-xs uppercase text-blue-600 font-bold">{{ getMonth(apt.start_time) }}</p>
-                    <p class="text-2xl font-black text-blue-700">{{ getDay(apt.start_time) }}</p>
-                  </div>
-                  <div class="h-10 w-[1px] bg-gradient-to-b from-blue-200 to-purple-200"></div>
-                  <div>
-                    <p class="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ apt.title }}</p>
-                    <p class="text-xs text-gray-500 font-medium">{{ formatTime(apt.start_time) }} - {{ formatTime(apt.end_time) }}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-xs px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-lg font-semibold shadow-sm">
-                    {{ getTypeLabel(apt.appointment_type) }}
-                  </span>
-                  <button
-                      @click="viewAppointment(apt.id)"
-                      class="p-2 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all"
-                  >
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="space-y-4">
-              <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                Aujourd'hui
-              </h3>
-              <div class="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-200">
-                <p class="text-blue-100 text-sm italic font-medium">Vous avez</p>
-                <p class="text-5xl font-black my-2">{{ stats.today || 0 }}</p>
-                <p class="text-blue-100 text-sm font-medium">rendez-vous prévu(s)</p>
-                <div class="mt-6 pt-6 border-t border-white/20 text-xs font-semibold">
-                  {{ new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Vue Carte modernisée -->
-        <div v-else-if="viewMode === 'map'" class="h-[600px] bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/20">
-          <ClientOnly>
-            <AppointmentMap
-                :appointments="appointments"
-                :selected-appointment-id="selectedAppointmentId || undefined"
-                @select-appointment="handleSelectAppointment"
-            />
-          </ClientOnly>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal moderne avec backdrop blur et animations -->
-    <div v-if="showCreateModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-slideUp">
-        <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl z-10">
-          <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-black">
-              {{ isEditing ? 'Modifier le rendez-vous' : 'Programmer un rendez-vous' }}
-            </h2>
-            <button
-                @click="closeModal"
-                class="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <form @submit.prevent="handleSubmit" class="p-6 space-y-5">
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Motif du rendez-vous *</label>
-            <input
-                v-model="form.title"
-                type="text"
-                required
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                placeholder="Ex: Consultation dossier divorce"
-            >
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Type *</label>
-              <select
-                  v-model="form.appointment_type"
-                  required
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              >
-                <option value="consultation">Consultation</option>
-                <option value="court">Tribunal</option>
-                <option value="meeting">Réunion</option>
-                <option value="phone">Téléphone</option>
-                <option value="video">Visioconférence</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Type de lieu *</label>
-              <select
-                  v-model="form.location_type"
-                  required
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  @change="onLocationTypeChange"
-              >
-                <option value="office">Cabinet</option>
-                <option value="court">Tribunal</option>
-                <option value="client_location">Chez le client</option>
-                <option value="online">En ligne</option>
-                <option value="other">Autre</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Adresse (si pas en ligne) -->
-          <div v-if="form.location_type !== 'online'">
-            <AddressAutocomplete
-                v-model="locationData"
-                label="Adresse du rendez-vous"
-                placeholder="Entrez une adresse..."
-                :required="form.location_type !== 'online'"
-                :show-current-location-button="form.location_type === 'client_location'"
-            />
-          </div>
-
-          <!-- URL de réunion (si en ligne) -->
-          <div v-if="form.location_type === 'online'">
-            <label class="block text-sm font-bold text-gray-700 mb-2">
-              Lien de la réunion en ligne
-              <span class="text-xs font-normal text-gray-500">(Zoom, Google Meet, Teams, etc.)</span>
-            </label>
-            <input
-                v-model="form.meeting_url"
-                type="url"
-                placeholder="https://zoom.us/j/..."
-                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            />
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Dossier lié</label>
-              <select
-                  v-model="form.case_id"
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  @change="onCaseChange"
-              >
-                <option :value="null">Aucun dossier</option>
-                <option v-for="c in cases" :key="c.id" :value="c.id">{{ c.title }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">
-                Client *
-                <span class="text-xs font-normal text-gray-500">({{ clients.length }} disponible(s))</span>
-              </label>
-              <select
-                  v-model="form.client_id"
-                  required
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              >
-                <option value="" disabled>Sélectionner un client</option>
-                <option v-for="cl in clients" :key="cl.id" :value="cl.id">
-                  {{ cl.first_name }} {{ cl.last_name }}
-                </option>
-              </select>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Début *</label>
-              <input
-                  v-model="form.start_time"
-                  type="datetime-local"
-                  required
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              >
-            </div>
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Fin *</label>
-              <input
-                  v-model="form.end_time"
-                  type="datetime-local"
-                  :min="form.start_time"
-                  required
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              >
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3 mt-8 pt-6 border-t">
-            <button
-                type="button"
-                @click="closeModal"
-                class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold"
-            >
-              Annuler
-            </button>
-            <button
-                type="submit"
-                :disabled="submitting"
-                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-            >
-              {{ submitting ? '⏳ Chargement...' : (isEditing ? '✓ Enregistrer' : '✓ Confirmer') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Conflict Modal -->
-    <ConflictModal
-        :is-open="showConflictModal"
-        :conflicts="conflictData?.conflicts || []"
-        :available-slots="conflictData?.availableSlots || []"
-        :allow-force="true"
-        @close="showConflictModal = false"
-        @select-slot="handleSelectSlot"
-        @force-create="handleForceCreate"
-    />
-
-    <!-- Route Optimizer Modal -->
-    <div v-if="showRouteOptimizer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <RouteOptimizer
-          :lawyer-id="authStore.user?.id || ''"
-          :date="new Date().toISOString().split('T')[0] || ''"
-          @close="showRouteOptimizer = false"
-      />
-    </div>
-  </div>
-</template>
 
 <script setup lang="ts">
 import { nextTick } from 'vue'
@@ -455,7 +16,6 @@ const { getAllCases } = useCase();
 const { geocodeAddress } = useGeolocation();
 const config = useRuntimeConfig();
 
-// Redirection automatique pour les clients vers leur interface dédiée
 if (process.client && authStore.user?.role === 'client') {
   navigateTo('/clients/appointments');
 }
@@ -503,7 +63,6 @@ const form = ref({
 
 onMounted(() => fetchInitialData());
 
-// Watcher pour synchroniser locationData avec le formulaire
 watch(locationData, (newValue) => {
   form.value.location_address = newValue.address
   form.value.location_latitude = newValue.latitude
@@ -511,7 +70,6 @@ watch(locationData, (newValue) => {
 }, { deep: true });
 
 const onLocationTypeChange = () => {
-  // Réinitialiser les champs de localisation lors du changement de type
   if (form.value.location_type === 'online') {
     locationData.value = { address: '', latitude: null, longitude: null }
     form.value.location_address = ''
@@ -527,7 +85,6 @@ const getClients = async () => {
     const userId = authStore.user?.id;
     const userRole = authStore.user?.role;
 
-    // Si avocat, récupérer ses clients
     let endpoint = `${config.public.apiBaseUrl}/clients`;
     if (userRole === 'avocat') {
       endpoint = `${config.public.apiBaseUrl}/clients/lawyer/${userId}`;
@@ -539,7 +96,6 @@ const getClients = async () => {
 
     console.log('Response clients API:', response);
 
-    // Gérer les deux formats de réponse possibles
     if (response.success && response.data) {
       return response.data;
     } else if (Array.isArray(response)) {
@@ -597,17 +153,14 @@ const fetchInitialData = async () => {
     if (statsRes.success) stats.value = statsRes.data;
     if (casesRes.success && casesRes.data) cases.value = casesRes.data;
 
-    // Assigner les clients correctement
     clients.value = Array.isArray(clientsRes) ? clientsRes : [];
 
     console.log('Clients assignés:', clients.value);
 
-    // LOGIQUE DE PRÉ-REMPLISSAGE AUTOMATIQUE
     if (route.query.create === 'true') {
       isEditing.value = false;
       resetForm();
 
-      // On attend que le DOM se mette à jour avec les listes chargées
       await nextTick();
 
       if (route.query.caseId) form.value.case_id = route.query.caseId as any;
@@ -641,7 +194,6 @@ const openEditModal = (apt: any) => {
     end_time: new Date(apt.end_time).toISOString().slice(0, 16),
   };
 
-  // Initialize locationData for AddressAutocomplete
   locationData.value = {
     address: apt.location_address || '',
     latitude: apt.location_latitude || null,
@@ -677,22 +229,18 @@ const onCaseChange = () => {
   if (selectedCase) form.value.client_id = selectedCase.client_id;
 };
 
-// Fonction pour convertir datetime-local en ISO sans décalage de fuseau horaire
 const toISOStringLocal = (dateTimeLocal: string) => {
 
   let withSeconds = dateTimeLocal;
-  if (dateTimeLocal.length === 16) { // Format "YYYY-MM-DDTHH:mm"
+  if (dateTimeLocal.length === 16) {
     withSeconds = `${dateTimeLocal}:00`;
   }
 
-  // Vérifier le format
   const parts = withSeconds.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
   if (!parts) {
     return withSeconds;
   }
 
-  // Construire directement l'ISO string sans passer par Date()
-  // pour éviter toute conversion de fuseau horaire
   const isoString = `${withSeconds}.000Z`;
 
   return isoString;
@@ -704,7 +252,6 @@ const handleSubmit = async () => {
   if (end <= start) { alert("L'heure de fin doit être après l'heure de début."); return; }
   if (isEditing.value && isLocked(form.value.start_time)) { alert("Modification impossible à moins de 24h."); return; }
 
-  // Vérifier les conflits en utilisant la conversion correcte des dates
   const conflictCheck = await checkConflicts(
       form.value.lawyer_id || authStore.user?.id || '',
       toISOStringLocal(form.value.start_time),
@@ -713,7 +260,6 @@ const handleSubmit = async () => {
   );
 
   if (conflictCheck.hasConflict) {
-    // Récupérer les créneaux disponibles
     const dateStr = form.value.start_time.split('T')[0] || '';
     const slotsRes = await getAvailableSlots(
         form.value.lawyer_id || authStore.user?.id || '',
@@ -803,17 +349,15 @@ const getTypeLabel = (t: string) => {
 const viewAppointment = (id: string) => navigateTo(`/appointments/${id}`);
 const handleSelectAppointment = (id: string) => {
   selectedAppointmentId.value = id;
-  // Optionnel: naviguer vers les détails
-  // navigateTo(`/appointments/${id}`);
+
 };
 
-// Watcher pour debug quand on passe en mode carte
 watch(viewMode, (newMode) => {
   if (newMode === 'map') {
-    console.log('🗺️ Passage en mode carte');
-    console.log(`📊 Nombre de rendez-vous à afficher: ${appointments.value.length}`);
+    console.log('Passage en mode carte');
+    console.log(`Nombre de rendez-vous à afficher: ${appointments.value.length}`);
     appointments.value.forEach(apt => {
-      console.log(`📍 RDV: "${apt.title}"`, {
+      console.log(`RDV: "${apt.title}"`, {
         id: apt.id,
         address: apt.location_address,
         lat: apt.location_latitude,
@@ -825,6 +369,436 @@ watch(viewMode, (newMode) => {
   }
 });
 </script>
+
+
+
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="mb-8">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 border border-white/20">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                Mes Rendez-vous
+              </h1>
+              <p class="text-gray-600 mt-2 text-lg">Gérez vos rendez-vous et consultations</p>
+            </div>
+            <div class="flex gap-3">
+              <button
+                  @click="openRouteOptimizer"
+                  class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                Optimiser
+              </button>
+              <button
+                  @click="openCreateModal"
+                  class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2 font-semibold"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Nouveau rendez-vous
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 mb-8 border border-white/20">
+        <div class="flex gap-2">
+          <button
+              @click="viewMode = 'list'"
+              :class="[
+              viewMode === 'list' 
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+              'px-4 py-2 rounded-xl transition-all duration-200 flex items-center font-semibold'
+            ]"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            Liste
+          </button>
+          <button
+              @click="viewMode = 'calendar'"
+              :class="[
+              viewMode === 'calendar' 
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+              'px-4 py-2 rounded-xl transition-all duration-200 flex items-center font-semibold'
+            ]"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Calendrier
+          </button>
+          <button
+              @click="viewMode = 'map'"
+              :class="[
+              viewMode === 'map' 
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+              'px-4 py-2 rounded-xl transition-all duration-200 flex items-center font-semibold'
+            ]"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            Carte
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
+          <p class="text-sm font-medium text-gray-600 mb-1">Aujourd'hui</p>
+          <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+            {{ stats.today || 0 }}
+          </p>
+          <div class="mt-2 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
+        </div>
+        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
+          <p class="text-sm font-medium text-gray-600 mb-1">Cette semaine</p>
+          <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+            {{ stats.thisWeek || 0 }}
+          </p>
+          <div class="mt-2 h-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
+        </div>
+        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
+          <p class="text-sm font-medium text-gray-600 mb-1">À venir</p>
+          <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
+            {{ stats.upcoming || 0 }}
+          </p>
+          <div class="mt-2 h-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
+        </div>
+        <div class="group bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border-l-4 border-gray-400 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
+          <p class="text-sm font-medium text-gray-600 mb-1">Complétés</p>
+          <p class="text-4xl font-black text-gray-700">{{ stats.completed || 0 }}</p>
+          <div class="mt-2 h-1 bg-gray-400 rounded-full w-0 group-hover:w-full transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <div v-if="loading" class="flex items-center justify-center py-20">
+        <div class="relative">
+          <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
+          <div class="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600 absolute top-0"></div>
+        </div>
+      </div>
+
+      <div v-else>
+        <div v-if="viewMode === 'list'" class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/20">
+          <div v-if="appointments.length === 0" class="text-center py-20">
+            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p class="text-gray-500 text-lg">Aucun rendez-vous trouvé</p>
+          </div>
+          <div v-else class="divide-y divide-gray-100">
+            <div
+                v-for="apt in appointments"
+                :key="apt.id"
+                class="p-6 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 flex items-center justify-between group"
+            >
+              <div class="flex gap-4">
+                <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex flex-col items-center justify-center border border-blue-200 shadow-sm group-hover:shadow-md transition-shadow">
+                  <span class="text-xl font-bold text-blue-700">{{ getDay(apt.start_time) }}</span>
+                  <span class="text-xs text-blue-600 uppercase font-semibold">{{ getMonth(apt.start_time) }}</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-3 mb-1">
+                    <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ apt.title }}</h3>
+                    <span :class="getStatusClass(apt.status)" class="px-3 py-1 text-xs rounded-full font-semibold shadow-sm">
+                      {{ getStatusLabel(apt.status) }}
+                    </span>
+                  </div>
+                  <div class="flex flex-wrap gap-x-4 text-sm text-gray-600">
+                    <span class="font-medium">{{ formatTime(apt.start_time) }} - {{ formatTime(apt.end_time) }}</span>
+                    <span class="px-2 py-0.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-md font-semibold text-xs">
+                      {{ getTypeLabel(apt.appointment_type) }}
+                    </span>
+                    <span v-if="apt.client_first_name" class="flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {{ apt.client_first_name }} {{ apt.client_last_name }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <button
+                    v-if="!isLocked(apt.start_time)"
+                    @click="openEditModal(apt)"
+                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Modifier"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <span v-else class="text-[10px] text-gray-400 italic px-2 py-1 bg-gray-100 rounded">Verrouillé</span>
+
+                <button
+                    @click="viewAppointment(apt.id)"
+                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold text-sm"
+                >
+                  Détails →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="viewMode === 'calendar'" class="space-y-6">
+          <div v-if="appointments.length === 0" class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-12 text-center border border-white/20">
+            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p class="text-gray-500 text-lg">Aucun rendez-vous à afficher dans l'agenda</p>
+          </div>
+          <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-4">
+              <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 flex items-center gap-2">
+                Agenda chronologique
+              </h3>
+              <div
+                  v-for="apt in sortedAppointments"
+                  :key="apt.id"
+                  class="bg-white/80 backdrop-blur-sm border-l-4 border-blue-500 rounded-r-xl shadow-lg p-4 flex items-center justify-between hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 group"
+              >
+                <div class="flex items-center gap-4">
+                  <div class="text-center min-w-[60px] bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2">
+                    <p class="text-xs uppercase text-blue-600 font-bold">{{ getMonth(apt.start_time) }}</p>
+                    <p class="text-2xl font-black text-blue-700">{{ getDay(apt.start_time) }}</p>
+                  </div>
+                  <div class="h-10 w-[1px] bg-gradient-to-b from-blue-200 to-purple-200"></div>
+                  <div>
+                    <p class="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ apt.title }}</p>
+                    <p class="text-xs text-gray-500 font-medium">{{ formatTime(apt.start_time) }} - {{ formatTime(apt.end_time) }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-lg font-semibold shadow-sm">
+                    {{ getTypeLabel(apt.appointment_type) }}
+                  </span>
+                  <button
+                      @click="viewAppointment(apt.id)"
+                      class="p-2 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all"
+                  >
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                Aujourd'hui
+              </h3>
+              <div class="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-200">
+                <p class="text-blue-100 text-sm italic font-medium">Vous avez</p>
+                <p class="text-5xl font-black my-2">{{ stats.today || 0 }}</p>
+                <p class="text-blue-100 text-sm font-medium">rendez-vous prévu(s)</p>
+                <div class="mt-6 pt-6 border-t border-white/20 text-xs font-semibold">
+                  {{ new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="viewMode === 'map'" class="h-[600px] bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/20">
+          <ClientOnly>
+            <AppointmentMap
+                :appointments="appointments"
+                :selected-appointment-id="selectedAppointmentId || undefined"
+                @select-appointment="handleSelectAppointment"
+            />
+          </ClientOnly>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showCreateModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-slideUp">
+        <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl z-10">
+          <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-black">
+              {{ isEditing ? 'Modifier le rendez-vous' : 'Programmer un rendez-vous' }}
+            </h2>
+            <button
+                @click="closeModal"
+                class="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="p-6 space-y-5">
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Motif du rendez-vous *</label>
+            <input
+                v-model="form.title"
+                type="text"
+                required
+                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                placeholder="Ex: Consultation dossier divorce"
+            >
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Type *</label>
+              <select
+                  v-model="form.appointment_type"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              >
+                <option value="consultation">Consultation</option>
+                <option value="court">Tribunal</option>
+                <option value="meeting">Réunion</option>
+                <option value="phone">Téléphone</option>
+                <option value="video">Visioconférence</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Type de lieu *</label>
+              <select
+                  v-model="form.location_type"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  @change="onLocationTypeChange"
+              >
+                <option value="office">Cabinet</option>
+                <option value="court">Tribunal</option>
+                <option value="client_location">Chez le client</option>
+                <option value="online">En ligne</option>
+                <option value="other">Autre</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-if="form.location_type !== 'online'">
+            <AddressAutocomplete
+                v-model="locationData"
+                label="Adresse du rendez-vous"
+                placeholder="Entrez une adresse..."
+                :required="form.location_type !== 'online'"
+                :show-current-location-button="form.location_type === 'client_location'"
+            />
+          </div>
+
+          <div v-if="form.location_type === 'online'">
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              Lien de la réunion en ligne
+              <span class="text-xs font-normal text-gray-500">(Zoom, Google Meet, Teams, etc.)</span>
+            </label>
+            <input
+                v-model="form.meeting_url"
+                type="url"
+                placeholder="https://zoom.us/j/..."
+                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Dossier lié</label>
+              <select
+                  v-model="form.case_id"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  @change="onCaseChange"
+              >
+                <option :value="null">Aucun dossier</option>
+                <option v-for="c in cases" :key="c.id" :value="c.id">{{ c.title }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">
+                Client *
+                <span class="text-xs font-normal text-gray-500">({{ clients.length }} disponible(s))</span>
+              </label>
+              <select
+                  v-model="form.client_id"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              >
+                <option value="" disabled>Sélectionner un client</option>
+                <option v-for="cl in clients" :key="cl.id" :value="cl.id">
+                  {{ cl.first_name }} {{ cl.last_name }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Début *</label>
+              <input
+                  v-model="form.start_time"
+                  type="datetime-local"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Fin *</label>
+              <input
+                  v-model="form.end_time"
+                  type="datetime-local"
+                  :min="form.start_time"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              >
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-8 pt-6 border-t">
+            <button
+                type="button"
+                @click="closeModal"
+                class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold"
+            >
+              Annuler
+            </button>
+            <button
+                type="submit"
+                :disabled="submitting"
+                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            >
+              {{ submitting ? '⏳ Chargement...' : (isEditing ? '✓ Enregistrer' : '✓ Confirmer') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <ConflictModal
+        :is-open="showConflictModal"
+        :conflicts="conflictData?.conflicts || []"
+        :available-slots="conflictData?.availableSlots || []"
+        :allow-force="true"
+        @close="showConflictModal = false"
+        @select-slot="handleSelectSlot"
+        @force-create="handleForceCreate"
+    />
+
+    <div v-if="showRouteOptimizer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <RouteOptimizer
+          :lawyer-id="authStore.user?.id || ''"
+          :date="new Date().toISOString().split('T')[0] || ''"
+          @close="showRouteOptimizer = false"
+      />
+    </div>
+  </div>
+</template>
 
 <style scoped>
 @keyframes fadeIn {

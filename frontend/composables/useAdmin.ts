@@ -40,9 +40,6 @@ export interface ActivityLog {
 export const useAdmin = () => {
   const { apiFetch } = useApi();
 
-  /**
-   * Get dashboard statistics
-   */
   const getDashboardStats = async () => {
     try {
       const response = await apiFetch<{ success: boolean; data: AdminStats }>('/admin/stats', {
@@ -55,9 +52,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Get users with pagination and filters
-   */
+
   const getUsers = async (params: {
     page?: number;
     limit?: number;
@@ -83,9 +78,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Get user details
-   */
+
   const getUserDetails = async (userId: string) => {
     try {
       const response = await apiFetch<{ success: boolean; data: User }>(`/admin/users/${userId}`, {
@@ -98,9 +91,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Toggle user status (activate/deactivate)
-   */
+
   const toggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
       const response = await apiFetch<{ success: boolean; message: string }>(`/admin/users/${userId}/status`, {
@@ -114,9 +105,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Verify user
-   */
+
   const verifyUser = async (userId: string) => {
     try {
       const response = await apiFetch<{ success: boolean; message: string }>(`/admin/users/${userId}/verify`, {
@@ -129,9 +118,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Delete user
-   */
+
   const deleteUser = async (userId: string) => {
     try {
       const response = await apiFetch<{ success: boolean; message: string }>(`/admin/users/${userId}`, {
@@ -144,9 +131,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Get user growth statistics
-   */
+
   const getUserGrowthStats = async (days: number = 30) => {
     try {
       const response = await apiFetch<{ success: boolean; data: any[] }>(`/admin/stats/growth?days=${days}`, {
@@ -159,9 +144,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Get activity logs
-   */
+
   const getActivityLogs = async (params: {
     page?: number;
     limit?: number;
@@ -183,9 +166,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Send bulk email
-   */
+
   const sendBulkEmail = async (
     recipientIds: string[],
     subject: string,
@@ -206,9 +187,7 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Export users data
-   */
+
   const exportUsers = (role?: string) => {
     const params = new URLSearchParams();
     if (role) params.set('role', role);

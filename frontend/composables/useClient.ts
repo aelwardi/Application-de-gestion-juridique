@@ -9,14 +9,6 @@ import type { ApiResponse, PaginatedResponse } from '~/types/api';
 export const useClient = () => {
   const { apiFetch } = useApi();
 
-  // Note: Création de client via /auth/register maintenant
-  // const createClient = async (data: CreateClientInput): Promise<Client> => {
-  //   const response = await apiFetch<ApiResponse<Client>>('/clients', {
-  //     method: 'POST',
-  //     body: JSON.stringify(data),
-  //   });
-  //   return response.data!;
-  // };
 
   const getClientById = async (id: string): Promise<Client> => {
     const response = await apiFetch<ApiResponse<Client>>(`/clients/${id}`);
@@ -131,7 +123,6 @@ export const useClient = () => {
   };
 
   return {
-    // createClient, // Utiliser /auth/register à la place
     getClientById,
     getClientByUserId,
     getAllClients,

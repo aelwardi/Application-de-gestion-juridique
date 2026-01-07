@@ -1,3 +1,17 @@
+<script setup lang="ts">
+import type { Lawyer } from '~/types/lawyer';
+
+defineProps<{
+  lawyer: Lawyer;
+}>();
+
+defineEmits<{
+  (e: 'send-request', lawyer: Lawyer): void;
+}>();
+</script>
+
+
+
 <template>
   <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
     <div class="flex flex-col md:flex-row gap-4">
@@ -155,14 +169,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import type { Lawyer } from '~/types/lawyer';
-
-defineProps<{
-  lawyer: Lawyer;
-}>();
-
-defineEmits<{
-  (e: 'send-request', lawyer: Lawyer): void;
-}>();
-</script>

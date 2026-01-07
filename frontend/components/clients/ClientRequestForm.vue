@@ -1,3 +1,105 @@
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue';
+
+const props = defineProps({
+  initialData: { type: Object, default: null },
+  preselectedLawyerId: { type: String, default: '' }
+});
+
+const emit = defineEmits(['success', 'cancel']);
+const authStore = useAuthStore();
+const { apiFetch } = useApi();
+const loading = ref(false);
+
+const emptyForm = {
+  request_type: '',
+  title: '',
+  case_category: '',
+  description: '',
+  urgency: 'medium',
+  budget_min: null,
+  budget_max: null,
+  lawyer_id: '', // Sera rempli par la prop
+};
+
+const form = ref({ ...emptyForm });
+
+const syncLawyerId = () => {
+  if (props.preselectedLawyerId) {
+    console.log("[DEBUG FORM] Injection du lawyer_id:", props.preselectedLawyerId);
+    form.value.lawyer_id = props.preselectedLawyerId;
+  }
+};
+
+const fillForm = () => {
+  if (props.initialData) {
+    form.value = {
+      request_type: props.initialData.request_type || '',
+      title: props.initialData.title || '',
+      case_category: props.initialData.case_category || '',
+      description: props.initialData.description || '',
+      urgency: props.initialData.urgency || 'medium',
+      budget_min: props.initialData.budget_min || null,
+      budget_max: props.initialData.budget_max || null,
+      lawyer_id: props.initialData.lawyer_id || '',
+    };
+  } else {
+    form.value = { ...emptyForm };
+    syncLawyerId();
+  }
+};
+
+watch(() => props.preselectedLawyerId, () => {
+  if (!props.initialData) syncLawyerId();
+}, { immediate: true });
+
+const handleSubmit = async () => {
+  if (!authStore.user) return;
+
+  const isEdit = !!props.initialData;
+
+
+  if (!isEdit && !form.value.lawyer_id) {
+    alert("Erreur: L'ID de l'avocat est manquant. La demande ne peut pas être envoyée.");
+    return;
+  }
+
+  loading.value = true;
+
+  try {
+    const payload = {
+      client_id: authStore.user.id,
+      ...form.value,
+      lawyer_id: form.value.lawyer_id || null,
+    };
+
+    console.log("[DEBUG SUBMIT] Envoi du payload:", payload);
+
+    const url = isEdit
+        ? `/clients-extended/requests/${props.initialData.id}`
+        : '/clients-extended/requests';
+
+    await apiFetch(url, {
+      method: isEdit ? 'PUT' : 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    emit('success');
+  } catch (error) {
+    console.error("Erreur lors de l'envoi:", error);
+    alert("Impossible d'enregistrer la demande.");
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fillForm();
+});
+</script>
+
+
+
 <template>
   <div class="bg-white rounded-lg">
     <div v-if="form.lawyer_id" class="mb-4 p-2 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2">
@@ -65,105 +167,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
-
-const props = defineProps({
-  initialData: { type: Object, default: null },
-  preselectedLawyerId: { type: String, default: '' }
-});
-
-const emit = defineEmits(['success', 'cancel']);
-const authStore = useAuthStore();
-const { apiFetch } = useApi();
-const loading = ref(false);
-
-const emptyForm = {
-  request_type: '',
-  title: '',
-  case_category: '',
-  description: '',
-  urgency: 'medium',
-  budget_min: null,
-  budget_max: null,
-  lawyer_id: '', // Sera rempli par la prop
-};
-
-const form = ref({ ...emptyForm });
-
-// Fonction pour synchroniser l'ID de l'avocat
-const syncLawyerId = () => {
-  if (props.preselectedLawyerId) {
-    console.log("[DEBUG FORM] Injection du lawyer_id:", props.preselectedLawyerId);
-    form.value.lawyer_id = props.preselectedLawyerId;
-  }
-};
-
-const fillForm = () => {
-  if (props.initialData) {
-    form.value = {
-      request_type: props.initialData.request_type || '',
-      title: props.initialData.title || '',
-      case_category: props.initialData.case_category || '',
-      description: props.initialData.description || '',
-      urgency: props.initialData.urgency || 'medium',
-      budget_min: props.initialData.budget_min || null,
-      budget_max: props.initialData.budget_max || null,
-      lawyer_id: props.initialData.lawyer_id || '',
-    };
-  } else {
-    form.value = { ...emptyForm };
-    syncLawyerId(); // On injecte l'ID au démarrage
-  }
-};
-
-// On surveille si la prop change (ex: fermeture/réouverture de modale)
-watch(() => props.preselectedLawyerId, () => {
-  if (!props.initialData) syncLawyerId();
-}, { immediate: true });
-
-const handleSubmit = async () => {
-  if (!authStore.user) return;
-  
-  const isEdit = !!props.initialData;
-
-  // En mode création, vérifier que lawyer_id est présent
-  // En mode édition, on peut modifier sans changer l'avocat
-  if (!isEdit && !form.value.lawyer_id) {
-    alert("Erreur: L'ID de l'avocat est manquant. La demande ne peut pas être envoyée.");
-    return;
-  }
-
-  loading.value = true;
-  
-  try {
-    const payload = {
-      client_id: authStore.user.id,
-      ...form.value,
-      lawyer_id: form.value.lawyer_id || null, // Convertir chaîne vide en null
-    };
-
-    console.log("[DEBUG SUBMIT] Envoi du payload:", payload);
-
-    const url = isEdit
-      ? `/clients-extended/requests/${props.initialData.id}` 
-      : '/clients-extended/requests';
-    
-    await apiFetch(url, { 
-      method: isEdit ? 'PUT' : 'POST', 
-      body: JSON.stringify(payload) 
-    });
-
-    emit('success');
-  } catch (error) {
-    console.error("Erreur lors de l'envoi:", error);
-    alert("Impossible d'enregistrer la demande.");
-  } finally {
-    loading.value = false;
-  }
-};
-
-onMounted(() => {
-  fillForm();
-});
-</script>

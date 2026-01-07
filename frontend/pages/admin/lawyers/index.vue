@@ -1,3 +1,129 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: ['auth', 'admin'],
+  layout: 'admin',
+});
+
+interface Lawyer {
+  id: string;
+  email: string;
+  role: 'avocat';
+  firstName?: string;
+  lastName?: string;
+  barNumber: string | null;
+  specialties: string[];
+  officeCity: string | null;
+  verifiedByAdmin: boolean;
+  rating?: number;
+  totalCases?: number;
+}
+
+const { apiFetch } = useApi();
+const lawyers = ref<Lawyer[]>([]);
+const specialties = ref<any[]>([]);
+const stats = ref<any>(null);
+
+const filters = ref({
+  verified: '',
+  city: '',
+  specialty: '',
+});
+
+const pagination = ref({
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 0,
+});
+
+const fetchLawyers = async () => {
+  try {
+    const params = new URLSearchParams({
+      page: pagination.value.page.toString(),
+      limit: pagination.value.limit.toString(),
+      ...(filters.value.verified && { verified: filters.value.verified }),
+      ...(filters.value.city && { city: filters.value.city }),
+      ...(filters.value.specialty && { specialty: filters.value.specialty }),
+    });
+
+    const response = await apiFetch<any>(`/admin/lawyers?${params}`, { method: 'GET' });
+
+    if (response.success) {
+      lawyers.value = response.data;
+      pagination.value = { ...pagination.value, ...response.pagination };
+    }
+  } catch (error) {
+    console.error('Failed to fetch lawyers:', error);
+  }
+};
+
+const fetchSpecialties = async () => {
+  try {
+    const response = await apiFetch<any>('/admin/specialties', { method: 'GET' });
+
+    if (response.success) {
+      specialties.value = response.data;
+    }
+  } catch (error) {
+    console.error('Failed to fetch specialties:', error);
+  }
+};
+
+const fetchStats = async () => {
+  try {
+    const response = await apiFetch<any>('/admin/stats/comprehensive', { method: 'GET' });
+
+    if (response.success) {
+      stats.value = response.data.lawyers;
+    }
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+  }
+};
+
+let searchTimeout: NodeJS.Timeout;
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    pagination.value.page = 1;
+    fetchLawyers();
+  }, 500);
+};
+
+const resetFilters = () => {
+  filters.value = { verified: '', city: '', specialty: '' };
+  pagination.value.page = 1;
+  fetchLawyers();
+};
+
+const verifyLawyer = async (lawyer: Lawyer) => {
+  if (!confirm(`Vérifier l'avocat ${lawyer.firstName} ${lawyer.lastName} ?`)) {
+    return;
+  }
+
+  try {
+    const response = await apiFetch(`/admin/lawyers/${lawyer.id}/verify`, { method: 'PATCH' });
+
+    if (response.success) {
+      lawyer.verifiedByAdmin = true;
+      alert('Avocat vérifié avec succès !');
+      fetchStats();
+    }
+  } catch (error) {
+    console.error('Failed to verify lawyer:', error);
+    alert('Erreur lors de la vérification');
+  }
+};
+
+onMounted(() => {
+  fetchLawyers();
+  fetchSpecialties();
+  fetchStats();
+});
+</script>
+
+
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="bg-white shadow">
@@ -172,126 +298,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-  middleware: ['auth', 'admin'],
-  layout: 'admin',
-});
-
-interface Lawyer {
-  id: string;
-  email: string;
-  role: 'avocat';
-  firstName?: string;
-  lastName?: string;
-  barNumber: string | null;
-  specialties: string[];
-  officeCity: string | null;
-  verifiedByAdmin: boolean;
-  rating?: number;
-  totalCases?: number;
-}
-
-const { apiFetch } = useApi();
-const lawyers = ref<Lawyer[]>([]);
-const specialties = ref<any[]>([]);
-const stats = ref<any>(null);
-
-const filters = ref({
-  verified: '',
-  city: '',
-  specialty: '',
-});
-
-const pagination = ref({
-  page: 1,
-  limit: 20,
-  total: 0,
-  totalPages: 0,
-});
-
-const fetchLawyers = async () => {
-  try {
-    const params = new URLSearchParams({
-      page: pagination.value.page.toString(),
-      limit: pagination.value.limit.toString(),
-      ...(filters.value.verified && { verified: filters.value.verified }),
-      ...(filters.value.city && { city: filters.value.city }),
-      ...(filters.value.specialty && { specialty: filters.value.specialty }),
-    });
-
-    const response = await apiFetch<any>(`/admin/lawyers?${params}`, { method: 'GET' });
-
-    if (response.success) {
-      lawyers.value = response.data;
-      pagination.value = { ...pagination.value, ...response.pagination };
-    }
-  } catch (error) {
-    console.error('Failed to fetch lawyers:', error);
-  }
-};
-
-const fetchSpecialties = async () => {
-  try {
-    const response = await apiFetch<any>('/admin/specialties', { method: 'GET' });
-
-    if (response.success) {
-      specialties.value = response.data;
-    }
-  } catch (error) {
-    console.error('Failed to fetch specialties:', error);
-  }
-};
-
-const fetchStats = async () => {
-  try {
-    const response = await apiFetch<any>('/admin/stats/comprehensive', { method: 'GET' });
-
-    if (response.success) {
-      stats.value = response.data.lawyers;
-    }
-  } catch (error) {
-    console.error('Failed to fetch stats:', error);
-  }
-};
-
-let searchTimeout: NodeJS.Timeout;
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    pagination.value.page = 1;
-    fetchLawyers();
-  }, 500);
-};
-
-const resetFilters = () => {
-  filters.value = { verified: '', city: '', specialty: '' };
-  pagination.value.page = 1;
-  fetchLawyers();
-};
-
-const verifyLawyer = async (lawyer: Lawyer) => {
-  if (!confirm(`Vérifier l'avocat ${lawyer.firstName} ${lawyer.lastName} ?`)) {
-    return;
-  }
-
-  try {
-    const response = await apiFetch(`/admin/lawyers/${lawyer.id}/verify`, { method: 'PATCH' });
-
-    if (response.success) {
-      lawyer.verifiedByAdmin = true;
-      alert('Avocat vérifié avec succès !');
-      fetchStats();
-    }
-  } catch (error) {
-    console.error('Failed to verify lawyer:', error);
-    alert('Erreur lors de la vérification');
-  }
-};
-
-onMounted(() => {
-  fetchLawyers();
-  fetchSpecialties();
-  fetchStats();
-});
-</script>

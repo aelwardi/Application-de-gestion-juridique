@@ -24,9 +24,7 @@ export const useCase = () => {
     return headers;
   };
 
- /**
-   * Récupère dynamiquement la liste des avocats et aplatit les données SQL
-   */
+
   const getLawyers = async (): Promise<any[]> => {
     try {
       const response = await $fetch<any>(`${baseURL}/users`, {
@@ -43,17 +41,14 @@ export const useCase = () => {
           u.user_type === 'lawyer'
         )
         .map((u: any) => {
-          // On cherche où sont les infos "lawyer" (soit à la racine, soit dans un sous-objet)
-          const lawyerData = u.lawyer_info || u.lawyer_profile || u; 
+          const lawyerData = u.lawyer_info || u.lawyer_profile || u;
           
           return {
-            // Infos User
             id: u.id,
             first_name: u.first_name,
             last_name: u.last_name,
             email: u.email,
-            
-            // Infos Lawyer (Mapping exact avec ton CREATE TABLE)
+
             lawyerTableId: lawyerData.id || u.id,
             bar_number: lawyerData.bar_number || 'NC',
             specialties: lawyerData.specialties || [],
@@ -71,11 +66,8 @@ export const useCase = () => {
       return [];
     }
   };
-  // --- FONCTIONS POUR LES OFFRES ---
 
-  /**
-   * Récupérer les offres en attente pour un avocat
-   */
+
   const getPendingOffers = async (lawyerId: string): Promise<any[]> => {
     try {
       const response = await $fetch<any[]>(`${baseURL}/offers/pending/${lawyerId}`, {
@@ -89,9 +81,7 @@ export const useCase = () => {
     }
   };
 
-  /**
-   * Accepter une offre et créer le dossier
-   */
+
   const acceptOffer = async (offerId: string): Promise<any> => {
     try {
       const response = await $fetch<any>(`${baseURL}/offers/${offerId}/accept`, {
@@ -105,9 +95,7 @@ export const useCase = () => {
     }
   };
 
-  /**
-   * Refuser une offre
-   */
+
   const declineOffer = async (offerId: string): Promise<any> => {
     try {
       const response = await $fetch<any>(`${baseURL}/offers/${offerId}/decline`, {
@@ -121,7 +109,6 @@ export const useCase = () => {
     }
   };
 
-  // --- FONCTIONS DE GESTION DES DOSSIERS ---
 
   const createCase = async (caseData: CreateCaseDTO): Promise<CaseResponse> => {
     try {
@@ -176,9 +163,7 @@ export const useCase = () => {
     }
   };
 
-  /**
-   * MISE À JOUR (Utilisée pour le statut)
-   */
+
   const updateCase = async (id: string, updates: UpdateCaseDTO): Promise<CaseResponse> => {
     try {
       const response = await $fetch<CaseResponse>(`${baseURL}/cases/${id}`, {

@@ -1,3 +1,105 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import useDocumentRequest from '~/composables/useDocumentRequest';
+
+const props = defineProps<{
+  show: boolean;
+  caseId: string;
+  clientId: string;
+}>();
+
+const emit = defineEmits<{
+  close: [];
+  success: [data: any];
+}>();
+
+const { createDocumentRequest } = useDocumentRequest();
+
+const loading = ref(false);
+
+const form = ref({
+  title: '',
+  description: '',
+  document_types: [] as string[],
+  expires_in_days: 30
+});
+
+const documentTypes = [
+  { value: 'contract', label: 'Contrat' },
+  { value: 'evidence', label: 'Preuve' },
+  { value: 'invoice', label: 'Facture' },
+  { value: 'identity', label: 'Pièce d\'identité' },
+  { value: 'certificate', label: 'Certificat' },
+  { value: 'court_decision', label: 'Décision de justice' },
+  { value: 'letter', label: 'Courrier' },
+  { value: 'other', label: 'Autre' }
+];
+
+const getExpirationDate = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+const handleSubmit = async () => {
+  if (!form.value.title.trim()) {
+    alert('Veuillez saisir un titre');
+    return;
+  }
+
+  loading.value = true;
+  try {
+    const response = await createDocumentRequest({
+      case_id: props.caseId,
+      client_id: props.clientId,
+      title: form.value.title,
+      description: form.value.description || undefined,
+      document_types: form.value.document_types.length > 0 ? form.value.document_types : undefined,
+      expires_in_days: form.value.expires_in_days
+    }) as any;
+
+    if (response?.success) {
+      emit('success', response.data);
+      resetForm();
+      close();
+    } else {
+      alert(response?.message || 'Erreur lors de la création de la demande');
+    }
+  } catch (error: any) {
+    console.error('Error creating document request:', error);
+    alert(error?.data?.message || 'Erreur lors de la création de la demande');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const resetForm = () => {
+  form.value = {
+    title: '',
+    description: '',
+    document_types: [],
+    expires_in_days: 30
+  };
+};
+
+const close = () => {
+  emit('close');
+};
+
+watch(() => props.show, (newVal) => {
+  if (!newVal) {
+    resetForm();
+  }
+});
+</script>
+
+
+
+
 <template>
   <div v-if="show" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -126,101 +228,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, watch } from 'vue';
-import useDocumentRequest from '~/composables/useDocumentRequest';
-
-const props = defineProps<{
-  show: boolean;
-  caseId: string;
-  clientId: string;
-}>();
-
-const emit = defineEmits<{
-  close: [];
-  success: [data: any];
-}>();
-
-const { createDocumentRequest } = useDocumentRequest();
-
-const loading = ref(false);
-
-const form = ref({
-  title: '',
-  description: '',
-  document_types: [] as string[],
-  expires_in_days: 30
-});
-
-const documentTypes = [
-  { value: 'contract', label: 'Contrat' },
-  { value: 'evidence', label: 'Preuve' },
-  { value: 'invoice', label: 'Facture' },
-  { value: 'identity', label: 'Pièce d\'identité' },
-  { value: 'certificate', label: 'Certificat' },
-  { value: 'court_decision', label: 'Décision de justice' },
-  { value: 'letter', label: 'Courrier' },
-  { value: 'other', label: 'Autre' }
-];
-
-const getExpirationDate = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
-};
-
-const handleSubmit = async () => {
-  if (!form.value.title.trim()) {
-    alert('Veuillez saisir un titre');
-    return;
-  }
-
-  loading.value = true;
-  try {
-    const response = await createDocumentRequest({
-      case_id: props.caseId,
-      client_id: props.clientId,
-      title: form.value.title,
-      description: form.value.description || undefined,
-      document_types: form.value.document_types.length > 0 ? form.value.document_types : undefined,
-      expires_in_days: form.value.expires_in_days
-    }) as any;
-
-    if (response?.success) {
-      emit('success', response.data);
-      resetForm();
-      close();
-    } else {
-      alert(response?.message || 'Erreur lors de la création de la demande');
-    }
-  } catch (error: any) {
-    console.error('Error creating document request:', error);
-    alert(error?.data?.message || 'Erreur lors de la création de la demande');
-  } finally {
-    loading.value = false;
-  }
-};
-
-const resetForm = () => {
-  form.value = {
-    title: '',
-    description: '',
-    document_types: [],
-    expires_in_days: 30
-  };
-};
-
-const close = () => {
-  emit('close');
-};
-
-watch(() => props.show, (newVal) => {
-  if (!newVal) {
-    resetForm();
-  }
-});
-</script>

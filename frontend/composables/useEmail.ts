@@ -16,9 +16,7 @@ export interface AppointmentEmailData {
 export const useEmail = () => {
   const { apiFetch } = useApi();
 
-  /**
-   * Envoyer un email personnalisé
-   */
+
   const sendCustomEmail = async (data: SendEmailData) => {
     try {
       const response = await apiFetch<{ success: boolean; message: string }>('/email/send', {
@@ -32,9 +30,7 @@ export const useEmail = () => {
     }
   };
 
-  /**
-   * Envoyer une notification de rendez-vous
-   */
+
   const sendAppointmentNotification = async (data: AppointmentEmailData) => {
     try {
       const response = await apiFetch<{ success: boolean; message: string }>('/email/appointment', {

@@ -1,17 +1,16 @@
 import { defineStore } from 'pinia';
 import { useAuthStore } from '~/stores/auth';
 
-// On définit une interface plus complète pour correspondre à ton UI
 export interface Notification {
   id: string;
-  type: string;        // 'offer', 'message', etc.
-  category: string;    // 'Nouveau Dossier ⚖️', 'Communication 💬'
+  type: string;
+  category: string;
   title: string;
   message: string;
   is_read: boolean;
-  time: string;        // Date formatée pour l'affichage
-  created_at: string;  // Date brute pour le tri si besoin
-  data?: any;          // Données additionnelles (case_id, conversation_id, etc.)
+  time: string;
+  created_at: string;
+  data?: any;
 }
 
 export const useNotificationStore = defineStore('notifications', {
@@ -66,7 +65,6 @@ export const useNotificationStore = defineStore('notifications', {
         const config = useRuntimeConfig();
         let allNotifs: Notification[] = [];
 
-        // 1. Récupération des notifications depuis l'API (documents, messages, etc.)
         try {
           const apiResponse = await $fetch<any>(`${config.public.apiBaseUrl}/notifications`, {
             method: 'GET',
@@ -90,17 +88,15 @@ export const useNotificationStore = defineStore('notifications', {
           console.error('Erreur API notifications:', error);
         }
 
-        // 2. Pour les AVOCATS : ajouter les offres en attente
         if (authStore.isLawyer) {
           try {
             const offers = await getPendingOffers(authStore.user.id);
             const offersList = Array.isArray(offers) ? offers : [];
 
-            // Conversion des offres en format "Notification"
             const offerNotifs = offersList.map((o: any) => ({
               id: o.id,
               type: 'offer',
-              category: 'Nouveau Dossier ⚖️',
+              category: 'Nouveau Dossier',
               title: 'Nouvelle demande client',
               message: `Dossier: ${o.title || 'Sans titre'}`,
               time: this.formatRelativeTime(o.created_at),
@@ -142,7 +138,6 @@ export const useNotificationStore = defineStore('notifications', {
         const notif = this.notifications.find(n => n.id === id);
         if (notif) notif.is_read = true;
       } catch (error) {
-        // En cas d'erreur API, on marque quand même en local pour l'UX
         const notif = this.notifications.find(n => n.id === id);
         if (notif) notif.is_read = true;
       }

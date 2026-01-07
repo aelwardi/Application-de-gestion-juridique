@@ -1,3 +1,278 @@
+
+<script setup lang="ts">
+import AddressAutocomplete from '~/components/common/AddressAutocomplete.vue';
+
+interface Props {
+  modelValue: boolean;
+  userType?: 'avocat' | 'client';
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  userType: undefined,
+});
+const emit = defineEmits(['update:modelValue', 'success']);
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const selectedUserType = ref<'avocat' | 'client'>(props.userType || 'client');
+
+watch(() => props.userType, (newType) => {
+  if (newType) {
+    selectedUserType.value = newType;
+  }
+});
+
+const form = ref({
+  email: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+  role: selectedUserType.value,
+  lawyerData: {
+    barNumber: '',
+    specialties: [] as string[],
+    officeAddress: '',
+    officeCity: '',
+    yearsOfExperience: undefined as number | undefined,
+    bio: '',
+  },
+  clientData: {
+    address: '',
+    city: '',
+    postalCode: '',
+  },
+});
+
+const lawyerLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
+const clientLocationData = ref<{
+  address: string
+  latitude: number | null
+  longitude: number | null
+  formattedAddress?: string
+}>({
+  address: '',
+  latitude: null,
+  longitude: null
+});
+
+const specialtiesInput = ref('');
+const confirmPassword = ref('');
+const isLoading = ref(false);
+const errorMessage = ref('');
+const validationErrors = ref<string[]>([]);
+const showPassword = ref(false);
+const acceptTerms = ref(false);
+
+watch(lawyerLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.lawyerData.officeAddress = newValue.address
+
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      if (parts.length > 1) {
+        form.value.lawyerData.officeCity = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
+
+watch(clientLocationData, (newValue) => {
+  if (newValue.address) {
+    form.value.clientData.address = newValue.address
+
+    if (newValue.formattedAddress) {
+      const parts = newValue.formattedAddress.split(',')
+      if (parts.length > 1) {
+        const postalMatch = newValue.formattedAddress.match(/\b\d{5}\b/)
+        if (postalMatch) {
+          form.value.clientData.postalCode = postalMatch[0]
+        }
+        form.value.clientData.city = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
+      }
+    }
+  }
+}, { deep: true });
+
+watch(specialtiesInput, (value) => {
+  if (value) {
+    form.value.lawyerData.specialties = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+  } else {
+    form.value.lawyerData.specialties = [];
+  }
+});
+
+watch(selectedUserType, (newType) => {
+  form.value.role = newType;
+});
+
+const passwordStrength = computed(() => {
+  const password = form.value.password;
+  if (!password) return 0;
+
+  let strength = 0;
+  if (password.length >= 8) strength += 25;
+  if (password.length >= 12) strength += 25;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
+  if (/\d/.test(password)) strength += 12.5;
+  if (/[^a-zA-Z\d]/.test(password)) strength += 12.5;
+
+  return Math.min(strength, 100);
+});
+
+const passwordStrengthText = computed(() => {
+  if (passwordStrength.value < 25) return 'Très faible';
+  if (passwordStrength.value < 50) return 'Faible';
+  if (passwordStrength.value < 75) return 'Moyen';
+  if (passwordStrength.value < 100) return 'Fort';
+  return 'Très fort';
+});
+
+const passwordStrengthColor = computed(() => {
+  if (passwordStrength.value < 25) return 'bg-accent-500 text-accent-600';
+  if (passwordStrength.value < 50) return 'bg-amber-500 text-amber-600';
+  if (passwordStrength.value < 75) return 'bg-primary-500 text-primary-600';
+  return 'bg-success-500 text-success-600';
+});
+
+const closeModal = () => {
+  emit('update:modelValue', false);
+  setTimeout(() => {
+    if (!props.userType) {
+      selectedUserType.value = 'client';
+    }
+
+    form.value = {
+      email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      role: selectedUserType.value,
+      lawyerData: {
+        barNumber: '',
+        specialties: [],
+        officeAddress: '',
+        officeCity: '',
+        yearsOfExperience: undefined,
+        bio: '',
+      },
+      clientData: {
+        address: '',
+        city: '',
+        postalCode: '',
+      },
+    };
+
+    lawyerLocationData.value = { address: '', latitude: null, longitude: null };
+    clientLocationData.value = { address: '', latitude: null, longitude: null };
+
+    specialtiesInput.value = '';
+    confirmPassword.value = '';
+    errorMessage.value = '';
+    validationErrors.value = [];
+    acceptTerms.value = false;
+  }, 300);
+};
+
+const handleRegister = async () => {
+  isLoading.value = true;
+  errorMessage.value = '';
+  validationErrors.value = [];
+
+  if (form.value.password !== confirmPassword.value) {
+    errorMessage.value = 'Les mots de passe ne correspondent pas';
+    isLoading.value = false;
+    return;
+  }
+
+  if (form.value.role === 'avocat') {
+    if (!form.value.lawyerData.barNumber) {
+      errorMessage.value = 'Le numéro du barreau est requis pour les avocats';
+      isLoading.value = false;
+      return;
+    }
+  }
+
+  try {
+    const registrationData: any = {
+      email: form.value.email,
+      password: form.value.password,
+      firstName: form.value.firstName,
+      lastName: form.value.lastName,
+      phone: form.value.phone,
+      role: form.value.role,
+    };
+
+    if (form.value.role === 'avocat') {
+      registrationData.lawyerData = {
+        barNumber: form.value.lawyerData.barNumber,
+        specialties: form.value.lawyerData.specialties,
+        officeAddress: form.value.lawyerData.officeAddress || undefined,
+        officeCity: form.value.lawyerData.officeCity || undefined,
+        yearsOfExperience: form.value.lawyerData.yearsOfExperience || undefined,
+        bio: form.value.lawyerData.bio || undefined,
+      };
+    }
+
+    if (form.value.role === 'client') {
+      registrationData.clientData = {
+        address: form.value.clientData.address || undefined,
+        city: form.value.clientData.city || undefined,
+        postalCode: form.value.clientData.postalCode || undefined,
+      };
+    }
+
+    const result = await authStore.register(registrationData);
+
+    if (result.success) {
+      emit('success');
+      closeModal();
+      await router.push('/dashboard');
+    } else {
+      errorMessage.value = result.message || 'Échec de l\'inscription';
+      if (result.errors) {
+        validationErrors.value = result.errors.map((err: any) => err.message);
+      }
+    }
+  } catch (error: any) {
+    console.error('Register exception:', error);
+    errorMessage.value = 'Une erreur est survenue lors de l\'inscription';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+});
+
+onUnmounted(() => {
+  document.body.style.overflow = '';
+});
+</script>
+
+
+
+
+
+
+
 <template>
   <Teleport to="body">
     <Transition
@@ -13,10 +288,8 @@
         class="fixed inset-0 z-50 overflow-y-auto"
         @click.self="closeModal"
       >
-        <!-- Backdrop -->
         <div class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm" @click="closeModal"></div>
 
-        <!-- Modal Container -->
         <div class="flex min-h-screen items-center justify-center p-4">
           <Transition
             enter-active-class="transition duration-300 ease-out"
@@ -31,7 +304,6 @@
               class="relative w-full max-w-2xl bg-white rounded-2xl shadow-strong overflow-hidden"
               @click.stop
             >
-              <!-- Close Button -->
               <button
                 @click="closeModal"
                 class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 transition-colors"
@@ -41,7 +313,6 @@
                 </svg>
               </button>
 
-              <!-- Header -->
               <div :class="[
                 'px-8 py-6',
                 selectedUserType === 'avocat' ? 'bg-gradient-to-r from-primary-600 to-primary-700' : 'bg-gradient-to-r from-secondary-600 to-secondary-700'
@@ -69,10 +340,8 @@
                 </div>
               </div>
 
-              <!-- Form Content -->
               <div class="px-8 py-6 max-h-[70vh] overflow-y-auto">
                 <form @submit.prevent="handleRegister" class="space-y-6">
-                  <!-- User Type Selection (only if not pre-selected) -->
                   <div v-if="!userType" class="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
                     <label class="block text-sm font-medium text-neutral-700 mb-3">
                       Je m'inscris en tant que <span class="text-accent-500">*</span>
@@ -135,7 +404,6 @@
                     </div>
                   </div>
 
-                  <!-- Error Message -->
                   <div v-if="errorMessage" class="bg-accent-50 border border-accent-200 rounded-lg p-4">
                     <div class="flex">
                       <svg class="w-5 h-5 text-accent-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -153,7 +421,6 @@
                     </div>
                   </div>
 
-                  <!-- Personal Information -->
                   <div>
                     <h3 class="text-sm font-semibold text-neutral-900 mb-4 flex items-center">
                       <span :class="[
@@ -221,7 +488,6 @@
                     </div>
                   </div>
 
-                  <!-- Lawyer Specific Fields -->
                   <div v-if="selectedUserType === 'avocat'" class="pt-4 border-t border-neutral-200">
                     <h3 class="text-sm font-semibold text-neutral-900 mb-4 flex items-center">
                       <span class="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center mr-2 text-xs font-bold text-white">2</span>
@@ -266,7 +532,6 @@
                     </div>
                   </div>
 
-                  <!-- Client Specific Fields -->
                   <div v-if="selectedUserType === 'client'" class="pt-4 border-t border-neutral-200">
                     <h3 class="text-sm font-semibold text-neutral-900 mb-4 flex items-center">
                       <span class="w-6 h-6 bg-secondary-600 rounded-full flex items-center justify-center mr-2 text-xs font-bold text-white">2</span>
@@ -281,7 +546,6 @@
                     />
                   </div>
 
-                  <!-- Password Section -->
                   <div class="pt-4 border-t border-neutral-200">
                     <h3 class="text-sm font-semibold text-neutral-900 mb-4 flex items-center">
                       <span :class="[
@@ -337,7 +601,6 @@
                       </div>
                     </div>
 
-                    <!-- Password Strength -->
                     <div v-if="form.password" class="mt-3">
                       <div class="flex items-center justify-between text-xs text-neutral-600 mb-1">
                         <span>Force du mot de passe</span>
@@ -349,7 +612,6 @@
                     </div>
                   </div>
 
-                  <!-- Terms -->
                   <div class="pt-4 border-t border-neutral-200">
                     <label class="flex items-start cursor-pointer">
                       <input
@@ -370,7 +632,6 @@
                     </label>
                   </div>
 
-                  <!-- Submit Button -->
                   <div class="flex gap-3 pt-4">
                     <button
                       type="button"
@@ -402,7 +663,6 @@
                 </form>
               </div>
 
-              <!-- Footer -->
               <div class="px-8 py-4 bg-neutral-50 border-t border-neutral-200">
                 <p class="text-sm text-center text-neutral-600">
                   Vous avez déjà un compte ?
@@ -424,288 +684,3 @@
     </Transition>
   </Teleport>
 </template>
-
-<script setup lang="ts">
-import AddressAutocomplete from '~/components/common/AddressAutocomplete.vue';
-
-interface Props {
-  modelValue: boolean;
-  userType?: 'avocat' | 'client';
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  userType: undefined,
-});
-const emit = defineEmits(['update:modelValue', 'success']);
-
-const authStore = useAuthStore();
-const router = useRouter();
-
-// Initialize userType as a reactive ref - use provided prop or default to 'client'
-const selectedUserType = ref<'avocat' | 'client'>(props.userType || 'client');
-
-// Update selectedUserType when prop changes
-watch(() => props.userType, (newType) => {
-  if (newType) {
-    selectedUserType.value = newType;
-  }
-});
-
-const form = ref({
-  email: '',
-  password: '',
-  firstName: '',
-  lastName: '',
-  phone: '',
-  role: selectedUserType.value,
-  lawyerData: {
-    barNumber: '',
-    specialties: [] as string[],
-    officeAddress: '',
-    officeCity: '',
-    yearsOfExperience: undefined as number | undefined,
-    bio: '',
-  },
-  clientData: {
-    address: '',
-    city: '',
-    postalCode: '',
-  },
-});
-
-// Variables pour l'autocomplete d'adresse
-const lawyerLocationData = ref<{
-  address: string
-  latitude: number | null
-  longitude: number | null
-  formattedAddress?: string
-}>({
-  address: '',
-  latitude: null,
-  longitude: null
-});
-
-const clientLocationData = ref<{
-  address: string
-  latitude: number | null
-  longitude: number | null
-  formattedAddress?: string
-}>({
-  address: '',
-  latitude: null,
-  longitude: null
-});
-
-const specialtiesInput = ref('');
-const confirmPassword = ref('');
-const isLoading = ref(false);
-const errorMessage = ref('');
-const validationErrors = ref<string[]>([]);
-const showPassword = ref(false);
-const acceptTerms = ref(false);
-
-// Watcher pour synchroniser les données d'adresse de l'avocat
-watch(lawyerLocationData, (newValue) => {
-  if (newValue.address) {
-    form.value.lawyerData.officeAddress = newValue.address
-
-    // Extraire la ville depuis l'adresse formatée si disponible
-    if (newValue.formattedAddress) {
-      const parts = newValue.formattedAddress.split(',')
-      if (parts.length > 1) {
-        form.value.lawyerData.officeCity = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
-      }
-    }
-  }
-}, { deep: true });
-
-// Watcher pour synchroniser les données d'adresse du client
-watch(clientLocationData, (newValue) => {
-  if (newValue.address) {
-    form.value.clientData.address = newValue.address
-
-    // Extraire ville et code postal depuis l'adresse formatée
-    if (newValue.formattedAddress) {
-      const parts = newValue.formattedAddress.split(',')
-      if (parts.length > 1) {
-        // Chercher le code postal dans l'adresse
-        const postalMatch = newValue.formattedAddress.match(/\b\d{5}\b/)
-        if (postalMatch) {
-          form.value.clientData.postalCode = postalMatch[0]
-        }
-        // Extraire la ville
-        form.value.clientData.city = parts[parts.length - 3]?.trim() || parts[1]?.trim() || ''
-      }
-    }
-  }
-}, { deep: true });
-
-// Watch specialties input
-watch(specialtiesInput, (value) => {
-  if (value) {
-    form.value.lawyerData.specialties = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-  } else {
-    form.value.lawyerData.specialties = [];
-  }
-});
-
-// Watch selectedUserType and update form role
-watch(selectedUserType, (newType) => {
-  form.value.role = newType;
-});
-
-// Password strength calculator
-const passwordStrength = computed(() => {
-  const password = form.value.password;
-  if (!password) return 0;
-  
-  let strength = 0;
-  if (password.length >= 8) strength += 25;
-  if (password.length >= 12) strength += 25;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
-  if (/\d/.test(password)) strength += 12.5;
-  if (/[^a-zA-Z\d]/.test(password)) strength += 12.5;
-  
-  return Math.min(strength, 100);
-});
-
-const passwordStrengthText = computed(() => {
-  if (passwordStrength.value < 25) return 'Très faible';
-  if (passwordStrength.value < 50) return 'Faible';
-  if (passwordStrength.value < 75) return 'Moyen';
-  if (passwordStrength.value < 100) return 'Fort';
-  return 'Très fort';
-});
-
-const passwordStrengthColor = computed(() => {
-  if (passwordStrength.value < 25) return 'bg-accent-500 text-accent-600';
-  if (passwordStrength.value < 50) return 'bg-amber-500 text-amber-600';
-  if (passwordStrength.value < 75) return 'bg-primary-500 text-primary-600';
-  return 'bg-success-500 text-success-600';
-});
-
-const closeModal = () => {
-  emit('update:modelValue', false);
-  // Reset form after animation
-  setTimeout(() => {
-    // Reset selectedUserType if it was not provided as prop
-    if (!props.userType) {
-      selectedUserType.value = 'client';
-    }
-    
-    form.value = {
-      email: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-      phone: '',
-      role: selectedUserType.value,
-      lawyerData: {
-        barNumber: '',
-        specialties: [],
-        officeAddress: '',
-        officeCity: '',
-        yearsOfExperience: undefined,
-        bio: '',
-      },
-      clientData: {
-        address: '',
-        city: '',
-        postalCode: '',
-      },
-    };
-
-    // Réinitialiser les données de localisation
-    lawyerLocationData.value = { address: '', latitude: null, longitude: null };
-    clientLocationData.value = { address: '', latitude: null, longitude: null };
-
-    specialtiesInput.value = '';
-    confirmPassword.value = '';
-    errorMessage.value = '';
-    validationErrors.value = [];
-    acceptTerms.value = false;
-  }, 300);
-};
-
-const handleRegister = async () => {
-  isLoading.value = true;
-  errorMessage.value = '';
-  validationErrors.value = [];
-
-  if (form.value.password !== confirmPassword.value) {
-    errorMessage.value = 'Les mots de passe ne correspondent pas';
-    isLoading.value = false;
-    return;
-  }
-
-  // Validate lawyer required fields
-  if (form.value.role === 'avocat') {
-    if (!form.value.lawyerData.barNumber) {
-      errorMessage.value = 'Le numéro du barreau est requis pour les avocats';
-      isLoading.value = false;
-      return;
-    }
-  }
-
-  try {
-    const registrationData: any = {
-      email: form.value.email,
-      password: form.value.password,
-      firstName: form.value.firstName,
-      lastName: form.value.lastName,
-      phone: form.value.phone,
-      role: form.value.role,
-    };
-
-    if (form.value.role === 'avocat') {
-      registrationData.lawyerData = {
-        barNumber: form.value.lawyerData.barNumber,
-        specialties: form.value.lawyerData.specialties,
-        officeAddress: form.value.lawyerData.officeAddress || undefined,
-        officeCity: form.value.lawyerData.officeCity || undefined,
-        yearsOfExperience: form.value.lawyerData.yearsOfExperience || undefined,
-        bio: form.value.lawyerData.bio || undefined,
-      };
-    }
-
-    if (form.value.role === 'client') {
-      registrationData.clientData = {
-        address: form.value.clientData.address || undefined,
-        city: form.value.clientData.city || undefined,
-        postalCode: form.value.clientData.postalCode || undefined,
-      };
-    }
-
-    const result = await authStore.register(registrationData);
-
-    if (result.success) {
-      emit('success');
-      closeModal();
-      await router.push('/dashboard');
-    } else {
-      errorMessage.value = result.message || 'Échec de l\'inscription';
-      if (result.errors) {
-        validationErrors.value = result.errors.map((err: any) => err.message);
-      }
-    }
-  } catch (error: any) {
-    console.error('Register exception:', error);
-    errorMessage.value = 'Une erreur est survenue lors de l\'inscription';
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Prevent body scroll when modal is open
-watch(() => props.modelValue, (isOpen) => {
-  if (isOpen) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
-});
-
-onUnmounted(() => {
-  document.body.style.overflow = '';
-});
-</script>

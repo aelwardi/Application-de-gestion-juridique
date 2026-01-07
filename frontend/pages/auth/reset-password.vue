@@ -1,3 +1,68 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'guest',
+  layout: false,
+});
+
+const route = useRoute();
+const token = route.query.token as string;
+
+const form = ref({
+  password: '',
+  confirmPassword: ''
+});
+
+const isLoading = ref(false);
+const errorMessage = ref('');
+const successMessage = ref('');
+
+onMounted(() => {
+  if (!token) {
+    errorMessage.value = 'Token de réinitialisation manquant ou invalide';
+  }
+});
+
+const handleResetPassword = async () => {
+  console.log('Reset password requested');
+  isLoading.value = true;
+  errorMessage.value = '';
+  successMessage.value = '';
+
+  if (form.value.password !== form.value.confirmPassword) {
+    errorMessage.value = 'Les mots de passe ne correspondent pas';
+    isLoading.value = false;
+    return;
+  }
+
+  try {
+    const config = useRuntimeConfig();
+
+    const response = await $fetch<any>(`${config.public.apiBaseUrl}/auth/reset-password`, {
+      method: 'POST',
+      body: {
+        token: token,
+        password: form.value.password
+      }
+    });
+
+    if (response.success) {
+      successMessage.value = response.message || 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.';
+      console.log('Password reset successful');
+    } else {
+      errorMessage.value = response.message || 'Une erreur est survenue';
+    }
+
+  } catch (error: any) {
+    console.error('Reset password error:', error);
+    errorMessage.value = error.data?.message || 'Une erreur est survenue. Veuillez réessayer.';
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
+
+
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -87,67 +152,4 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({
-  middleware: 'guest',
-  layout: false,
-});
-
-const route = useRoute();
-const token = route.query.token as string;
-
-const form = ref({
-  password: '',
-  confirmPassword: ''
-});
-
-const isLoading = ref(false);
-const errorMessage = ref('');
-const successMessage = ref('');
-
-onMounted(() => {
-  if (!token) {
-    errorMessage.value = 'Token de réinitialisation manquant ou invalide';
-  }
-});
-
-const handleResetPassword = async () => {
-  console.log('Reset password requested');
-  isLoading.value = true;
-  errorMessage.value = '';
-  successMessage.value = '';
-
-  if (form.value.password !== form.value.confirmPassword) {
-    errorMessage.value = 'Les mots de passe ne correspondent pas';
-    isLoading.value = false;
-    return;
-  }
-
-  try {
-    const config = useRuntimeConfig();
-
-    const response = await $fetch<any>(`${config.public.apiBaseUrl}/auth/reset-password`, {
-      method: 'POST',
-      body: {
-        token: token,
-        password: form.value.password
-      }
-    });
-
-    if (response.success) {
-      successMessage.value = response.message || 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.';
-      console.log('Password reset successful');
-    } else {
-      errorMessage.value = response.message || 'Une erreur est survenue';
-    }
-
-  } catch (error: any) {
-    console.error('Reset password error:', error);
-    errorMessage.value = error.data?.message || 'Une erreur est survenue. Veuillez réessayer.';
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
 

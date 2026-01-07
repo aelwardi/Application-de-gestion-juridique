@@ -1,3 +1,60 @@
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+
+const isOpen = ref(false)
+
+const notifications = ref([
+  {
+    id: 'notif-1',
+    type: 'offer_accepted',
+    title: 'Dossier Accepté !',
+    message: 'Me Boss Boss a accepté votre demande. Vous pouvez maintenant prendre rendez-vous.',
+    read: false,
+    createdAt: new Date(),
+    data: { lawyerId: 'lawyer-123' }
+  },
+  {
+    id: 'notif-2',
+    type: 'info',
+    title: 'Bienvenue',
+    message: 'Votre profil a été complété avec succès.',
+    read: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24)
+  }
+])
+
+const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+
+const getIcon = (type: string) => {
+  if (type === 'offer_accepted') return ''
+  return ''
+}
+
+const getIconBg = (type: string) => {
+  if (type === 'offer_accepted') return 'bg-blue-600'
+  return 'bg-gray-400'
+}
+
+const formatTimeAgo = (date: Date) => {
+  return "À l'instant"
+}
+
+const markAllAsRead = () => {
+  notifications.value.forEach(n => n.read = true)
+  isOpen.value = false
+}
+
+const goToAppointment = (lawyerId: string) => {
+  console.log("Redirection vers le calendrier de l'avocat:", lawyerId)
+  isOpen.value = false
+}
+</script>
+
+
+
+
+
 <template>
   <div class="relative">
     <button 
@@ -73,57 +130,3 @@
     <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 z-40"></div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-
-const isOpen = ref(false)
-
-// Données de test (Mock) pour valider l'affichage
-const notifications = ref([
-  {
-    id: 'notif-1',
-    type: 'offer_accepted',
-    title: 'Dossier Accepté !',
-    message: 'Me Boss Boss a accepté votre demande. Vous pouvez maintenant prendre rendez-vous.',
-    read: false,
-    createdAt: new Date(),
-    data: { lawyerId: 'lawyer-123' }
-  },
-  {
-    id: 'notif-2',
-    type: 'info',
-    title: 'Bienvenue',
-    message: 'Votre profil a été complété avec succès.',
-    read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24)
-  }
-])
-
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
-
-const getIcon = (type: string) => {
-  if (type === 'offer_accepted') return '📅'
-  return '📢'
-}
-
-const getIconBg = (type: string) => {
-  if (type === 'offer_accepted') return 'bg-blue-600'
-  return 'bg-gray-400'
-}
-
-const formatTimeAgo = (date: Date) => {
-  return "À l'instant" // On simplifie pour le test
-}
-
-const markAllAsRead = () => {
-  notifications.value.forEach(n => n.read = true)
-  isOpen.value = false
-}
-
-const goToAppointment = (lawyerId: string) => {
-  console.log("Redirection vers le calendrier de l'avocat:", lawyerId)
-  // On ajoutera le navigateTo plus tard
-  isOpen.value = false
-}
-</script>

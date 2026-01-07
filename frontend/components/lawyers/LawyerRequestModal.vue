@@ -1,3 +1,82 @@
+<script setup lang="ts">
+import type { Lawyer, CreateLawyerRequestInput } from '~/types/lawyer';
+
+const props = defineProps<{
+  lawyer: Lawyer | null;
+  specialties: any[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'submit'): void;
+}>();
+
+const { createLawyerRequest } = useLawyer();
+
+const formData = ref<CreateLawyerRequestInput>({
+  lawyer_id: props.lawyer?.id || '',
+  title: '',
+  description: '',
+  case_type: '',
+  urgency: 'medium',
+  budget_min: undefined,
+  budget_max: undefined,
+  preferred_date: undefined,
+});
+
+const loading = ref(false);
+const error = ref('');
+
+const minDate = computed(() => {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+});
+
+const isFormValid = computed(() => {
+  return (
+      formData.value.title.trim() !== '' &&
+      formData.value.description.trim() !== '' &&
+      formData.value.case_type.trim() !== '' &&
+      formData.value.description.length <= 1000
+  );
+});
+
+const handleSubmit = async () => {
+  if (!isFormValid.value) return;
+
+  loading.value = true;
+  error.value = '';
+
+  try {
+    await createLawyerRequest({
+      ...formData.value,
+      lawyer_id: props.lawyer!.id,
+    });
+
+    alert('Votre demande a été envoyée avec succès !');
+    emit('submit');
+  } catch (err: any) {
+    console.error('Error sending request:', err);
+    error.value = err.message || 'Une erreur est survenue lors de l\'envoi de la demande';
+  } finally {
+    loading.value = false;
+  }
+};
+
+watch(
+    () => props.lawyer,
+    (newLawyer) => {
+      if (newLawyer) {
+        formData.value.lawyer_id = newLawyer.id;
+      }
+    },
+    { immediate: true }
+);
+</script>
+
+
+
+
 <template>
   <Teleport to="body">
     <div
@@ -184,78 +263,3 @@
   </Teleport>
 </template>
 
-<script setup lang="ts">
-import type { Lawyer, CreateLawyerRequestInput } from '~/types/lawyer';
-
-const props = defineProps<{
-  lawyer: Lawyer | null;
-  specialties: any[];
-}>();
-
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'submit'): void;
-}>();
-
-const { createLawyerRequest } = useLawyer();
-
-const formData = ref<CreateLawyerRequestInput>({
-  lawyer_id: props.lawyer?.id || '',
-  title: '',
-  description: '',
-  case_type: '',
-  urgency: 'medium',
-  budget_min: undefined,
-  budget_max: undefined,
-  preferred_date: undefined,
-});
-
-const loading = ref(false);
-const error = ref('');
-
-const minDate = computed(() => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
-});
-
-const isFormValid = computed(() => {
-  return (
-    formData.value.title.trim() !== '' &&
-    formData.value.description.trim() !== '' &&
-    formData.value.case_type.trim() !== '' &&
-    formData.value.description.length <= 1000
-  );
-});
-
-const handleSubmit = async () => {
-  if (!isFormValid.value) return;
-
-  loading.value = true;
-  error.value = '';
-
-  try {
-    await createLawyerRequest({
-      ...formData.value,
-      lawyer_id: props.lawyer!.id,
-    });
-
-    alert('Votre demande a été envoyée avec succès !');
-    emit('submit');
-  } catch (err: any) {
-    console.error('Error sending request:', err);
-    error.value = err.message || 'Une erreur est survenue lors de l\'envoi de la demande';
-  } finally {
-    loading.value = false;
-  }
-};
-
-watch(
-  () => props.lawyer,
-  (newLawyer) => {
-    if (newLawyer) {
-      formData.value.lawyer_id = newLawyer.id;
-    }
-  },
-  { immediate: true }
-);
-</script>

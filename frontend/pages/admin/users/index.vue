@@ -1,3 +1,235 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: ['auth', 'admin'],
+  layout: 'admin',
+});
+
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+}
+
+const { apiFetch } = useApi();
+const users = ref<User[]>([]);
+const loading = ref(false);
+
+const filters = ref({
+  search: '',
+  role: '',
+  isActive: '',
+});
+
+const pagination = ref({
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 0,
+});
+
+const fetchUsers = async () => {
+  loading.value = true;
+  try {
+    const params = new URLSearchParams({
+      page: pagination.value.page.toString(),
+      limit: pagination.value.limit.toString(),
+      ...(filters.value.search && { search: filters.value.search }),
+      ...(filters.value.role && { role: filters.value.role }),
+      ...(filters.value.isActive && { isActive: filters.value.isActive }),
+    });
+
+    const response = await apiFetch<any>(`/admin/users?${params}`, {
+      method: 'GET',
+    });
+
+    if (response.success) {
+      users.value = response.data;
+      pagination.value = { ...pagination.value, ...response.pagination };
+    }
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+let searchTimeout: NodeJS.Timeout;
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    pagination.value.page = 1;
+    fetchUsers();
+  }, 500);
+};
+
+const resetFilters = () => {
+  filters.value = { search: '', role: '', isActive: '' };
+  pagination.value.page = 1;
+  fetchUsers();
+};
+
+const changePage = (page: number) => {
+  pagination.value.page = page;
+  fetchUsers();
+};
+
+const visiblePages = computed(() => {
+  const total = pagination.value.totalPages;
+  const current = pagination.value.page;
+  const delta = 2;
+  const range = [];
+  const rangeWithDots = [];
+
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i);
+  }
+
+  if (current - delta > 2) {
+    rangeWithDots.push(1, '...');
+  } else {
+    rangeWithDots.push(1);
+  }
+
+  rangeWithDots.push(...range);
+
+  if (current + delta < total - 1) {
+    rangeWithDots.push('...', total);
+  } else if (total > 1) {
+    rangeWithDots.push(total);
+  }
+
+  return rangeWithDots.filter(p => p !== '...');
+});
+
+const getRoleLabel = (role: string) => {
+  const labels: Record<string, string> = {
+    admin: 'Admin',
+    avocat: 'Avocat',
+    client: 'Client',
+    collaborateur: 'Collaborateur',
+  };
+  return labels[role] || role;
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fr-FR');
+};
+
+const viewUser = (user: User) => {
+  navigateTo(`/admin/users/${user.id}`);
+};
+
+const toggleStatus = async (user: User) => {
+  if (!confirm(`Voulez-vous vraiment ${user.is_active ? 'désactiver' : 'activer'} cet utilisateur ?`)) {
+    return;
+  }
+
+  try {
+    const response = await apiFetch(`/admin/users/${user.id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isActive: !user.is_active }),
+    });
+
+    if (response.success) {
+      user.is_active = !user.is_active;
+    }
+  } catch (error) {
+    console.error('Failed to toggle user status:', error);
+    alert('Erreur lors de la mise à jour du statut');
+  }
+};
+
+const verifyUser = async (user: User) => {
+  if (!confirm('Voulez-vous vraiment vérifier cet utilisateur ?')) {
+    return;
+  }
+
+  try {
+    const response = await apiFetch(`/admin/users/${user.id}/verify`, {
+      method: 'PATCH',
+    });
+
+    if (response.success) {
+      user.is_verified = true;
+    }
+  } catch (error) {
+    console.error('Failed to verify user:', error);
+    alert('Erreur lors de la vérification');
+  }
+};
+
+const deleteUserConfirm = async (user: User) => {
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer ${user.first_name} ${user.last_name} ? Cette action est irréversible.`)) {
+    return;
+  }
+
+  try {
+    const response = await apiFetch(`/admin/users/${user.id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.success) {
+      users.value = users.value.filter(u => u.id !== user.id);
+      pagination.value.total--;
+    }
+  } catch (error) {
+    console.error('Failed to delete user:', error);
+    alert('Erreur lors de la suppression');
+  }
+};
+
+const exportUsers = async () => {
+  try {
+    const config = useRuntimeConfig();
+    const params = new URLSearchParams({
+      ...(filters.value.role && { role: filters.value.role }),
+      ...(filters.value.isActive && { isActive: filters.value.isActive }),
+    });
+
+    const authStore = useAuthStore();
+    const token = authStore.accessToken;
+
+    const url = `${config.public.apiBaseUrl}/admin/export/users?${params}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } else {
+      alert('Erreur lors de l\'export');
+    }
+  } catch (error) {
+    console.error('Failed to export users:', error);
+    alert('Erreur lors de l\'export');
+  }
+};
+
+onMounted(() => {
+  fetchUsers();
+});
+</script>
+
+
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="bg-white shadow">
@@ -280,232 +512,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-  middleware: ['auth', 'admin'],
-  layout: 'admin',
-});
-
-interface User {
-  id: string;
-  email: string;
-  role: string;
-  first_name: string;
-  last_name: string;
-  phone: string | null;
-  is_active: boolean;
-  is_verified: boolean;
-  created_at: string;
-}
-
-const { apiFetch } = useApi();
-const users = ref<User[]>([]);
-const loading = ref(false);
-
-const filters = ref({
-  search: '',
-  role: '',
-  isActive: '',
-});
-
-const pagination = ref({
-  page: 1,
-  limit: 20,
-  total: 0,
-  totalPages: 0,
-});
-
-const fetchUsers = async () => {
-  loading.value = true;
-  try {
-    const params = new URLSearchParams({
-      page: pagination.value.page.toString(),
-      limit: pagination.value.limit.toString(),
-      ...(filters.value.search && { search: filters.value.search }),
-      ...(filters.value.role && { role: filters.value.role }),
-      ...(filters.value.isActive && { isActive: filters.value.isActive }),
-    });
-
-    const response = await apiFetch<any>(`/admin/users?${params}`, {
-      method: 'GET',
-    });
-
-    if (response.success) {
-      users.value = response.data;
-      pagination.value = { ...pagination.value, ...response.pagination };
-    }
-  } catch (error) {
-    console.error('Failed to fetch users:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-let searchTimeout: NodeJS.Timeout;
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    pagination.value.page = 1;
-    fetchUsers();
-  }, 500);
-};
-
-const resetFilters = () => {
-  filters.value = { search: '', role: '', isActive: '' };
-  pagination.value.page = 1;
-  fetchUsers();
-};
-
-const changePage = (page: number) => {
-  pagination.value.page = page;
-  fetchUsers();
-};
-
-const visiblePages = computed(() => {
-  const total = pagination.value.totalPages;
-  const current = pagination.value.page;
-  const delta = 2;
-  const range = [];
-  const rangeWithDots = [];
-
-  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-    range.push(i);
-  }
-
-  if (current - delta > 2) {
-    rangeWithDots.push(1, '...');
-  } else {
-    rangeWithDots.push(1);
-  }
-
-  rangeWithDots.push(...range);
-
-  if (current + delta < total - 1) {
-    rangeWithDots.push('...', total);
-  } else if (total > 1) {
-    rangeWithDots.push(total);
-  }
-
-  return rangeWithDots.filter(p => p !== '...');
-});
-
-const getRoleLabel = (role: string) => {
-  const labels: Record<string, string> = {
-    admin: 'Admin',
-    avocat: 'Avocat',
-    client: 'Client',
-    collaborateur: 'Collaborateur',
-  };
-  return labels[role] || role;
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR');
-};
-
-const viewUser = (user: User) => {
-  navigateTo(`/admin/users/${user.id}`);
-};
-
-const toggleStatus = async (user: User) => {
-  if (!confirm(`Voulez-vous vraiment ${user.is_active ? 'désactiver' : 'activer'} cet utilisateur ?`)) {
-    return;
-  }
-
-  try {
-    const response = await apiFetch(`/admin/users/${user.id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ isActive: !user.is_active }),
-    });
-
-    if (response.success) {
-      user.is_active = !user.is_active;
-    }
-  } catch (error) {
-    console.error('Failed to toggle user status:', error);
-    alert('Erreur lors de la mise à jour du statut');
-  }
-};
-
-const verifyUser = async (user: User) => {
-  if (!confirm('Voulez-vous vraiment vérifier cet utilisateur ?')) {
-    return;
-  }
-
-  try {
-    const response = await apiFetch(`/admin/users/${user.id}/verify`, {
-      method: 'PATCH',
-    });
-
-    if (response.success) {
-      user.is_verified = true;
-    }
-  } catch (error) {
-    console.error('Failed to verify user:', error);
-    alert('Erreur lors de la vérification');
-  }
-};
-
-const deleteUserConfirm = async (user: User) => {
-  if (!confirm(`Êtes-vous sûr de vouloir supprimer ${user.first_name} ${user.last_name} ? Cette action est irréversible.`)) {
-    return;
-  }
-
-  try {
-    const response = await apiFetch(`/admin/users/${user.id}`, {
-      method: 'DELETE',
-    });
-
-    if (response.success) {
-      users.value = users.value.filter(u => u.id !== user.id);
-      pagination.value.total--;
-    }
-  } catch (error) {
-    console.error('Failed to delete user:', error);
-    alert('Erreur lors de la suppression');
-  }
-};
-
-const exportUsers = async () => {
-  try {
-    const config = useRuntimeConfig();
-    const params = new URLSearchParams({
-      ...(filters.value.role && { role: filters.value.role }),
-      ...(filters.value.isActive && { isActive: filters.value.isActive }),
-    });
-
-    const authStore = useAuthStore();
-    const token = authStore.accessToken;
-
-    const url = `${config.public.apiBaseUrl}/admin/export/users?${params}`;
-
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (response.ok) {
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-    } else {
-      alert('Erreur lors de l\'export');
-    }
-  } catch (error) {
-    console.error('Failed to export users:', error);
-    alert('Erreur lors de l\'export');
-  }
-};
-
-onMounted(() => {
-  fetchUsers();
-});
-</script>

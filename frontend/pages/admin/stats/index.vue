@@ -1,3 +1,101 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: ['auth', 'admin'],
+  layout: 'admin',
+});
+
+interface AdminStats {
+  totalUsers: number;
+  totalLawyers: number;
+  totalClients: number;
+  totalCollaborators: number;
+  activeUsers: number;
+  newUsersThisMonth: number;
+}
+
+const { apiFetch } = useApi();
+const stats = ref<AdminStats | null>(null);
+const comprehensiveStats = ref<any>(null);
+const loading = ref(false);
+const showBulkEmailModal = ref(false);
+const bulkEmailLoading = ref(false);
+
+const bulkEmailForm = ref({
+  role: '',
+  subject: '',
+  message: '',
+});
+
+const fetchStats = async () => {
+  loading.value = true;
+  try {
+    const response = await apiFetch<{ success: boolean; data: AdminStats }>('/admin/stats', {
+      method: 'GET',
+    });
+    if (response.success) {
+      stats.value = response.data;
+    }
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchComprehensiveStats = async () => {
+  try {
+    const response = await apiFetch<{ success: boolean; data: any }>('/admin/stats/comprehensive', {
+      method: 'GET',
+    });
+    if (response.success) {
+      comprehensiveStats.value = response.data;
+      console.log('Statistiques complètes chargées:', comprehensiveStats.value);
+    }
+  } catch (error) {
+    console.error('Failed to fetch comprehensive stats:', error);
+    comprehensiveStats.value = {
+      cases: { total: 0, pending: 0, in_progress: 0, resolved: 0 },
+      lawyers: { total: 0, verified: 0, pending_verification: 0, average_rating: 0 },
+      appointments: { total: 0, scheduled: 0, completed: 0, upcoming: 0 },
+    };
+  }
+};
+
+const sendBulkEmail = async () => {
+  bulkEmailLoading.value = true;
+  try {
+    const response = await apiFetch('/admin/email/bulk', {
+      method: 'POST',
+      body: JSON.stringify(bulkEmailForm.value),
+    });
+
+    if (response.success) {
+      alert('Emails envoyés avec succès !');
+      showBulkEmailModal.value = false;
+      bulkEmailForm.value = { role: '', subject: '', message: '' };
+    } else {
+      alert('Erreur lors de l\'envoi des emails');
+    }
+  } catch (error) {
+    console.error('Failed to send bulk email:', error);
+    alert('Erreur lors de l\'envoi des emails');
+  } finally {
+    bulkEmailLoading.value = false;
+  }
+};
+
+const refreshStats = () => {
+  fetchStats();
+  fetchComprehensiveStats();
+};
+
+onMounted(() => {
+  fetchStats();
+  fetchComprehensiveStats();
+});
+</script>
+
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="bg-white shadow">
@@ -194,7 +292,7 @@
             </div>
             <div class="bg-gray-50 px-5 py-3">
               <NuxtLink to="/admin/lawyers" class="text-sm font-medium text-blue-700 hover:text-blue-900">
-                Gérer les avocats →
+                Gérer les avocats
               </NuxtLink>
             </div>
           </div>
@@ -394,100 +492,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-  middleware: ['auth', 'admin'],
-  layout: 'admin',
-});
-
-interface AdminStats {
-  totalUsers: number;
-  totalLawyers: number;
-  totalClients: number;
-  totalCollaborators: number;
-  activeUsers: number;
-  newUsersThisMonth: number;
-}
-
-const { apiFetch } = useApi();
-const stats = ref<AdminStats | null>(null);
-const comprehensiveStats = ref<any>(null);
-const loading = ref(false);
-const showBulkEmailModal = ref(false);
-const bulkEmailLoading = ref(false);
-
-const bulkEmailForm = ref({
-  role: '',
-  subject: '',
-  message: '',
-});
-
-const fetchStats = async () => {
-  loading.value = true;
-  try {
-    const response = await apiFetch<{ success: boolean; data: AdminStats }>('/admin/stats', {
-      method: 'GET',
-    });
-    if (response.success) {
-      stats.value = response.data;
-    }
-  } catch (error) {
-    console.error('Failed to fetch stats:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const fetchComprehensiveStats = async () => {
-  try {
-    const response = await apiFetch<{ success: boolean; data: any }>('/admin/stats/comprehensive', {
-      method: 'GET',
-    });
-    if (response.success) {
-      comprehensiveStats.value = response.data;
-      console.log('📊 Statistiques complètes chargées:', comprehensiveStats.value);
-    }
-  } catch (error) {
-    console.error('Failed to fetch comprehensive stats:', error);
-    // Ne pas bloquer si les stats avancées échouent
-    comprehensiveStats.value = {
-      cases: { total: 0, pending: 0, in_progress: 0, resolved: 0 },
-      lawyers: { total: 0, verified: 0, pending_verification: 0, average_rating: 0 },
-      appointments: { total: 0, scheduled: 0, completed: 0, upcoming: 0 },
-    };
-  }
-};
-
-const sendBulkEmail = async () => {
-  bulkEmailLoading.value = true;
-  try {
-    const response = await apiFetch('/admin/email/bulk', {
-      method: 'POST',
-      body: JSON.stringify(bulkEmailForm.value),
-    });
-
-    if (response.success) {
-      alert('Emails envoyés avec succès !');
-      showBulkEmailModal.value = false;
-      bulkEmailForm.value = { role: '', subject: '', message: '' };
-    } else {
-      alert('Erreur lors de l\'envoi des emails');
-    }
-  } catch (error) {
-    console.error('Failed to send bulk email:', error);
-    alert('Erreur lors de l\'envoi des emails');
-  } finally {
-    bulkEmailLoading.value = false;
-  }
-};
-
-const refreshStats = () => {
-  fetchStats();
-  fetchComprehensiveStats();
-};
-
-onMounted(() => {
-  fetchStats();
-  fetchComprehensiveStats();
-});
-</script>

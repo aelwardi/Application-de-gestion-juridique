@@ -1,10 +1,19 @@
+<script setup lang="ts">
+import RegisterModal from '~/components/auth/RegisterModal.vue';
+
+definePageMeta({
+  layout: false,
+});
+
+const showRegisterModal = ref(false);
+</script>
+
+
 <template>
   <div class="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
-    <!-- Navigation -->
     <nav class="bg-white/80 backdrop-blur-md shadow-sm fixed w-full top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
-          <!-- Logo -->
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <h1 class="text-2xl font-heading font-bold text-primary-700">
@@ -13,7 +22,6 @@
             </div>
           </div>
 
-          <!-- Navigation Links -->
           <div class="hidden md:flex items-center space-x-8">
             <NuxtLink to="#fonctionnalites" class="text-neutral-600 hover:text-primary-600 font-medium transition-colors">
               Fonctionnalités
@@ -26,7 +34,6 @@
             </NuxtLink>
           </div>
 
-          <!-- Auth Buttons -->
           <div class="flex items-center space-x-4">
             <NuxtLink to="/auth/login" class="btn-outline">
               Connexion
@@ -39,7 +46,6 @@
       </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <div class="text-center">
@@ -52,9 +58,7 @@
             Connectez avocats, clients et collaborateurs en un seul endroit.
           </p>
 
-          <!-- Choice Cards -->
           <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-16">
-            <!-- Card Avocat -->
             <NuxtLink to="/home/lawyers" class="card p-8 hover:scale-105 transition-transform duration-300 group">
               <div class="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-200 transition-colors">
                 <svg class="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +79,6 @@
               </div>
             </NuxtLink>
 
-            <!-- Card Client -->
             <NuxtLink to="/home/clients" class="card p-8 hover:scale-105 transition-transform duration-300 group">
               <div class="w-20 h-20 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-secondary-200 transition-colors">
                 <svg class="w-10 h-10 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +103,6 @@
       </div>
     </section>
 
-    <!-- Features Section -->
     <section id="fonctionnalites" class="py-20 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
@@ -146,7 +148,6 @@
       </div>
     </section>
 
-    <!-- Footer -->
     <footer class="bg-neutral-900 text-white py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
@@ -163,17 +164,7 @@
       </div>
     </footer>
 
-    <!-- Register Modal -->
     <RegisterModal v-model="showRegisterModal" />
   </div>
 </template>
 
-<script setup lang="ts">
-import RegisterModal from '~/components/auth/RegisterModal.vue';
-
-definePageMeta({
-  layout: false,
-});
-
-const showRegisterModal = ref(false);
-</script>

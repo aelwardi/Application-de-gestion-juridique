@@ -1,3 +1,147 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: ['auth', 'admin'],
+  layout: 'admin',
+});
+
+const route = useRoute();
+const { apiFetch } = useApi();
+const authStore = useAuthStore();
+
+const ticket = ref<any>(null);
+const messages = ref<any[]>([]);
+const loading = ref(true);
+const newStatus = ref('');
+const newMessage = ref('');
+const isInternalMessage = ref(false);
+const sending = ref(false);
+
+const fetchTicket = async () => {
+  loading.value = true;
+  try {
+    const response = await apiFetch<any>(`/support/tickets/${route.params.id}`, {
+      method: 'GET',
+    });
+
+    console.log('Réponse ticket:', response);
+
+    if (response.success) {
+      ticket.value = response.data.ticket;
+      messages.value = response.data.messages;
+      newStatus.value = ticket.value.status;
+
+      console.log(' Ticket chargé:', ticket.value);
+      console.log(' Messages chargés:', messages.value.length);
+    }
+  } catch (error) {
+    console.error('Failed to fetch ticket:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const updateStatus = async () => {
+  try {
+    await apiFetch(`/support/tickets/${ticket.value.id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus.value }),
+    });
+    ticket.value.status = newStatus.value;
+  } catch (error) {
+    console.error('Failed to update status:', error);
+    alert('Erreur lors de la mise à jour');
+  }
+};
+
+const assignToMe = async () => {
+  try {
+    await apiFetch(`/support/tickets/${ticket.value.id}/assign`, {
+      method: 'PATCH',
+      body: JSON.stringify({ adminId: authStore.user?.id }),
+    });
+    ticket.value.admin_name = authStore.fullName;
+    alert('Ticket assigné avec succès');
+  } catch (error) {
+    console.error('Failed to assign ticket:', error);
+    alert('Erreur lors de l\'assignation');
+  }
+};
+
+const closeTicket = async () => {
+  if (!confirm('Êtes-vous sûr de vouloir clôturer ce ticket ? L\'utilisateur devra créer un nouveau ticket pour vous contacter à nouveau.')) {
+    return;
+  }
+
+  try {
+    await apiFetch(`/support/tickets/${ticket.value.id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'closed' }),
+    });
+    ticket.value.status = 'closed';
+    newStatus.value = 'closed';
+    alert('Ticket clôturé avec succès');
+  } catch (error) {
+    console.error('Failed to close ticket:', error);
+    alert('Erreur lors de la clôture du ticket');
+  }
+};
+
+const sendMessage = async () => {
+  sending.value = true;
+  try {
+    const response = await apiFetch<any>(`/support/tickets/${ticket.value.id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message: newMessage.value,
+        isInternal: isInternalMessage.value,
+      }),
+    });
+
+    if (response.success) {
+      messages.value.push(response.data);
+      newMessage.value = '';
+      isInternalMessage.value = false;
+    }
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    alert('Erreur lors de l\'envoi');
+  } finally {
+    sending.value = false;
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    open: 'Ouvert',
+    in_progress: 'En cours',
+    resolved: 'Résolu',
+    closed: 'Fermé',
+  };
+  return labels[status] || status;
+};
+
+const getPriorityLabel = (priority: string) => {
+  const labels: Record<string, string> = {
+    low: 'Basse',
+    medium: 'Moyenne',
+    high: 'Haute',
+    urgent: 'Urgente',
+  };
+  return labels[priority] || priority;
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleString('fr-FR');
+};
+
+onMounted(() => {
+  fetchTicket();
+});
+</script>
+
+
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="bg-white shadow">
@@ -138,7 +282,7 @@
                     <p class="text-xs text-gray-500">{{ formatDate(message.created_at) }}</p>
                   </div>
                   <span v-if="message.is_internal" class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    🔒 Interne
+                    Interne
                   </span>
                 </div>
                 <p class="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{{ message.message }}</p>
@@ -178,144 +322,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-  middleware: ['auth', 'admin'],
-  layout: 'admin',
-});
-
-const route = useRoute();
-const { apiFetch } = useApi();
-const authStore = useAuthStore();
-
-const ticket = ref<any>(null);
-const messages = ref<any[]>([]);
-const loading = ref(true);
-const newStatus = ref('');
-const newMessage = ref('');
-const isInternalMessage = ref(false);
-const sending = ref(false);
-
-const fetchTicket = async () => {
-  loading.value = true;
-  try {
-    const response = await apiFetch<any>(`/support/tickets/${route.params.id}`, {
-      method: 'GET',
-    });
-
-    console.log('📬 Réponse ticket:', response);
-
-    if (response.success) {
-      ticket.value = response.data.ticket;
-      messages.value = response.data.messages;
-      newStatus.value = ticket.value.status;
-
-      console.log(' Ticket chargé:', ticket.value);
-      console.log(' Messages chargés:', messages.value.length);
-    }
-  } catch (error) {
-    console.error('❌ Failed to fetch ticket:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const updateStatus = async () => {
-  try {
-    await apiFetch(`/support/tickets/${ticket.value.id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: newStatus.value }),
-    });
-    ticket.value.status = newStatus.value;
-  } catch (error) {
-    console.error('Failed to update status:', error);
-    alert('Erreur lors de la mise à jour');
-  }
-};
-
-const assignToMe = async () => {
-  try {
-    await apiFetch(`/support/tickets/${ticket.value.id}/assign`, {
-      method: 'PATCH',
-      body: JSON.stringify({ adminId: authStore.user?.id }),
-    });
-    ticket.value.admin_name = authStore.fullName;
-    alert('Ticket assigné avec succès');
-  } catch (error) {
-    console.error('Failed to assign ticket:', error);
-    alert('Erreur lors de l\'assignation');
-  }
-};
-
-const closeTicket = async () => {
-  if (!confirm('Êtes-vous sûr de vouloir clôturer ce ticket ? L\'utilisateur devra créer un nouveau ticket pour vous contacter à nouveau.')) {
-    return;
-  }
-
-  try {
-    await apiFetch(`/support/tickets/${ticket.value.id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: 'closed' }),
-    });
-    ticket.value.status = 'closed';
-    newStatus.value = 'closed';
-    alert('✅ Ticket clôturé avec succès');
-  } catch (error) {
-    console.error('Failed to close ticket:', error);
-    alert('❌ Erreur lors de la clôture du ticket');
-  }
-};
-
-const sendMessage = async () => {
-  sending.value = true;
-  try {
-    const response = await apiFetch<any>(`/support/tickets/${ticket.value.id}/messages`, {
-      method: 'POST',
-      body: JSON.stringify({
-        message: newMessage.value,
-        isInternal: isInternalMessage.value,
-      }),
-    });
-
-    if (response.success) {
-      messages.value.push(response.data);
-      newMessage.value = '';
-      isInternalMessage.value = false;
-    }
-  } catch (error) {
-    console.error('Failed to send message:', error);
-    alert('Erreur lors de l\'envoi');
-  } finally {
-    sending.value = false;
-  }
-};
-
-const getStatusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    open: 'Ouvert',
-    in_progress: 'En cours',
-    resolved: 'Résolu',
-    closed: 'Fermé',
-  };
-  return labels[status] || status;
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels: Record<string, string> = {
-    low: 'Basse',
-    medium: 'Moyenne',
-    high: 'Haute',
-    urgent: 'Urgente',
-  };
-  return labels[priority] || priority;
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleString('fr-FR');
-};
-
-onMounted(() => {
-  fetchTicket();
-});
-</script>

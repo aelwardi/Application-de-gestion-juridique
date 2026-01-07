@@ -1,3 +1,75 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
+const props = defineProps<{
+  lawyerId: string
+  date: string
+}>()
+
+const emit = defineEmits<{
+  close: []
+}>()
+
+const loading = ref(true)
+const result = ref<any>(null)
+const config = useRuntimeConfig()
+const authStore = useAuthStore()
+
+onMounted(async () => {
+  await loadOptimization()
+})
+
+const loadOptimization = async () => {
+  loading.value = true
+  try {
+    const response = await $fetch<any>(
+        `${config.public.apiBaseUrl}/appointments/optimize-route?lawyer_id=${props.lawyerId}&date=${props.date}`,
+        { headers: authStore.getAuthHeaders() }
+    )
+    if (response.success) {
+      result.value = response
+    }
+  } catch (error) {
+    console.error('Erreur optimisation:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const openInGoogleMaps = () => {
+  if (!result.value || !result.value.optimizedRoute) return
+
+  const locations = result.value.optimizedRoute
+  const origin = `${locations[0].lat},${locations[0].lng}`
+  const destination = `${locations[locations.length - 1].lat},${locations[locations.length - 1].lng}`
+
+  const waypoints = locations
+      .slice(1, -1)
+      .map((loc: any) => `${loc.lat},${loc.lng}`)
+      .join('|')
+
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`
+  if (waypoints) {
+    url += `&waypoints=${waypoints}`
+  }
+  url += '&travelmode=driving'
+
+  window.open(url, '_blank')
+}
+
+const formatTime = (time: string) => {
+  return new Date(time).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const close = () => emit('close')
+</script>
+
+
+
+
 <template>
   <div class="bg-white rounded-lg shadow-lg p-6">
     <div class="flex items-center justify-between mb-6">
@@ -92,71 +164,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-
-const props = defineProps<{
-  lawyerId: string
-  date: string
-}>()
-
-const emit = defineEmits<{
-  close: []
-}>()
-
-const loading = ref(true)
-const result = ref<any>(null)
-const config = useRuntimeConfig()
-const authStore = useAuthStore()
-
-onMounted(async () => {
-  await loadOptimization()
-})
-
-const loadOptimization = async () => {
-  loading.value = true
-  try {
-    const response = await $fetch<any>(
-      `${config.public.apiBaseUrl}/appointments/optimize-route?lawyer_id=${props.lawyerId}&date=${props.date}`,
-      { headers: authStore.getAuthHeaders() }
-    )
-    if (response.success) {
-      result.value = response
-    }
-  } catch (error) {
-    console.error('Erreur optimisation:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const openInGoogleMaps = () => {
-  if (!result.value || !result.value.optimizedRoute) return
-
-  const locations = result.value.optimizedRoute
-  const origin = `${locations[0].lat},${locations[0].lng}`
-  const destination = `${locations[locations.length - 1].lat},${locations[locations.length - 1].lng}`
-
-  const waypoints = locations
-    .slice(1, -1)
-    .map((loc: any) => `${loc.lat},${loc.lng}`)
-    .join('|')
-
-  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`
-  if (waypoints) {
-    url += `&waypoints=${waypoints}`
-  }
-  url += '&travelmode=driving'
-
-  window.open(url, '_blank')
-}
-
-const formatTime = (time: string) => {
-  return new Date(time).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const close = () => emit('close')
-</script>

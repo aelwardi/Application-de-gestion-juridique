@@ -1,3 +1,92 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+
+const props = defineProps<{
+  modelValue: any
+}>()
+
+const emit = defineEmits<{
+  'update:modelValue': [value: any]
+}>()
+
+const isRecurring = ref(false)
+const endType = ref<'never' | 'on' | 'after'>('after')
+
+const recurrence = ref({
+  frequency: 'weekly' as 'daily' | 'weekly' | 'monthly',
+  interval: 1,
+  daysOfWeek: [] as number[],
+  endDate: undefined as string | undefined,
+  occurrences: 10
+})
+
+const daysOfWeek = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+
+watch(isRecurring, (value) => {
+  if (value) {
+    emit('update:modelValue', recurrence.value)
+  } else {
+    emit('update:modelValue', null)
+  }
+})
+
+watch(recurrence, (value) => {
+  if (isRecurring.value) {
+    const cleaned = { ...value }
+    if (endType.value === 'never' || endType.value === 'after') {
+      cleaned.endDate = undefined
+    }
+    if (endType.value === 'never' || endType.value === 'on') {
+      cleaned.occurrences = undefined
+    }
+    emit('update:modelValue', cleaned)
+  }
+}, { deep: true })
+
+const toggleDay = (dayIndex: number) => {
+  const index = recurrence.value.daysOfWeek.indexOf(dayIndex)
+  if (index > -1) {
+    recurrence.value.daysOfWeek.splice(index, 1)
+  } else {
+    recurrence.value.daysOfWeek.push(dayIndex)
+  }
+}
+
+const getFrequencyLabel = () => {
+  const labels = {
+    daily: 'jour(s)',
+    weekly: 'semaine(s)',
+    monthly: 'mois'
+  }
+  return labels[recurrence.value.frequency]
+}
+
+const getSummary = () => {
+  let summary = `Se répète tous les ${recurrence.value.interval} ${getFrequencyLabel()}`
+
+  if (recurrence.value.frequency === 'weekly' && recurrence.value.daysOfWeek.length > 0) {
+    const days = recurrence.value.daysOfWeek
+        .sort()
+        .map(i => daysOfWeek[i])
+        .join(', ')
+    summary += ` le ${days}`
+  }
+
+  if (endType.value === 'on' && recurrence.value.endDate) {
+    summary += ` jusqu'au ${new Date(recurrence.value.endDate).toLocaleDateString('fr-FR')}`
+  } else if (endType.value === 'after' && recurrence.value.occurrences) {
+    summary += ` pour ${recurrence.value.occurrences} occurrence(s)`
+  }
+
+  return summary
+}
+</script>
+
+
+
+
+
+
 <template>
   <div class="space-y-4 border-t pt-4 mt-4">
     <div class="flex items-center gap-2">
@@ -8,12 +97,11 @@
         class="w-4 h-4 text-blue-600 rounded"
       />
       <label for="enable-recurrence" class="text-sm font-medium text-gray-700">
-        🔄 Répéter ce rendez-vous
+        Répéter ce rendez-vous
       </label>
     </div>
 
     <div v-if="isRecurring" class="space-y-4 pl-6 border-l-2 border-blue-200">
-      <!-- Fréquence -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Fréquence</label>
         <select
@@ -26,7 +114,6 @@
         </select>
       </div>
 
-      <!-- Intervalle -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
           Répéter tous les {{ recurrence.interval }} {{ getFrequencyLabel() }}
@@ -40,7 +127,6 @@
         />
       </div>
 
-      <!-- Jours de la semaine (si hebdomadaire) -->
       <div v-if="recurrence.frequency === 'weekly'">
         <label class="block text-sm font-medium text-gray-700 mb-2">Jours de la semaine</label>
         <div class="flex flex-wrap gap-2">
@@ -61,7 +147,6 @@
         </div>
       </div>
 
-      <!-- Fin de récurrence -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">Se termine</label>
         <div class="space-y-2">
@@ -115,97 +200,11 @@
         </div>
       </div>
 
-      <!-- Résumé -->
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <p class="text-sm text-blue-900 font-medium mb-1">📋 Résumé</p>
+        <p class="text-sm text-blue-900 font-medium mb-1">Résumé</p>
         <p class="text-sm text-blue-700">{{ getSummary() }}</p>
       </div>
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, watch } from 'vue'
-
-const props = defineProps<{
-  modelValue: any
-}>()
-
-const emit = defineEmits<{
-  'update:modelValue': [value: any]
-}>()
-
-const isRecurring = ref(false)
-const endType = ref<'never' | 'on' | 'after'>('after')
-
-const recurrence = ref({
-  frequency: 'weekly' as 'daily' | 'weekly' | 'monthly',
-  interval: 1,
-  daysOfWeek: [] as number[],
-  endDate: undefined as string | undefined,
-  occurrences: 10
-})
-
-const daysOfWeek = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
-
-watch(isRecurring, (value) => {
-  if (value) {
-    emit('update:modelValue', recurrence.value)
-  } else {
-    emit('update:modelValue', null)
-  }
-})
-
-watch(recurrence, (value) => {
-  if (isRecurring.value) {
-    // Nettoyer les champs selon le type de fin
-    const cleaned = { ...value }
-    if (endType.value === 'never' || endType.value === 'after') {
-      cleaned.endDate = undefined
-    }
-    if (endType.value === 'never' || endType.value === 'on') {
-      cleaned.occurrences = undefined
-    }
-    emit('update:modelValue', cleaned)
-  }
-}, { deep: true })
-
-const toggleDay = (dayIndex: number) => {
-  const index = recurrence.value.daysOfWeek.indexOf(dayIndex)
-  if (index > -1) {
-    recurrence.value.daysOfWeek.splice(index, 1)
-  } else {
-    recurrence.value.daysOfWeek.push(dayIndex)
-  }
-}
-
-const getFrequencyLabel = () => {
-  const labels = {
-    daily: 'jour(s)',
-    weekly: 'semaine(s)',
-    monthly: 'mois'
-  }
-  return labels[recurrence.value.frequency]
-}
-
-const getSummary = () => {
-  let summary = `Se répète tous les ${recurrence.value.interval} ${getFrequencyLabel()}`
-
-  if (recurrence.value.frequency === 'weekly' && recurrence.value.daysOfWeek.length > 0) {
-    const days = recurrence.value.daysOfWeek
-      .sort()
-      .map(i => daysOfWeek[i])
-      .join(', ')
-    summary += ` le ${days}`
-  }
-
-  if (endType.value === 'on' && recurrence.value.endDate) {
-    summary += ` jusqu'au ${new Date(recurrence.value.endDate).toLocaleDateString('fr-FR')}`
-  } else if (endType.value === 'after' && recurrence.value.occurrences) {
-    summary += ` pour ${recurrence.value.occurrences} occurrence(s)`
-  }
-
-  return summary
-}
-</script>
 

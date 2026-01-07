@@ -1,7 +1,3 @@
-// =====================================================
-// Types LAWYER - Frontend adapté à la table users unifiée
-// =====================================================
-
 export interface LawyerRequest {
   id: string;
   client_id: string;
@@ -54,9 +50,8 @@ export interface LawyerRequestStats {
   cancelled?: number;
 }
 
-// Lawyer = User avec role='avocat' (table unifiée)
 export interface Lawyer {
-  id: string; // ID user (plus besoin de user_id séparé)
+  id: string;
   email: string;
   role: 'avocat';
   firstName: string;
@@ -66,7 +61,6 @@ export interface Lawyer {
   isActive: boolean;
   isVerified: boolean;
 
-  // Champs spécifiques avocats
   barNumber: string;
   specialties: string[];
   experienceYears: number;

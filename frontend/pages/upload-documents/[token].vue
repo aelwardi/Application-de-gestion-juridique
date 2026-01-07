@@ -1,3 +1,135 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const token = route.params.token as string;
+
+const loading = ref(true);
+const error = ref(false);
+const errorMessage = ref('');
+const documentRequest = ref<any>(null);
+const selectedFile = ref<File | null>(null);
+const uploading = ref(false);
+const uploadSuccess = ref(false);
+
+const uploadForm = ref({
+  title: '',
+  document_type: 'other'
+});
+
+const loadDocumentRequest = async () => {
+  try {
+    loading.value = true;
+    const response = await $fetch<any>(`http://localhost:3000/api/document-requests/token/${token}`);
+
+    if (response.success) {
+      documentRequest.value = response.data;
+    } else {
+      error.value = true;
+      errorMessage.value = response.message || 'Demande non trouvée';
+    }
+  } catch (err: any) {
+    error.value = true;
+    if (err.status === 404) {
+      errorMessage.value = 'Cette demande n\'existe pas';
+    } else if (err.status === 410 || err.data?.expired) {
+      errorMessage.value = 'Cette demande a expiré';
+    } else {
+      errorMessage.value = err.data?.message || 'Une erreur est survenue';
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+const onFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    selectedFile.value = target.files[0];
+    if (!uploadForm.value.title) {
+      uploadForm.value.title = target.files[0].name.split('.')[0];
+    }
+  }
+};
+
+const handleUpload = async () => {
+  if (!selectedFile.value) return;
+
+  uploading.value = true;
+  try {
+    const formData = new FormData();
+    formData.append('file', selectedFile.value);
+    formData.append('title', uploadForm.value.title);
+    formData.append('document_type', uploadForm.value.document_type);
+
+    const response = await $fetch<any>(
+        `http://localhost:3000/api/document-requests/upload/${token}`,
+        {
+          method: 'POST',
+          body: formData
+        }
+    );
+
+    if (response.success) {
+      uploadSuccess.value = true;
+    } else {
+      alert(response.message || 'Erreur lors de l\'envoi');
+    }
+  } catch (err: any) {
+    console.error('Upload error:', err);
+    alert(err.data?.message || 'Erreur lors de l\'envoi du document');
+  } finally {
+    uploading.value = false;
+  }
+};
+
+const resetForm = () => {
+  uploadSuccess.value = false;
+  selectedFile.value = null;
+  uploadForm.value = {
+    title: '',
+    document_type: 'other'
+  };
+  const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+  if (fileInput) fileInput.value = '';
+};
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+const formatFileSize = (bytes: number) => {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+};
+
+const getDocumentTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    contract: 'Contrat',
+    evidence: 'Preuve',
+    invoice: 'Facture',
+    identity: 'Pièce d\'identité',
+    certificate: 'Certificat',
+    other: 'Autre'
+  };
+  return labels[type] || type;
+};
+
+onMounted(() => {
+  loadDocumentRequest();
+});
+</script>
+
+
 <template>
   <div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-12 px-4">
     <div class="max-w-3xl mx-auto">
@@ -175,133 +307,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
-const token = route.params.token as string;
-
-const loading = ref(true);
-const error = ref(false);
-const errorMessage = ref('');
-const documentRequest = ref<any>(null);
-const selectedFile = ref<File | null>(null);
-const uploading = ref(false);
-const uploadSuccess = ref(false);
-
-const uploadForm = ref({
-  title: '',
-  document_type: 'other'
-});
-
-const loadDocumentRequest = async () => {
-  try {
-    loading.value = true;
-    const response = await $fetch<any>(`http://localhost:3000/api/document-requests/token/${token}`);
-
-    if (response.success) {
-      documentRequest.value = response.data;
-    } else {
-      error.value = true;
-      errorMessage.value = response.message || 'Demande non trouvée';
-    }
-  } catch (err: any) {
-    error.value = true;
-    if (err.status === 404) {
-      errorMessage.value = 'Cette demande n\'existe pas';
-    } else if (err.status === 410 || err.data?.expired) {
-      errorMessage.value = 'Cette demande a expiré';
-    } else {
-      errorMessage.value = err.data?.message || 'Une erreur est survenue';
-    }
-  } finally {
-    loading.value = false;
-  }
-};
-
-const onFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    selectedFile.value = target.files[0];
-    if (!uploadForm.value.title) {
-      uploadForm.value.title = target.files[0].name.split('.')[0];
-    }
-  }
-};
-
-const handleUpload = async () => {
-  if (!selectedFile.value) return;
-
-  uploading.value = true;
-  try {
-    const formData = new FormData();
-    formData.append('file', selectedFile.value);
-    formData.append('title', uploadForm.value.title);
-    formData.append('document_type', uploadForm.value.document_type);
-
-    const response = await $fetch<any>(
-      `http://localhost:3000/api/document-requests/upload/${token}`,
-      {
-        method: 'POST',
-        body: formData
-      }
-    );
-
-    if (response.success) {
-      uploadSuccess.value = true;
-    } else {
-      alert(response.message || 'Erreur lors de l\'envoi');
-    }
-  } catch (err: any) {
-    console.error('Upload error:', err);
-    alert(err.data?.message || 'Erreur lors de l\'envoi du document');
-  } finally {
-    uploading.value = false;
-  }
-};
-
-const resetForm = () => {
-  uploadSuccess.value = false;
-  selectedFile.value = null;
-  uploadForm.value = {
-    title: '',
-    document_type: 'other'
-  };
-  const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-  if (fileInput) fileInput.value = '';
-};
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
-};
-
-const formatFileSize = (bytes: number) => {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-};
-
-const getDocumentTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    contract: 'Contrat',
-    evidence: 'Preuve',
-    invoice: 'Facture',
-    identity: 'Pièce d\'identité',
-    certificate: 'Certificat',
-    other: 'Autre'
-  };
-  return labels[type] || type;
-};
-
-onMounted(() => {
-  loadDocumentRequest();
-});
-</script>

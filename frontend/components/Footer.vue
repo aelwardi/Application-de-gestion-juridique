@@ -1,3 +1,17 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import FeedbackModal from './FeedbackModal.vue'
+
+const showFeedbackModal = ref(false)
+
+const currentYear = computed(() => new Date().getFullYear())
+
+const openFeedbackModal = () => {
+  showFeedbackModal.value = true
+}
+</script>
+
+
 <template>
   <footer class="bg-gray-900 text-white mt-auto">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -10,7 +24,6 @@
           </p>
         </div>
 
-        <!-- Quick Links -->
         <div>
           <h3 class="text-lg font-bold mb-4">Liens rapides</h3>
           <ul class="space-y-2 text-sm">
@@ -32,7 +45,6 @@
           </ul>
         </div>
 
-        <!-- Legal -->
         <div>
           <h3 class="text-lg font-bold mb-4">Légal</h3>
           <ul class="space-y-2 text-sm">
@@ -54,7 +66,6 @@
           </ul>
         </div>
 
-        <!-- Feedback Button -->
         <div>
           <h3 class="text-lg font-bold mb-4">Votre avis</h3>
           <p class="text-gray-400 text-sm mb-4">
@@ -72,7 +83,6 @@
         </div>
       </div>
 
-      <!-- Bottom Bar -->
       <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
         <p class="text-gray-400 text-sm">
           © {{ currentYear }} Plateforme Juridique. Tous droits réservés.
@@ -97,21 +107,7 @@
       </div>
     </div>
 
-    <!-- Feedback Modal -->
     <FeedbackModal :is-open="showFeedbackModal" @close="showFeedbackModal = false" />
   </footer>
 </template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import FeedbackModal from './FeedbackModal.vue'
-
-const showFeedbackModal = ref(false)
-
-const currentYear = computed(() => new Date().getFullYear())
-
-const openFeedbackModal = () => {
-  showFeedbackModal.value = true
-}
-</script>
 

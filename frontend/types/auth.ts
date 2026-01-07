@@ -1,7 +1,3 @@
-// =====================================================
-// Types AUTH - Frontend adapté à la table users unifiée
-// =====================================================
-
 export type UserRole = 'admin' | 'avocat' | 'client' | 'collaborateur';
 
 export interface User {
@@ -18,7 +14,6 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
 
-  // Champs spécifiques avocats (si role='avocat')
   barNumber?: string | null;
   specialties?: string[];
   experienceYears?: number | null;
@@ -36,7 +31,6 @@ export interface User {
   rating?: number;
   totalReviews?: number;
 
-  // Champs spécifiques clients (si role='client')
   address?: string | null;
   city?: string | null;
   postalCode?: string | null;
@@ -44,7 +38,6 @@ export interface User {
   emergencyContactPhone?: string | null;
   notes?: string | null;
 
-  // Statistiques (commun avocats/clients)
   totalCases?: number;
   activeCases?: number;
 }
@@ -107,7 +100,6 @@ export interface UpdateProfileData {
   description?: string;
   hourlyRate?: number;
   availabilityStatus?: 'available' | 'busy' | 'unavailable';
-  // Champs clients
   address?: string;
   city?: string;
   emergencyContactName?: string;

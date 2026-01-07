@@ -1,3 +1,110 @@
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import type { Notification } from '~/composables/useNotifications'
+
+const isOpen = ref(false)
+const notifications = ref<Notification[]>([])
+const authStore = useAuthStore()
+const { getUnreadNotifications, markAsRead: markNotificationAsRead, markAllAsRead: markAllNotificationsAsRead } = useNotifications()
+
+const loadNotifications = async () => {
+  if (!authStore.user?.id) return
+
+  try {
+    const data = await getUnreadNotifications(authStore.user.id)
+    notifications.value = data
+  } catch (error) {
+    console.error('Erreur lors du chargement des notifications:', error)
+  }
+}
+
+onMounted(() => {
+  loadNotifications()
+  setInterval(loadNotifications, 30000)
+})
+
+watch(() => authStore.user?.id, () => {
+  loadNotifications()
+})
+
+const unreadCount = computed(() => {
+  return notifications.value.filter(n => !n.is_read).length
+})
+
+const getIconClass = (type: string) => {
+  const classes: Record<string, string> = {
+    appointment_created: 'bg-blue-500',
+    appointment_updated: 'bg-blue-500',
+    appointment_cancelled: 'bg-red-500',
+    appointment_reminder: 'bg-yellow-500',
+    case_created: 'bg-green-500',
+    case_updated: 'bg-blue-500',
+    message_received: 'bg-purple-500',
+    document_uploaded: 'bg-indigo-500',
+    info: 'bg-blue-500',
+    success: 'bg-green-500',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-500'
+  }
+  return classes[type] || 'bg-gray-500'
+}
+
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString)
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
+
+  if (seconds < 60) return 'À l\'instant'
+  if (seconds < 3600) return `Il y a ${Math.floor(seconds / 60)} min`
+  if (seconds < 86400) return `Il y a ${Math.floor(seconds / 3600)} h`
+  if (seconds < 604800) return `Il y a ${Math.floor(seconds / 86400)} j`
+
+  return date.toLocaleDateString('fr-FR')
+}
+
+const markAsRead = async (id: string) => {
+  try {
+    await markNotificationAsRead(id)
+    const notification = notifications.value.find(n => n.id === id)
+    if (notification) {
+      notification.is_read = true
+    }
+
+    const notif = notifications.value.find(n => n.id === id)
+    if (notif?.data?.appointment_id) {
+      navigateTo(`/appointments/${notif.data.appointment_id}`)
+      isOpen.value = false
+    }
+  } catch (error) {
+    console.error('Erreur lors du marquage de la notification:', error)
+  }
+}
+
+const markAllAsRead = async () => {
+  if (!authStore.user?.id) return
+
+  try {
+    await markAllNotificationsAsRead(authStore.user.id)
+    notifications.value.forEach(n => n.is_read = true)
+    isOpen.value = false
+  } catch (error) {
+    console.error('Erreur lors du marquage des notifications:', error)
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
 <template>
   <div class="relative">
     <button 
@@ -12,8 +119,7 @@
       </span>
     </button>
 
-    <!-- Dropdown -->
-    <div 
+    <div
       v-if="isOpen"
       @click.stop
       class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50"
@@ -68,109 +174,10 @@
       </div>
     </div>
 
-    <!-- Overlay pour fermer le dropdown -->
-    <div 
+    <div
       v-if="isOpen"
       @click="isOpen = false"
       class="fixed inset-0 z-40"
     ></div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import type { Notification } from '~/composables/useNotifications'
-
-const isOpen = ref(false)
-const notifications = ref<Notification[]>([])
-const authStore = useAuthStore()
-const { getUnreadNotifications, markAsRead: markNotificationAsRead, markAllAsRead: markAllNotificationsAsRead } = useNotifications()
-
-// Charger les notifications au montage et toutes les 30 secondes
-const loadNotifications = async () => {
-  if (!authStore.user?.id) return
-
-  try {
-    const data = await getUnreadNotifications(authStore.user.id)
-    notifications.value = data
-  } catch (error) {
-    console.error('Erreur lors du chargement des notifications:', error)
-  }
-}
-
-onMounted(() => {
-  loadNotifications()
-  // Rafraîchir toutes les 30 secondes
-  setInterval(loadNotifications, 30000)
-})
-
-// Recharger quand l'utilisateur change
-watch(() => authStore.user?.id, () => {
-  loadNotifications()
-})
-
-const unreadCount = computed(() => {
-  return notifications.value.filter(n => !n.is_read).length
-})
-
-const getIconClass = (type: string) => {
-  const classes: Record<string, string> = {
-    appointment_created: 'bg-blue-500',
-    appointment_updated: 'bg-blue-500',
-    appointment_cancelled: 'bg-red-500',
-    appointment_reminder: 'bg-yellow-500',
-    case_created: 'bg-green-500',
-    case_updated: 'bg-blue-500',
-    message_received: 'bg-purple-500',
-    document_uploaded: 'bg-indigo-500',
-    info: 'bg-blue-500',
-    success: 'bg-green-500',
-    warning: 'bg-yellow-500',
-    error: 'bg-red-500'
-  }
-  return classes[type] || 'bg-gray-500'
-}
-
-const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString)
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
-  
-  if (seconds < 60) return 'À l\'instant'
-  if (seconds < 3600) return `Il y a ${Math.floor(seconds / 60)} min`
-  if (seconds < 86400) return `Il y a ${Math.floor(seconds / 3600)} h`
-  if (seconds < 604800) return `Il y a ${Math.floor(seconds / 86400)} j`
-  
-  return date.toLocaleDateString('fr-FR')
-}
-
-const markAsRead = async (id: string) => {
-  try {
-    await markNotificationAsRead(id)
-    const notification = notifications.value.find(n => n.id === id)
-    if (notification) {
-      notification.is_read = true
-    }
-
-    // Si la notification a un lien, naviguer
-    const notif = notifications.value.find(n => n.id === id)
-    if (notif?.data?.appointment_id) {
-      navigateTo(`/appointments/${notif.data.appointment_id}`)
-      isOpen.value = false
-    }
-  } catch (error) {
-    console.error('Erreur lors du marquage de la notification:', error)
-  }
-}
-
-const markAllAsRead = async () => {
-  if (!authStore.user?.id) return
-
-  try {
-    await markAllNotificationsAsRead(authStore.user.id)
-    notifications.value.forEach(n => n.is_read = true)
-    isOpen.value = false
-  } catch (error) {
-    console.error('Erreur lors du marquage des notifications:', error)
-  }
-}
-</script>

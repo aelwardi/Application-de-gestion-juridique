@@ -1,10 +1,5 @@
-// =====================================================
-// Types CLIENT - Frontend adapté à la table users unifiée
-// =====================================================
-
-// Client = User avec role='client' (table unifiée)
 export interface Client {
-  id: string; // ID user (plus besoin de userId séparé)
+  id: string;
   email: string;
   role: 'client';
   firstName: string;
@@ -14,7 +9,6 @@ export interface Client {
   isActive: boolean;
   isVerified: boolean;
 
-  // Champs spécifiques clients
   address?: string;
   city?: string;
   postalCode?: string;

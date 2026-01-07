@@ -1,3 +1,15 @@
+<script setup lang="ts">
+const authStore = useAuthStore();
+
+const handleLogout = async () => {
+  await authStore.logout();
+  navigateTo('/auth/login');
+};
+</script>
+
+
+
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <nav class="bg-gradient-to-r from-purple-700 to-indigo-800 shadow-lg">
@@ -157,11 +169,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-const authStore = useAuthStore();
-
-const handleLogout = async () => {
-  await authStore.logout();
-  navigateTo('/auth/login');
-};
-</script>

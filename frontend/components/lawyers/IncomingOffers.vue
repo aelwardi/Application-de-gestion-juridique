@@ -1,3 +1,34 @@
+<script setup lang="ts">
+const props = defineProps({
+  offers: {
+    type: Array as () => any[],
+    default: () => []
+  }
+})
+
+const emit = defineEmits(['refresh'])
+
+const handleAccept = async (offerId: string) => {
+  if (!confirm("Voulez-vous accepter cette demande et créer le dossier correspondant ?")) return
+
+  try {
+    const response: any = await $fetch(`/api/offers/${offerId}/accept`, {
+      method: 'POST'
+    })
+
+    if (response.success) {
+      emit('refresh')
+    }
+  } catch (err) {
+    console.error("Erreur lors de l'acceptation:", err)
+    alert("Une erreur est survenue lors de la création du dossier.")
+  }
+}
+</script>
+
+
+
+
 <template>
   <div v-if="offers && offers.length > 0" class="mb-8">
     <div class="bg-white rounded-lg shadow-lg border-t-4 border-purple-600 overflow-hidden">
@@ -52,36 +83,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-// On définit les "props" pour recevoir les données depuis avocat.vue
-const props = defineProps({
-  offers: {
-    type: Array as () => any[],
-    default: () => []
-  }
-})
 
-// On définit les "emits" pour dire au parent de se rafraîchir après action
-const emit = defineEmits(['refresh'])
-
-const handleAccept = async (offerId: string) => {
-  if (!confirm("Voulez-vous accepter cette demande et créer le dossier correspondant ?")) return
-
-  try {
-    const response: any = await $fetch(`/api/offers/${offerId}/accept`, {
-      method: 'POST'
-    })
-
-    if (response.success) {
-      // On prévient le parent (avocat.vue) qu'il doit recharger les données
-      emit('refresh')
-    }
-  } catch (err) {
-    console.error("Erreur lors de l'acceptation:", err)
-    alert("Une erreur est survenue lors de la création du dossier.")
-  }
-}
-</script>
 
 <style scoped>
 .line-clamp-3 {

@@ -108,7 +108,6 @@ export interface CaseStatsResponse {
   message?: string;
 }
 
-// Labels pour l'affichage
 export const CaseStatusLabels: Record<CaseStatus, string> = {
   pending: 'En attente',
   accepted: 'Accepté',
@@ -137,7 +136,6 @@ export const CaseTypeLabels: Record<string, string> = {
   immobilier: 'Droit immobilier'
 };
 
-// Classes CSS pour les badges de statut
 export const CaseStatusColors: Record<CaseStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   accepted: 'bg-blue-100 text-blue-800',
@@ -149,7 +147,6 @@ export const CaseStatusColors: Record<CaseStatus, string> = {
   archived: 'bg-gray-100 text-gray-600'
 };
 
-// Classes CSS pour les badges de priorité
 export const CasePriorityColors: Record<CasePriority, string> = {
   low: 'bg-gray-100 text-gray-800',
   medium: 'bg-blue-100 text-blue-800',

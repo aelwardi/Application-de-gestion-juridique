@@ -14,9 +14,7 @@ export const useMessage = () => {
     return headers;
   };
 
-  /**
-   * Récupérer toutes les conversations
-   */
+
   const getConversations = async () => {
     try {
       const response = await $fetch<any>(`${baseURL}/messages/conversations`, {
@@ -30,9 +28,7 @@ export const useMessage = () => {
     }
   };
 
-  /**
-   * Récupérer les messages d'une conversation
-   */
+
   const getMessages = async (conversationId: string) => {
     try {
       const response = await $fetch<any>(`${baseURL}/messages/conversations/${conversationId}/messages`, {
@@ -46,9 +42,7 @@ export const useMessage = () => {
     }
   };
 
-  /**
-   * Créer ou récupérer une conversation
-   */
+
   const createOrGetConversation = async (recipientId: string, caseId?: string, title?: string) => {
     try {
       const response = await $fetch<any>(`${baseURL}/messages/conversations`, {
@@ -67,9 +61,7 @@ export const useMessage = () => {
     }
   };
 
-  /**
-   * Envoyer un message
-   */
+
   const sendMessage = async (conversationId: string, messageText: string, attachments?: any) => {
     try {
       const response = await $fetch<any>(`${baseURL}/messages/conversations/${conversationId}/messages`, {
@@ -88,9 +80,7 @@ export const useMessage = () => {
     }
   };
 
-  /**
-   * Nombre de messages non lus
-   */
+
   const getUnreadCount = async () => {
     try {
       const response = await $fetch<any>(`${baseURL}/messages/unread-count`, {
