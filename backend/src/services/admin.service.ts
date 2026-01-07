@@ -49,7 +49,7 @@ export const createAdmin = async (
       <p><strong>Email :</strong> ${email}<br>
       <strong>Mot de passe temporaire :</strong> ${password}</p>
       <p><strong>Important :</strong> Veuillez changer votre mot de passe dès votre première connexion.</p>
-      <p><a href="http://localhost:3001/auth/login">Se connecter</a></p>
+      <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/login">Se connecter</a></p>
     `,
   }).catch(err => console.error('Failed to send admin creation email:', err));
 
