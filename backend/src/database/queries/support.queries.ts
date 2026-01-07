@@ -72,7 +72,18 @@ export const getAllTickets = async (
     paramIndex++;
   }
 
-  const countQuery = query.replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM').replace(/LEFT JOIN.*admin_name/, '');
+  // Create count query - keep the FROM and WHERE clauses but remove SELECT columns
+  const countQuery = `
+    SELECT COUNT(*) 
+    FROM support_tickets st
+    LEFT JOIN users u ON st.user_id = u.id
+    LEFT JOIN users a ON st.assigned_to = a.id
+    WHERE 1=1
+    ${status ? ` AND st.status = $${params.indexOf(status) + 1}` : ''}
+    ${priority ? ` AND st.priority = $${params.indexOf(priority) + 1}` : ''}
+    ${assignedToMe && adminId ? ` AND st.assigned_to = $${params.indexOf(adminId) + 1}` : ''}
+  `;
+
   const countResult = await pool.query(countQuery, params);
   const total = parseInt(countResult.rows[0].count);
 

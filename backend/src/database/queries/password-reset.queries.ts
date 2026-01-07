@@ -9,7 +9,6 @@ export interface PasswordResetToken {
   expires_at: Date;
   used: boolean;
   created_at: Date;
-  updated_at: Date;
 }
 
 /**
@@ -66,7 +65,7 @@ export const findPasswordResetToken = async (
 export const markTokenAsUsed = async (token: string): Promise<void> => {
   const query = `
     UPDATE password_reset_tokens
-    SET used = TRUE, updated_at = CURRENT_TIMESTAMP
+    SET used = TRUE
     WHERE token = $1
   `;
 

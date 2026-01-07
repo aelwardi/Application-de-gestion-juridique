@@ -19,20 +19,38 @@ async function runCompleteMigration(): Promise<void> {
   try {
     console.log("Démarrage de la migration de la base de données...\n");
 
-    const migrationFilePath = path.join(__dirname, "../src/database/migrations/init-db.sql");
+    const migrationsDir = path.join(__dirname, "../src/database/migrations");
 
-    if (!fs.existsSync(migrationFilePath)) {
-      throw new Error("Le fichier de migration consolidée n'existe pas!");
+    if (!fs.existsSync(migrationsDir)) {
+      throw new Error("Le dossier migrations n'existe pas!");
     }
 
-    const sql = fs.readFileSync(migrationFilePath, "utf8");
+    // Get all SQL files in the migrations folder and sort them
+    const migrationFiles = fs.readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.sql'))
+      .sort();
 
-    console.log("Fichier de migration chargé");
-    console.log("Exécution de la migration...\n");
+    if (migrationFiles.length === 0) {
+      throw new Error("Aucun fichier de migration trouvé!");
+    }
 
-    await client.query("BEGIN");
-    await client.query(sql);
-    await client.query("COMMIT");
+    console.log(`Fichiers de migration trouvés: ${migrationFiles.length}`);
+    migrationFiles.forEach(file => console.log(`  - ${file}`));
+    console.log();
+
+    // Run each migration file
+    for (const file of migrationFiles) {
+      const migrationFilePath = path.join(migrationsDir, file);
+      console.log(`Exécution de: ${file}...`);
+
+      const sql = fs.readFileSync(migrationFilePath, "utf8");
+
+      await client.query("BEGIN");
+      await client.query(sql);
+      await client.query("COMMIT");
+
+      console.log(`✓ ${file} exécuté avec succès\n`);
+    }
 
     console.log("Migration complète exécutée avec succès!");
     console.log("\nÉtat de la base de données:");

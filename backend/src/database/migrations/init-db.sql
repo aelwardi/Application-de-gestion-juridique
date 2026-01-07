@@ -616,6 +616,33 @@ CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created
 
 COMMENT ON TABLE notifications IS 'Notifications système pour les utilisateurs';
 
+CREATE TABLE IF NOT EXISTS feedback (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 10),
+    category VARCHAR(100),
+    comment TEXT,
+    suggestions TEXT,
+    user_email VARCHAR(255),
+    user_role VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'replied', 'archived')),
+    admin_response TEXT,
+    admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    responded_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_rating ON feedback(rating);
+CREATE INDEX IF NOT EXISTS idx_feedback_category ON feedback(category);
+CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
+CREATE INDEX IF NOT EXISTS idx_feedback_user_role ON feedback(user_role);
+CREATE INDEX IF NOT EXISTS idx_feedback_admin_id ON feedback(admin_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at DESC);
+
+COMMENT ON TABLE feedback IS 'Feedbacks et avis des utilisateurs sur l''application';
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -635,7 +662,7 @@ WHERE schemaname = 'public'
   AND tablename IN (
                     'users', 'support_tickets', 'cases', 'appointments', 'documents',
                     'document_requests', 'client_requests', 'case_offers', 'client_notes',
-                    'client_payments', 'appointment_documents', 'lawyer_requests'
+                    'client_payments', 'appointment_documents', 'lawyer_requests', 'feedback'
     )
     LOOP
         EXECUTE format('DROP TRIGGER IF EXISTS trigger_update_%I_timestamp ON %I', table_name, table_name);
@@ -663,7 +690,7 @@ INSERT INTO users (
     is_active,
     is_verified
 ) VALUES (
-             'a.elwardi@myskolae.fr',
+             '',
              '$2b$10$rBV2R8T5fGKjKW.8xqF5..8qVx4YZ5nD7hNZO8nQqCXKZ1L0vE7Oi',
              'admin',
              'Admin',
