@@ -65,7 +65,9 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
 
     }
   } catch (error) {
-    console.error('Erreur lors de l\'envoi des notifications:', error);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Erreur lors de l\'envoi des notifications:', error);
+    }
   }
 
   return appointment;

@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Frontend URL for email links
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3001';
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -79,7 +82,7 @@ export const sendWelcomeEmail = async (
           <p>Nous sommes ravis de vous accueillir sur notre plateforme de gestion juridique.</p>
           <p>Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter et commencer à utiliser nos services.</p>
           <center>
-            <a href="http://localhost:3001/auth/login" class="button">Se connecter</a>
+            <a href="${FRONTEND_URL}/auth/login" class="button">Se connecter</a>
           </center>
           <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -107,7 +110,7 @@ export const sendPasswordResetEmail = async (
   resetToken: string,
   firstName: string
 ): Promise<boolean> => {
-  const resetUrl = `http://localhost:3001/auth/reset-password?token=${resetToken}`;
+  const resetUrl = `${FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
 
   const html = `
     <!DOCTYPE html>
@@ -355,7 +358,7 @@ export const sendNewRequestToLawyer = async (
           <p>Veuillez vous connecter à votre espace avocat pour consulter les détails complets de la demande et y répondre.</p>
           
           <center>
-            <a href="http://localhost:3001/dashboard" class="button">Voir la demande</a>
+            <a href="${FRONTEND_URL}/dashboard" class="button">Voir la demande</a>
           </center>
 
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -385,7 +388,7 @@ export const sendRequestAcceptedToClient = async (
   requestTitle: string,
   caseId?: string
 ): Promise<boolean> => {
-  const caseUrl = caseId ? `http://localhost:3001/cases/${caseId}` : 'http://localhost:3001/cases';
+  const caseUrl = caseId ? `${FRONTEND_URL}/cases/${caseId}` : `${FRONTEND_URL}/cases`;
 
   const html = `
     <!DOCTYPE html>
@@ -483,7 +486,7 @@ export const sendRequestRejectedToClient = async (
             <li>Nous contacter si vous avez des questions</li>
           </ul>
           <center>
-            <a href="http://localhost:3001/lawyers" class="button">Trouver un autre avocat</a>
+            <a href="${FRONTEND_URL}/lawyers" class="button">Trouver un autre avocat</a>
           </center>
           <p>Merci de votre compréhension.</p>
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -574,7 +577,7 @@ export const sendCaseStatusChangedEmail = async (
           <p>Connectez-vous pour consulter les détails et l'historique complet de votre dossier.</p>
           
           <center>
-            <a href="http://localhost:3001/cases/${caseId}" class="button">Voir mon dossier</a>
+            <a href="${FRONTEND_URL}/cases/${caseId}" class="button">Voir mon dossier</a>
           </center>
 
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -641,7 +644,7 @@ export const sendDocumentUploadedEmail = async (
           <p>Vous pouvez consulter ce document dès maintenant dans votre espace client.</p>
           
           <center>
-            <a href="http://localhost:3001/cases/${caseId}" class="button">Consulter le document</a>
+            <a href="${FRONTEND_URL}/cases/${caseId}" class="button">Consulter le document</a>
           </center>
 
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>

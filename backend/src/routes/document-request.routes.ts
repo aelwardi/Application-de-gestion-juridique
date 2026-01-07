@@ -109,7 +109,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
 
       if (userInfoResult.rows.length > 0) {
         const info = userInfoResult.rows[0];
-        const uploadLink = `http://localhost:3001/upload-documents/${accessToken}`;
+        const uploadLink = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/upload-documents/${accessToken}`;
 
         sendDocumentRequestEmail(
           info.client_email,
@@ -147,7 +147,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       data: documentRequest,
-      upload_link: `http://localhost:3001/upload-documents/${accessToken}`
+      upload_link: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/upload-documents/${accessToken}`
     });
   } catch (error: any) {
     console.error('Erreur création demande documents:', error);

@@ -41,6 +41,7 @@ services:
       - JWT_ACCESS_TOKEN_EXPIRY=15m
       - JWT_REFRESH_TOKEN_EXPIRY=7d
       - CORS_ORIGIN=http://localhost:3001
+      - FRONTEND_URL=http://localhost:3001
       - COOKIE_SECURE=false
       - COOKIE_SAME_SITE=lax
       - GMAIL_APP_USERNAME=pdog83341@gmail.com

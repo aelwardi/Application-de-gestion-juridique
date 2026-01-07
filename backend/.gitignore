@@ -5,3 +5,31 @@ dist/
 *.log
 .vscode/
 .idea/
+
+# Test coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# Test results
+jest-results.json
+junit.xml
+
+# Uploads (test files)
+uploads/test-*
+uploads/*/test-*
+# Tests backup
+backup_*/
+tests_backup_*/
+
+# Scripts temporaires
+*.sh.backup
+package.json.backup
+
+# Tests backup
+backup_*/
+tests_backup_*/
+
+# Scripts temporaires
+*.sh.backup
+package.json.backup
