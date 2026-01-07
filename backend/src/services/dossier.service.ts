@@ -1,5 +1,7 @@
 import { caseQueries } from '../database/queries/dossier.queries';
 import { CreateCaseDTO, UpdateCaseDTO, CaseFilters } from '../types/case.types';
+import { sendCaseStatusChangedEmail } from '../utils/email.util';
+import { pool } from '../config/database.config';
 
 export const dossierService = {
   async createCase(data: CreateCaseDTO) {
@@ -60,13 +62,48 @@ export const dossierService = {
           message: 'Dossier non trouvé'
         };
       }
-      
+
+      const oldStatus = existingCase.status;
+
       if (data.status === 'closed' && !data.closing_date) {
         data.closing_date = new Date();
       }
       
       const updatedCase = await caseQueries.updateCase(id, data);
-      
+
+      if (!updatedCase) {
+        return {
+          success: false,
+          message: 'Erreur lors de la mise à jour du dossier'
+        };
+      }
+
+      if (data.status && oldStatus !== data.status) {
+        try {
+          const clientQuery = await pool.query(
+            'SELECT first_name, last_name, email FROM users WHERE id = $1',
+            [updatedCase.client_id]
+          );
+
+          if (clientQuery.rows.length > 0) {
+            const client = clientQuery.rows[0];
+
+            sendCaseStatusChangedEmail(
+              client.email,
+              client.first_name,
+              updatedCase.title,
+              oldStatus,
+              data.status,
+              id
+            ).catch(error => {
+              console.error('Erreur lors de l\'envoi de l\'email de changement de statut:', error);
+            });
+          }
+        } catch (emailError) {
+          console.error('Erreur lors de la récupération des données pour l\'email:', emailError);
+        }
+      }
+
       return {
         success: true,
         data: updatedCase,

@@ -384,8 +384,11 @@ export const sendRequestAcceptedToClient = async (
   clientEmail: string,
   clientFirstName: string,
   lawyerName: string,
-  requestTitle: string
+  requestTitle: string,
+  caseId?: string
 ): Promise<boolean> => {
+  const caseUrl = caseId ? `http://localhost:3001/cases/${caseId}` : 'http://localhost:3001/cases';
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -404,31 +407,25 @@ export const sendRequestAcceptedToClient = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>Demande Acceptée !</h1>
+          <h1>Demande Acceptée</h1>
         </div>
         <div class="content">
-          <div class="icon">🎉</div>
           <h2>Bonjour ${clientFirstName},</h2>
-          <p>Bonne nouvelle ! Votre demande a été acceptée par l'avocat.</p>
-          
           <div class="success-box">
-            <p><strong>Détails de la demande :</strong></p>
-            <p><strong>Titre :</strong> ${requestTitle}</p>
-            <p><strong>Avocat :</strong> Me ${lawyerName}</p>
+            <p><strong>Bonne nouvelle !</strong></p>
+            <p>Me ${lawyerName} a accepté de traiter votre demande concernant : <strong>"${requestTitle}"</strong></p>
           </div>
-
-          <p><strong>Prochaines étapes :</strong></p>
+          <p>Votre dossier a été créé et vous pouvez maintenant :</p>
           <ul>
-            <li>L'avocat va vous contacter prochainement pour discuter des détails</li>
-            <li>Vous pouvez également le contacter via votre espace client</li>
-            <li>Un rendez-vous pourra être programmé pour approfondir votre dossier</li>
+            <li> Consulter les détails de votre dossier</li>
+            <li> Télécharger des documents</li>
+            <li> Communiquer avec votre avocat</li>
+            <li> Prendre rendez-vous</li>
           </ul>
-          
           <center>
-            <a href="http://localhost:3001/dashboard" class="button">Accéder à mon espace</a>
+            <a href="${caseUrl}" class="button">Accéder à mon dossier</a>
           </center>
-
-          <p>Nous vous souhaitons une excellente collaboration !</p>
+          <p>Votre avocat vous contactera prochainement pour définir les prochaines étapes.</p>
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
         </div>
         <div class="footer">
@@ -441,7 +438,7 @@ export const sendRequestAcceptedToClient = async (
 
   return sendEmail({
     to: clientEmail,
-    subject: `Votre demande "${requestTitle}" a été acceptée`,
+    subject: `Votre demande a été acceptée par Me ${lawyerName}`,
     html,
   });
 };
@@ -453,7 +450,8 @@ export const sendRequestRejectedToClient = async (
   clientEmail: string,
   clientFirstName: string,
   lawyerName: string,
-  requestTitle: string
+  requestTitle: string,
+  rejectionReason?: string
 ): Promise<boolean> => {
   const html = `
     <!DOCTYPE html>
@@ -466,7 +464,6 @@ export const sendRequestRejectedToClient = async (
         .content { padding: 20px; background-color: #f9fafb; }
         .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
         .info-box { background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 20px 0; border-radius: 5px; }
-        .suggestion-box { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 20px 0; border-radius: 5px; }
         .button { display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
       </style>
     </head>
@@ -477,31 +474,20 @@ export const sendRequestRejectedToClient = async (
         </div>
         <div class="content">
           <h2>Bonjour ${clientFirstName},</h2>
-          <p>Nous avons reçu une réponse concernant votre demande.</p>
-          
           <div class="info-box">
-            <p><strong>Détails de la demande :</strong></p>
-            <p><strong>Titre :</strong> ${requestTitle}</p>
-            <p><strong>Avocat :</strong> Me ${lawyerName}</p>
-            <p><strong>Statut :</strong> Non retenue</p>
+            <p>Me ${lawyerName} ne peut malheureusement pas donner suite à votre demande concernant : <strong>"${requestTitle}"</strong></p>
+            ${rejectionReason ? `<p><strong>Motif :</strong> ${rejectionReason}</p>` : ''}
           </div>
-
-          <p>Malheureusement, Me ${lawyerName} n'est pas en mesure de donner suite à votre demande pour le moment. Cela peut être dû à plusieurs raisons (disponibilité, spécialisation, etc.).</p>
-
-          <div class="suggestion-box">
-            <p><strong>Suggestions :</strong></p>
-            <ul>
-              <li>Consultez notre liste d'avocats pour trouver d'autres spécialistes dans votre domaine</li>
-              <li>Affinez votre demande avec plus de détails si nécessaire</li>
-              <li>Contactez notre support pour obtenir de l'aide dans votre recherche</li>
-            </ul>
-          </div>
-          
+          <p>Nous vous encourageons à :</p>
+          <ul>
+            <li>Consulter d'autres avocats spécialisés sur notre plateforme</li>
+            <li>Reformuler votre demande si nécessaire</li>
+            <li>Nous contacter si vous avez des questions</li>
+          </ul>
           <center>
             <a href="http://localhost:3001/lawyers" class="button">Trouver un autre avocat</a>
           </center>
-
-          <p>Ne vous découragez pas, nous sommes là pour vous aider à trouver l'avocat qui correspond à vos besoins.</p>
+          <p>Merci de votre compréhension.</p>
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
         </div>
         <div class="footer">
@@ -514,7 +500,165 @@ export const sendRequestRejectedToClient = async (
 
   return sendEmail({
     to: clientEmail,
-    subject: `Réponse à votre demande "${requestTitle}"`,
+    subject: `Réponse à votre demande : ${requestTitle}`,
+    html,
+  });
+};
+
+/**
+ * Envoyer un email de notification de changement de statut de dossier
+ */
+export const sendCaseStatusChangedEmail = async (
+  clientEmail: string,
+  clientFirstName: string,
+  caseTitle: string,
+  oldStatus: string,
+  newStatus: string,
+  caseId: string
+): Promise<boolean> => {
+  const statusLabels: Record<string, string> = {
+    pending: 'En attente',
+    in_progress: 'En cours',
+    on_hold: 'En pause',
+    closed: 'Fermé',
+    archived: 'Archivé'
+  };
+
+  const statusColors: Record<string, string> = {
+    pending: '#f59e0b',
+    in_progress: '#3b82f6',
+    on_hold: '#6b7280',
+    closed: '#10b981',
+    archived: '#9ca3af'
+  };
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .status-box { background-color: white; border: 1px solid #e5e7eb; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center; }
+        .status-badge { display: inline-block; padding: 8px 20px; border-radius: 20px; color: white; font-weight: bold; margin: 10px; }
+        .arrow { font-size: 24px; color: #6b7280; margin: 0 10px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Mise à jour de votre dossier</h1>
+        </div>
+        <div class="content">
+          <h2>Bonjour ${clientFirstName},</h2>
+          <p>Le statut de votre dossier <strong>"${caseTitle}"</strong> a été mis à jour.</p>
+          
+          <div class="status-box">
+            <span class="status-badge" style="background-color: ${statusColors[oldStatus] || '#6b7280'}">
+              ${statusLabels[oldStatus] || oldStatus}
+            </span>
+            <span class="arrow">→</span>
+            <span class="status-badge" style="background-color: ${statusColors[newStatus] || '#6b7280'}">
+              ${statusLabels[newStatus] || newStatus}
+            </span>
+          </div>
+
+          ${newStatus === 'closed' ? `
+            <p style="background-color: #ecfdf5; padding: 15px; border-radius: 5px; border-left: 4px solid #10b981;">
+              <strong>Félicitations !</strong> Votre dossier a été clôturé avec succès.
+            </p>
+          ` : ''}
+
+          <p>Connectez-vous pour consulter les détails et l'historique complet de votre dossier.</p>
+          
+          <center>
+            <a href="http://localhost:3001/cases/${caseId}" class="button">Voir mon dossier</a>
+          </center>
+
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: clientEmail,
+    subject: `Mise à jour de votre dossier : ${caseTitle}`,
+    html,
+  });
+};
+
+/**
+ * Envoyer un email de notification d'upload de document
+ */
+export const sendDocumentUploadedEmail = async (
+  recipientEmail: string,
+  recipientFirstName: string,
+  uploaderName: string,
+  documentTitle: string,
+  caseTitle: string,
+  caseId: string,
+  isConfidential: boolean = false
+): Promise<boolean> => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #8b5cf6; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .document-box { background-color: white; border: 1px solid #e5e7eb; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .document-icon { font-size: 48px; text-align: center; margin-bottom: 15px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #8b5cf6; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        ${isConfidential ? '.confidential-badge { background-color: #fef2f2; color: #dc2626; padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }' : ''}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Nouveau document</h1>
+        </div>
+        <div class="content">
+          <h2>Bonjour ${recipientFirstName},</h2>
+          <p>${uploaderName} a ajouté un nouveau document à votre dossier <strong>"${caseTitle}"</strong>.</p>
+          
+          <div class="document-box">
+            <p style="text-align: center;">
+              <strong>${documentTitle}</strong>
+              ${isConfidential ? '<br><span class="confidential-badge">Document confidentiel</span>' : ''}
+            </p>
+          </div>
+
+          <p>Vous pouvez consulter ce document dès maintenant dans votre espace client.</p>
+          
+          <center>
+            <a href="http://localhost:3001/cases/${caseId}" class="button">Consulter le document</a>
+          </center>
+
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: recipientEmail,
+    subject: `Nouveau document : ${documentTitle}`,
     html,
   });
 };

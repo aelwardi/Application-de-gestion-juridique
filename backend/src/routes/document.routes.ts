@@ -4,6 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/auth.middleware';
+import { sendDocumentUploadedEmail } from '../utils/email.util';
 
 import { pool } from '../config/database.config';
 const storage = multer.diskStorage({
@@ -121,6 +122,26 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
                 })
               ]
             );
+
+            const clientEmailQuery = await pool.query(
+              'SELECT first_name, email FROM users WHERE id = $1',
+              [caseData.client_id]
+            );
+
+            if (clientEmailQuery.rows.length > 0) {
+              const client = clientEmailQuery.rows[0];
+              sendDocumentUploadedEmail(
+                client.email,
+                client.first_name,
+                uploaderName,
+                title,
+                caseData.case_title,
+                case_id,
+                false
+              ).catch(error => {
+                console.error('Erreur envoi email document au client:', error);
+              });
+            }
           } else if (uploaderRole === 'client') {
             await pool.query(
               `INSERT INTO notifications (user_id, notification_type, title, message, data)
@@ -138,6 +159,26 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
                 })
               ]
             );
+
+            const lawyerEmailQuery = await pool.query(
+              'SELECT first_name, email FROM users WHERE id = $1',
+              [caseData.lawyer_id]
+            );
+
+            if (lawyerEmailQuery.rows.length > 0) {
+              const lawyer = lawyerEmailQuery.rows[0];
+              sendDocumentUploadedEmail(
+                lawyer.email,
+                lawyer.first_name,
+                uploaderName,
+                title,
+                caseData.case_title,
+                case_id,
+                false
+              ).catch(error => {
+                console.error('Erreur envoi email document à l\'avocat:', error);
+              });
+            }
           }
         }
       } catch (notifError) {
