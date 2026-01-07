@@ -28,7 +28,7 @@
             <div class="flex gap-2">
               <!-- Boutons d'action cachés si le rendez-vous est expiré -->
               <button
-                v-if="!isAppointmentExpired && appointment.status === 'scheduled' && authStore.user?.role === 'client'"
+                v-if="!isAppointmentExpired && appointment.status === 'pending' && authStore.user?.role === 'client'"
                 @click="handleAction('confirm')"
                 class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-semibold"
               >
@@ -106,19 +106,19 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
             <div>
-              <p class="text-green-900 font-bold text-lg">✅ Rendez-vous confirmé</p>
+              <p class="text-green-900 font-bold text-lg">Rendez-vous confirmé</p>
               <p class="text-green-700 text-sm">Ce rendez-vous est confirmé et validé par toutes les parties</p>
             </div>
           </div>
         </div>
 
-        <div v-if="appointment.status === 'scheduled'" class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-xl p-6 mb-6">
+        <div v-if="appointment.status === 'pending'" class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-xl p-6 mb-6">
           <div class="flex items-center gap-3">
             <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
             </svg>
             <div>
-              <p class="text-blue-900 font-bold text-lg">📅 Rendez-vous programmé</p>
+              <p class="text-blue-900 font-bold text-lg">Rendez-vous en attente</p>
               <p class="text-blue-700 text-sm">En attente de confirmation</p>
             </div>
           </div>
@@ -428,8 +428,8 @@ const getDuration = (s: any, e: any) => {
   const diff = Math.floor((new Date(e).getTime() - new Date(s).getTime()) / 60000);
   return diff >= 60 ? `${Math.floor(diff/60)}h${diff%60 || ''}` : `${diff} min`;
 };
-const getStatusClass = (s: string) => ({ 'scheduled': 'bg-blue-100 text-blue-700', 'confirmed': 'bg-green-100 text-green-700', 'completed': 'bg-gray-100 text-gray-700', 'cancelled': 'bg-red-100 text-red-700' }[s] || 'bg-gray-100');
-const getStatusLabel = (s: string) => ({ scheduled: 'Prévu', confirmed: 'Confirmé', completed: 'Terminé', cancelled: 'Annulé' }[s] || s);
+const getStatusClass = (s: string) => ({ 'pending': 'bg-blue-100 text-blue-700', 'confirmed': 'bg-green-100 text-green-700', 'completed': 'bg-gray-100 text-gray-700', 'cancelled': 'bg-red-100 text-red-700', 'no_show': 'bg-orange-100 text-orange-700' }[s] || 'bg-gray-100');
+const getStatusLabel = (s: string) => ({ pending: 'En attente', confirmed: 'Confirmé', completed: 'Terminé', cancelled: 'Annulé', no_show: 'Absent' }[s] || s);
 const getLocationTypeLabel = (t: string) => ({ office: 'Au Cabinet', online: 'En Visioconférence', court: 'Au Tribunal', other: 'Autre' }[t] || t);
 
 onMounted(loadData);

@@ -14,18 +14,18 @@ export const checkConflicts = async (
       SELECT 
         a.id,
         a.title,
-        a.start_time,
-        a.end_time,
+        a.start_date as start_time,
+        a.end_date as end_time,
         a.location_address,
         CONCAT(c.first_name, ' ', c.last_name) as client_name
       FROM appointments a
       LEFT JOIN users c ON a.client_id = c.id
       WHERE a.lawyer_id = $1
-        AND a.status IN ('scheduled', 'confirmed')
+        AND a.status IN ('pending', 'confirmed')
         AND (
-          (a.start_time >= $2 AND a.start_time < $3)
-          OR (a.end_time > $2 AND a.end_time <= $3)
-          OR (a.start_time <= $2 AND a.end_time >= $3)
+          (a.start_date >= $2 AND a.start_date < $3)
+          OR (a.end_date > $2 AND a.end_date <= $3)
+          OR (a.start_date <= $2 AND a.end_date >= $3)
         )
     `;
 
@@ -36,7 +36,7 @@ export const checkConflicts = async (
       params.push(excludeAppointmentId);
     }
 
-    query += ` ORDER BY a.start_time`;
+    query += ` ORDER BY a.start_date`;
 
     const result = await pool.query(query, params);
     return result.rows;
@@ -65,13 +65,13 @@ export const findAvailableSlots = async (
     const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
     const query = `
-      SELECT start_time, end_time
+      SELECT start_date as start_time, end_date as end_time
       FROM appointments
       WHERE lawyer_id = $1
-        AND start_time >= $2
-        AND start_time < $3
-        AND status IN ('scheduled', 'confirmed')
-      ORDER BY start_time
+        AND start_date >= $2
+        AND start_date < $3
+        AND status IN ('pending', 'confirmed')
+      ORDER BY start_date
     `;
 
     const result = await pool.query(query, [

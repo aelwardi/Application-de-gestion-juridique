@@ -229,13 +229,18 @@ router.get('/appointment/:appointmentId', async (req: Request, res: Response) =>
 
     const query = `
       SELECT s.*,
+        s.suggested_by as suggested_by_user_id,
+        s.suggested_to as suggested_to_user_id,
+        s.suggested_start_date as suggested_start_time,
+        s.suggested_end_date as suggested_end_time,
+        s.message as notes,
         u1.first_name as suggested_by_first_name,
         u1.last_name as suggested_by_last_name,
         u2.first_name as suggested_to_first_name,
         u2.last_name as suggested_to_last_name
       FROM appointment_suggestions s
-      LEFT JOIN users u1 ON s.suggested_by_user_id = u1.id
-      LEFT JOIN users u2 ON s.suggested_to_user_id = u2.id
+      LEFT JOIN users u1 ON s.suggested_by = u1.id
+      LEFT JOIN users u2 ON s.suggested_to = u2.id
       WHERE s.appointment_id = $1
       ORDER BY s.created_at DESC
     `;

@@ -23,8 +23,20 @@
 
       <!-- Content -->
       <div class="p-5 space-y-4">
+        <!-- Alerte si lawyerId manquant -->
+        <div v-if="!props.lawyerId" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm text-red-800 font-medium">
+              Erreur : L'ID de l'avocat est manquant. Impossible de charger les créneaux disponibles.
+            </p>
+          </div>
+        </div>
+
         <!-- Sélecteur de date -->
-        <div>
+        <div v-if="props.lawyerId">
           <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Sélectionner une date</label>
           <input
             v-model="selectedDate"
@@ -183,6 +195,12 @@ onMounted(() => {
 
 const loadAvailableSlots = async () => {
   if (!selectedDate.value) return;
+
+  if (!props.lawyerId) {
+    console.error('lawyerId est requis pour charger les créneaux disponibles');
+    availableSlots.value = [];
+    return;
+  }
 
   loading.value = true;
   selectedSlot.value = null;

@@ -19,6 +19,8 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
     const query = `
       SELECT 
         a.*,
+        a.start_date as start_time,
+        a.end_date as end_time,
         l.first_name as lawyer_first_name,
         l.last_name as lawyer_last_name,
         l.email as lawyer_email,
@@ -28,7 +30,7 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
       FROM appointments a
       LEFT JOIN users l ON a.lawyer_id = l.id
       LEFT JOIN users c ON a.client_id = c.id
-      WHERE a.id = $1 AND a.status IN ('scheduled', 'confirmed')
+      WHERE a.id = $1 AND a.status IN ('pending', 'confirmed')
     `;
 
     const result = await pool.query(query, [appointmentId]);
@@ -166,9 +168,9 @@ export const sendDailyReminders = async () => {
     const query = `
       SELECT id 
       FROM appointments 
-      WHERE start_time >= NOW() + INTERVAL '23 hours'
-        AND start_time <= NOW() + INTERVAL '25 hours'
-        AND status IN ('scheduled', 'confirmed')
+      WHERE start_date >= NOW() + INTERVAL '23 hours'
+        AND start_date <= NOW() + INTERVAL '25 hours'
+        AND status IN ('pending', 'confirmed')
         AND (reminder_24h_sent = false OR reminder_24h_sent IS NULL)
     `;
 
@@ -194,9 +196,9 @@ export const sendHourlyReminders = async () => {
     const query = `
       SELECT id 
       FROM appointments 
-      WHERE start_time >= NOW() + INTERVAL '90 minutes'
-        AND start_time <= NOW() + INTERVAL '150 minutes'
-        AND status IN ('scheduled', 'confirmed')
+      WHERE start_date >= NOW() + INTERVAL '90 minutes'
+        AND start_date <= NOW() + INTERVAL '150 minutes'
+        AND status IN ('pending', 'confirmed')
         AND (reminder_2h_sent = false OR reminder_2h_sent IS NULL)
     `;
 

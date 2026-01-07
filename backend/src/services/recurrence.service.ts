@@ -218,11 +218,13 @@ export const getSeriesAppointments = async (seriesId: string) => {
   try {
     const result = await pool.query(`
       SELECT a.*, 
+        a.start_date as start_time,
+        a.end_date as end_time,
         CONCAT(c.first_name, ' ', c.last_name) as client_name
       FROM appointments a
       LEFT JOIN users c ON a.client_id = c.id
       WHERE a.series_id = $1
-      ORDER BY a.start_time
+      ORDER BY a.start_date
     `, [seriesId]);
 
     return result.rows;

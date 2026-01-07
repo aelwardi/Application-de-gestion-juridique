@@ -15,7 +15,7 @@ export interface AppointmentSuggestion {
   status: 'pending' | 'accepted' | 'rejected' | 'countered';
   notes?: string;
   created_at: Date;
-  updated_at: Date;
+  responded_at?: Date;
 }
 
 export interface CreateSuggestionInput {
@@ -33,10 +33,15 @@ export interface CreateSuggestionInput {
 export const createSuggestion = async (data: CreateSuggestionInput): Promise<AppointmentSuggestion> => {
   const query = `
     INSERT INTO appointment_suggestions (
-      id, appointment_id, suggested_by_user_id, suggested_to_user_id,
-      suggested_start_time, suggested_end_time, status, notes
+      id, appointment_id, suggested_by, suggested_to,
+      suggested_start_date, suggested_end_date, status, message
     ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
-    RETURNING *
+    RETURNING *,
+      suggested_by as suggested_by_user_id,
+      suggested_to as suggested_to_user_id,
+      suggested_start_date as suggested_start_time,
+      suggested_end_date as suggested_end_time,
+      message as notes
   `;
 
   const values = [
@@ -109,18 +114,23 @@ export const createSuggestion = async (data: CreateSuggestionInput): Promise<App
  * Récupérer les suggestions d'un utilisateur
  */
 export const getUserSuggestions = async (userId: string, role: 'suggested_by' | 'suggested_to'): Promise<AppointmentSuggestion[]> => {
-  const field = role === 'suggested_by' ? 'suggested_by_user_id' : 'suggested_to_user_id';
+  const field = role === 'suggested_by' ? 'suggested_by' : 'suggested_to';
 
   const query = `
     SELECT s.*,
+      s.suggested_by as suggested_by_user_id,
+      s.suggested_to as suggested_to_user_id,
+      s.suggested_start_date as suggested_start_time,
+      s.suggested_end_date as suggested_end_time,
+      s.message as notes,
       u1.first_name as suggested_by_first_name,
       u1.last_name as suggested_by_last_name,
       u2.first_name as suggested_to_first_name,
       u2.last_name as suggested_to_last_name,
       a.title as appointment_title
     FROM appointment_suggestions s
-    LEFT JOIN users u1 ON s.suggested_by_user_id = u1.id
-    LEFT JOIN users u2 ON s.suggested_to_user_id = u2.id
+    LEFT JOIN users u1 ON s.suggested_by = u1.id
+    LEFT JOIN users u2 ON s.suggested_to = u2.id
     LEFT JOIN appointments a ON s.appointment_id = a.id
     WHERE s.${field} = $1
     ORDER BY s.created_at DESC
@@ -140,9 +150,14 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
 
     const updateQuery = `
       UPDATE appointment_suggestions
-      SET status = 'accepted', updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND suggested_to_user_id = $2
-      RETURNING *
+      SET status = 'accepted', responded_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND suggested_to = $2
+      RETURNING *,
+        suggested_by as suggested_by_user_id,
+        suggested_to as suggested_to_user_id,
+        suggested_start_date as suggested_start_time,
+        suggested_end_date as suggested_end_time,
+        message as notes
     `;
     const updateResult = await client.query(updateQuery, [suggestionId, lawyerId]);
     const suggestion = updateResult.rows[0];
@@ -155,9 +170,11 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
     if (suggestion.appointment_id) {
       const updateAptQuery = `
         UPDATE appointments
-        SET start_time = $1, end_time = $2, status = 'scheduled', updated_at = CURRENT_TIMESTAMP
+        SET start_date = $1, end_date = $2, status = 'pending', updated_at = CURRENT_TIMESTAMP
         WHERE id = $3
-        RETURNING *
+        RETURNING *,
+          start_date as start_time,
+          end_date as end_time
       `;
       const aptResult = await client.query(updateAptQuery, [
         suggestion.suggested_start_time,
@@ -168,10 +185,12 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
     } else {
       const createAptQuery = `
         INSERT INTO appointments (
-          lawyer_id, client_id, title, start_time, end_time, 
+          lawyer_id, client_id, title, start_date, end_date, 
           appointment_type, status
-        ) VALUES ($1, $2, $3, $4, $5, 'consultation', 'scheduled')
-        RETURNING *
+        ) VALUES ($1, $2, $3, $4, $5, 'consultation', 'pending')
+        RETURNING *,
+          start_date as start_time,
+          end_date as end_time
       `;
       const aptResult = await client.query(createAptQuery, [
         lawyerId,
@@ -220,9 +239,14 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
 export const rejectSuggestion = async (suggestionId: string, lawyerId: string, reason?: string): Promise<AppointmentSuggestion> => {
   const query = `
     UPDATE appointment_suggestions
-    SET status = 'rejected', notes = COALESCE($3, notes), updated_at = CURRENT_TIMESTAMP
-    WHERE id = $1 AND suggested_to_user_id = $2
-    RETURNING *
+    SET status = 'rejected', message = COALESCE($3, message), responded_at = CURRENT_TIMESTAMP
+    WHERE id = $1 AND suggested_to = $2
+    RETURNING *,
+      suggested_by as suggested_by_user_id,
+      suggested_to as suggested_to_user_id,
+      suggested_start_date as suggested_start_time,
+      suggested_end_date as suggested_end_time,
+      message as notes
   `;
 
   const result = await pool.query(query, [suggestionId, lawyerId, reason]);
@@ -265,7 +289,7 @@ export const counterSuggestion = async (
     await client.query('BEGIN');
 
     await client.query(
-      'UPDATE appointment_suggestions SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      'UPDATE appointment_suggestions SET status = $1, responded_at = CURRENT_TIMESTAMP WHERE id = $2',
       ['countered', originalSuggestionId]
     );
 
@@ -281,17 +305,22 @@ export const counterSuggestion = async (
 
     const createQuery = `
       INSERT INTO appointment_suggestions (
-        id, appointment_id, suggested_by_user_id, suggested_to_user_id,
-        suggested_start_time, suggested_end_time, status, notes
+        id, appointment_id, suggested_by, suggested_to,
+        suggested_start_date, suggested_end_date, status, message
       ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
-      RETURNING *
+      RETURNING *,
+        suggested_by as suggested_by_user_id,
+        suggested_to as suggested_to_user_id,
+        suggested_start_date as suggested_start_time,
+        suggested_end_date as suggested_end_time,
+        message as notes
     `;
 
     const values = [
       uuidv4(),
       original.appointment_id,
       lawyerId,
-      original.suggested_by_user_id,
+      original.suggested_by,
       newStartTime,
       newEndTime,
       notes || 'Contre-proposition de l\'avocat'

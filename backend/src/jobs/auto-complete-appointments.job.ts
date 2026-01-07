@@ -9,8 +9,8 @@ export const autoCompleteAppointments = async (): Promise<number> => {
   const query = `
     UPDATE appointments
     SET status = 'completed', updated_at = CURRENT_TIMESTAMP
-    WHERE status IN ('scheduled', 'confirmed')
-    AND end_time < NOW()
+    WHERE status IN ('pending', 'confirmed')
+    AND end_date < NOW()
     RETURNING id
   `;
 
@@ -19,12 +19,12 @@ export const autoCompleteAppointments = async (): Promise<number> => {
     const count = result.rowCount || 0;
 
     if (count > 0) {
-      console.log(`${count} rendez-vous marqués automatiquement comme terminés`);
+      console.log(`✅ ${count} rendez-vous marqués automatiquement comme terminés`);
     }
 
     return count;
   } catch (error) {
-    console.error('Erreur lors du marquage automatique des rendez-vous:', error);
+    console.error('❌ Erreur lors du marquage automatique des rendez-vous:', error);
     throw error;
   }
 };
@@ -37,7 +37,7 @@ export const getAppointmentsToComplete = async (): Promise<any[]> => {
     SELECT 
       a.id,
       a.title,
-      a.end_time,
+      a.end_date as end_time,
       a.status,
       c.first_name as client_first_name,
       c.last_name as client_last_name,
@@ -46,9 +46,9 @@ export const getAppointmentsToComplete = async (): Promise<any[]> => {
     FROM appointments a
     LEFT JOIN users c ON a.client_id = c.id
     LEFT JOIN users l ON a.lawyer_id = l.id
-    WHERE a.status IN ('scheduled', 'confirmed')
-    AND a.end_time < NOW()
-    ORDER BY a.end_time ASC
+    WHERE a.status IN ('pending', 'confirmed')
+    AND a.end_date < NOW()
+    ORDER BY a.end_date ASC
   `;
 
   try {
