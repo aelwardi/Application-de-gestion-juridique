@@ -244,10 +244,10 @@ export const getAppointmentStats = async () => {
   const query = `
     SELECT 
       COUNT(*) as total,
-      COUNT(*) FILTER (WHERE status = 'scheduled') as scheduled,
+      COUNT(*) FILTER (WHERE status = 'pending') as scheduled,
       COUNT(*) FILTER (WHERE status = 'completed') as completed,
       COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled,
-      COUNT(*) FILTER (WHERE start_time >= NOW() AND status = 'scheduled') as upcoming
+      COUNT(*) FILTER (WHERE start_date >= NOW() AND status = 'pending') as upcoming
     FROM appointments
   `;
 

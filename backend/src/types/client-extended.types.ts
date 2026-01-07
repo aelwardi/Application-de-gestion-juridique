@@ -6,11 +6,11 @@ export interface ClientRequest {
   title: string;
   description: string;
   case_category?: string;
-  urgency: 'low' | 'normal' | 'high' | 'urgent';
+  urgency: 'low' | 'medium' | 'high' | 'urgent';
   budget_min?: number;
   budget_max?: number;
   preferred_date?: Date;
-  status: 'pending' | 'viewed' | 'accepted' | 'rejected' | 'cancelled' | 'completed';
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
   lawyer_response?: string;
   responded_at?: Date;
   created_at: Date;
@@ -24,7 +24,7 @@ export interface CreateClientRequestInput {
   title: string;
   description: string;
   case_category?: string;
-  urgency?: 'low' | 'normal' | 'high' | 'urgent';
+  urgency?: 'low' | 'medium' | 'high' | 'urgent';
   budget_min?: number;
   budget_max?: number;
   preferred_date?: Date;
@@ -32,7 +32,7 @@ export interface CreateClientRequestInput {
 
 export interface UpdateClientRequestInput {
   lawyer_id?: string;
-  status?: 'pending' | 'viewed' | 'accepted' | 'rejected' | 'cancelled' | 'completed';
+  status?: 'pending' | 'accepted' | 'rejected' | 'cancelled';
   lawyer_response?: string;
   responded_at?: Date;
 }

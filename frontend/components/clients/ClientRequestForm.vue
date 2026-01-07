@@ -83,7 +83,7 @@ const emptyForm = {
   title: '',
   case_category: '',
   description: '',
-  urgency: 'normal',
+  urgency: 'medium',
   budget_min: null,
   budget_max: null,
   lawyer_id: '', // Sera rempli par la prop
@@ -106,7 +106,7 @@ const fillForm = () => {
       title: props.initialData.title || '',
       case_category: props.initialData.case_category || '',
       description: props.initialData.description || '',
-      urgency: props.initialData.urgency || 'normal',
+      urgency: props.initialData.urgency || 'medium',
       budget_min: props.initialData.budget_min || null,
       budget_max: props.initialData.budget_max || null,
       lawyer_id: props.initialData.lawyer_id || '',
@@ -140,6 +140,7 @@ const handleSubmit = async () => {
     const payload = {
       client_id: authStore.user.id,
       ...form.value,
+      lawyer_id: form.value.lawyer_id || null, // Convertir chaîne vide en null
     };
 
     console.log("[DEBUG SUBMIT] Envoi du payload:", payload);

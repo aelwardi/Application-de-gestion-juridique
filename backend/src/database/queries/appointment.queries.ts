@@ -15,7 +15,7 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
   const query = `
     INSERT INTO appointments (
       case_id, lawyer_id, client_id, appointment_type, title, description,
-      start_time, end_time, location_type, location_address, 
+      start_date, end_date, location_type, location_address, 
       location_latitude, location_longitude, meeting_url, status, notes
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING *
@@ -35,7 +35,7 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
     data.location_latitude || null,
     data.location_longitude || null,
     data.meeting_url || null,
-    data.status || 'scheduled',
+    data.status || 'pending',
     data.notes || null
   ];
 
@@ -49,7 +49,38 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<App
 export const getAllAppointments = async (filters: AppointmentFilters = {}): Promise<{ appointments: AppointmentWithDetails[], total: number }> => {
   let query = `
     SELECT 
-      a.*,
+      a.id,
+      a.case_id,
+      a.lawyer_id,
+      a.client_id,
+      a.appointment_type,
+      a.title,
+      a.description,
+      a.start_date as start_time,
+      a.end_date as end_time,
+      a.location,
+      a.location_type,
+      a.location_address,
+      a.location_latitude,
+      a.location_longitude,
+      a.meeting_url,
+      a.status,
+      a.is_recurring,
+      a.recurrence_pattern,
+      a.recurrence_end_date,
+      a.parent_appointment_id,
+      a.series_id,
+      a.reminder_sent,
+      a.reminder_sent_at,
+      a.reminder_24h_sent,
+      a.reminder_24h_sent_at,
+      a.reminder_2h_sent,
+      a.reminder_2h_sent_at,
+      a.notes,
+      a.private_notes,
+      a.shared_notes,
+      a.created_at,
+      a.updated_at,
       c.case_number,
       c.title as case_title,
       lu.first_name as lawyer_first_name,
@@ -96,12 +127,12 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}): Prom
   }
 
   if (filters.start_date) {
-    query += ` AND a.start_time >= $${paramCount++}`;
+    query += ` AND a.start_date >= $${paramCount++}`;
     values.push(filters.start_date);
   }
 
   if (filters.end_date) {
-    query += ` AND a.start_time <= $${paramCount++}`;
+    query += ` AND a.start_date <= $${paramCount++}`;
     values.push(filters.end_date);
   }
 
@@ -120,7 +151,7 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}): Prom
   const total = parseInt(countResult.rows[0].count);
 
   // Ajouter l'ordre et la pagination
-  query += ` ORDER BY a.start_time ASC`;
+  query += ` ORDER BY a.start_date ASC`;
 
   if (filters.limit) {
     query += ` LIMIT $${paramCount++}`;
@@ -142,7 +173,38 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}): Prom
 export const getAppointmentById = async (id: string): Promise<AppointmentWithDetails | null> => {
   const query = `
     SELECT 
-      a.*,
+      a.id,
+      a.case_id,
+      a.lawyer_id,
+      a.client_id,
+      a.appointment_type,
+      a.title,
+      a.description,
+      a.start_date as start_time,
+      a.end_date as end_time,
+      a.location,
+      a.location_type,
+      a.location_address,
+      a.location_latitude,
+      a.location_longitude,
+      a.meeting_url,
+      a.status,
+      a.is_recurring,
+      a.recurrence_pattern,
+      a.recurrence_end_date,
+      a.parent_appointment_id,
+      a.series_id,
+      a.reminder_sent,
+      a.reminder_sent_at,
+      a.reminder_24h_sent,
+      a.reminder_24h_sent_at,
+      a.reminder_2h_sent,
+      a.reminder_2h_sent_at,
+      a.notes,
+      a.private_notes,
+      a.shared_notes,
+      a.created_at,
+      a.updated_at,
       c.case_number,
       c.title as case_title,
       lu.first_name as lawyer_first_name,
@@ -191,12 +253,12 @@ export const updateAppointment = async (id: string, data: UpdateAppointmentDTO):
   }
 
   if (data.start_time) {
-    fields.push(`start_time = $${paramCount++}`);
+    fields.push(`start_date = $${paramCount++}`);
     values.push(data.start_time);
   }
 
   if (data.end_time) {
-    fields.push(`end_time = $${paramCount++}`);
+    fields.push(`end_date = $${paramCount++}`);
     values.push(data.end_time);
   }
 
@@ -343,15 +405,15 @@ export const getAppointmentStats = async (lawyerId?: string, clientId?: string):
   let query = `
     SELECT 
       COUNT(*) as total,
-      COUNT(*) FILTER (WHERE status = 'scheduled') as scheduled,
+      COUNT(*) FILTER (WHERE status = 'pending') as scheduled,
       COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed,
       COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled,
       COUNT(*) FILTER (WHERE status = 'completed') as completed,
       COUNT(*) FILTER (WHERE status = 'no_show') as no_show,
-      COUNT(*) FILTER (WHERE start_time >= NOW()) as upcoming,
-      COUNT(*) FILTER (WHERE DATE(start_time) = CURRENT_DATE) as today,
-      COUNT(*) FILTER (WHERE start_time >= DATE_TRUNC('week', NOW()) AND start_time < DATE_TRUNC('week', NOW()) + INTERVAL '1 week') as this_week,
-      COUNT(*) FILTER (WHERE start_time >= DATE_TRUNC('month', NOW()) AND start_time < DATE_TRUNC('month', NOW()) + INTERVAL '1 month') as this_month
+      COUNT(*) FILTER (WHERE start_date >= NOW()) as upcoming,
+      COUNT(*) FILTER (WHERE DATE(start_date) = CURRENT_DATE) as today,
+      COUNT(*) FILTER (WHERE start_date >= DATE_TRUNC('week', NOW()) AND start_date < DATE_TRUNC('week', NOW()) + INTERVAL '1 week') as this_week,
+      COUNT(*) FILTER (WHERE start_date >= DATE_TRUNC('month', NOW()) AND start_date < DATE_TRUNC('month', NOW()) + INTERVAL '1 month') as this_month
     FROM appointments
     WHERE 1=1
   `;

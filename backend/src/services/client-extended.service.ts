@@ -30,7 +30,7 @@ export class ClientExtendedService {
       title,
       description,
       case_category,
-      urgency = 'normal',
+      urgency = 'medium',
       budget_min,
       budget_max,
       preferred_date,
@@ -38,7 +38,7 @@ export class ClientExtendedService {
 
     const result = await pool.query(clientRequestQueries.create, [
       client_id,
-      lawyer_id,
+      lawyer_id || null,
       request_type,
       title,
       description,

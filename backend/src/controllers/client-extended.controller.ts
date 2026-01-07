@@ -24,9 +24,37 @@ export class ClientExtendedController {
         data: request,
       });
     } catch (error: any) {
+      console.error("Erreur lors de la création de la demande:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la création de la demande",
+        error: error.message,
+      });
+    }
+  }
+
+  async getClientRequestById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const request = await clientExtendedService.getClientRequestById(id);
+
+      if (!request) {
+        res.status(404).json({
+          success: false,
+          message: "Demande non trouvée",
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: request,
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération de la demande:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors de la récupération de la demande",
         error: error.message,
       });
     }

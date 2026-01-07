@@ -314,9 +314,9 @@ export const getAppointmentStats = async (): Promise<any> => {
   const query = `
     SELECT 
       COUNT(*) as total,
-      COUNT(CASE WHEN status = 'scheduled' THEN 1 END) as scheduled,
+      COUNT(CASE WHEN status = 'pending' THEN 1 END) as scheduled,
       COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
-      COUNT(CASE WHEN start_time > NOW() THEN 1 END) as upcoming
+      COUNT(CASE WHEN start_date > NOW() THEN 1 END) as upcoming
     FROM appointments
   `;
   const result = await pool.query(query);

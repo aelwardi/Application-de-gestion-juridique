@@ -142,9 +142,9 @@ export const clientQueries = {
       u.total_cases,
       u.active_cases,
       COUNT(CASE WHEN c.status = 'pending' THEN 1 END) as pending_cases,
-      COUNT(CASE WHEN c.status IN ('resolved', 'closed') THEN 1 END) as completed_cases,
+      COUNT(CASE WHEN c.status IN ('closed', 'archived') THEN 1 END) as completed_cases,
       (SELECT COUNT(*) FROM appointments 
-       WHERE client_id = $1 AND start_time > NOW() AND status = 'scheduled') as upcoming_appointments,
+       WHERE client_id = $1 AND start_date > NOW() AND status IN ('pending', 'confirmed')) as upcoming_appointments,
       (SELECT COUNT(*) FROM documents 
        WHERE uploaded_by = $1) as total_documents
     FROM users u
@@ -160,7 +160,7 @@ export const clientQueries = {
       COUNT(DISTINCT CASE WHEN c.status IN ('pending', 'in_progress') THEN c.id END) as active_cases_count,
       COUNT(DISTINCT CASE WHEN c.status = 'closed' THEN c.id END) as closed_cases_count,
       COUNT(DISTINCT a.id) as total_appointments,
-      COUNT(DISTINCT CASE WHEN a.status = 'scheduled' AND a.start_time > NOW() THEN a.id END) as upcoming_appointments,
+      COUNT(DISTINCT CASE WHEN a.status IN ('pending', 'confirmed') AND a.start_date > NOW() THEN a.id END) as upcoming_appointments,
       COUNT(DISTINCT d.id) as total_documents,
       COUNT(DISTINCT l.id) as lawyers_worked_with
     FROM users u
@@ -196,7 +196,7 @@ export const clientQueries = {
         json_build_object(
           'id', a.id,
           'title', a.title,
-          'start_time', a.start_time,
+          'start_date', a.start_date,
           'status', a.status
         )
       ) FILTER (WHERE a.id IS NOT NULL) as appointments

@@ -188,8 +188,9 @@
 
     <!-- Modal de détails de l'offre -->
     <NotificationsOfferDetailModal
+      v-if="canShowModal"
       :show="showOfferModal"
-      :offer="selectedOffer || {}"
+      :offer="selectedOffer"
       @close="closeOfferModal"
       @accept="handleOfferAcceptFromModal"
       @reject="handleOfferRejectFromModal"
@@ -213,6 +214,11 @@ const loading = ref(false);
 const activeFilter = ref('all');
 const showOfferModal = ref(false);
 const selectedOffer = ref<any>(null);
+
+// Computed pour vérifier si le modal peut s'afficher
+const canShowModal = computed(() => {
+  return showOfferModal.value && selectedOffer.value && selectedOffer.value.id;
+});
 
 const filters = [
   { value: 'all', label: 'Toutes' },
@@ -279,28 +285,50 @@ const showOfferDetails = async (notification: Notification) => {
     const { apiFetch } = useApi();
     const response = await apiFetch(`/clients-extended/requests/${notification.id}`) as any;
     selectedOffer.value = response.data || response;
-    showOfferModal.value = true;
-  } catch (error) {
+
+    // Vérifier que l'offre a un ID valide avant d'ouvrir le modal
+    if (selectedOffer.value && selectedOffer.value.id) {
+      showOfferModal.value = true;
+    } else {
+      console.error('Offre reçue sans ID valide:', selectedOffer.value);
+      alert('❌ Impossible de charger les détails de l\'offre');
+    }
+  } catch (error: any) {
     console.error('Erreur lors du chargement des détails:', error);
     // En cas d'erreur, utiliser les données de la notification
-    selectedOffer.value = notification;
+    // S'assurer que selectedOffer a au minimum un id et les infos nécessaires
+    const offerId = notification.data?.offer_id || notification.data?.case_id || notification.id;
+
+    if (!offerId) {
+      console.error('Impossible de déterminer l\'ID de l\'offre');
+      alert('❌ Impossible d\'identifier l\'offre');
+      return;
+    }
+
+    selectedOffer.value = {
+      id: offerId,
+      title: notification.title || notification.message,
+      message: notification.message,
+      description: notification.message,
+      ...notification.data,
+    };
     showOfferModal.value = true;
   }
 };
 
 const acceptOffer = async (notification: Notification) => {
-  if (!confirm('Êtes-vous sûr de vouloir accepter cette offre ?')) return;
+  if (!confirm('✅ Êtes-vous sûr de vouloir accepter cette offre ?\n\nUn nouveau dossier sera automatiquement créé.')) return;
 
   loading.value = true;
   try {
     await acceptOfferApi(notification.id);
     await notificationStore.markAsRead(notification.id);
     await loadNotifications();
-    alert('Offre acceptée avec succès ! Le dossier a été créé.');
-    navigateTo('/cases');
+    alert('✅ Offre acceptée avec succès ! Le dossier a été créé.');
+    // Rester sur la page des notifications
   } catch (error) {
     console.error('Erreur lors de l\'acceptation:', error);
-    alert('Erreur lors de l\'acceptation de l\'offre');
+    alert('❌ Erreur lors de l\'acceptation de l\'offre');
   } finally {
     loading.value = false;
   }
@@ -329,16 +357,23 @@ const closeOfferModal = () => {
 };
 
 const handleOfferAcceptFromModal = async () => {
-  if (!selectedOffer.value) return;
+  if (!selectedOffer.value || !selectedOffer.value.id) {
+    console.error('Pas d\'offre sélectionnée ou ID manquant');
+    alert('❌ Erreur : impossible d\'identifier l\'offre');
+    return;
+  }
+
+  // Sauvegarder l'ID avant de fermer le modal
+  const offerId = selectedOffer.value.id;
 
   loading.value = true;
   try {
-    await acceptOfferApi(selectedOffer.value.id);
+    await acceptOfferApi(offerId);
     closeOfferModal();
-    await notificationStore.markAsRead(selectedOffer.value.id);
+    await notificationStore.markAsRead(offerId);
     await loadNotifications();
     alert('✅ Offre acceptée avec succès ! Le dossier a été créé.');
-    navigateTo('/cases');
+    // Rester sur la page des notifications
   } catch (error) {
     console.error('Erreur lors de l\'acceptation:', error);
     alert('❌ Erreur lors de l\'acceptation de l\'offre');
@@ -348,18 +383,25 @@ const handleOfferAcceptFromModal = async () => {
 };
 
 const handleOfferRejectFromModal = async () => {
-  if (!selectedOffer.value) return;
+  if (!selectedOffer.value || !selectedOffer.value.id) {
+    console.error('Pas d\'offre sélectionnée ou ID manquant');
+    alert('❌ Erreur : impossible d\'identifier l\'offre');
+    return;
+  }
+
+  // Sauvegarder l'ID avant de fermer le modal
+  const offerId = selectedOffer.value.id;
 
   loading.value = true;
   try {
-    await declineOffer(selectedOffer.value.id);
+    await declineOffer(offerId);
     closeOfferModal();
-    await notificationStore.markAsRead(selectedOffer.value.id);
+    await notificationStore.markAsRead(offerId);
     await loadNotifications();
-    alert('Offre refusée');
+    alert('✅ Offre refusée avec succès');
   } catch (error) {
     console.error('Erreur lors du refus:', error);
-    alert('Erreur lors du refus de l\'offre');
+    alert('❌ Erreur lors du refus de l\'offre');
   } finally {
     loading.value = false;
   }

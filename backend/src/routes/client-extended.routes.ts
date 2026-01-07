@@ -8,6 +8,7 @@ const controller = new ClientExtendedController();
 router.use(authenticate);
 
 router.post("/requests", (req, res) => controller.createClientRequest(req, res));
+router.get("/requests/:id", (req, res) => controller.getClientRequestById(req, res));
 router.get("/requests/client/:clientId", (req, res) => controller.getClientRequestsByClientId(req, res));
 router.get("/requests/lawyer/:lawyerId", (req, res) => controller.getClientRequestsByLawyerId(req, res));
 router.put("/requests/:id", (req, res) => controller.updateClientRequest(req, res));

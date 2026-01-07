@@ -301,9 +301,9 @@ export const userQueries = {
       u.total_cases,
       u.active_cases,
       COUNT(CASE WHEN c.status = 'pending' THEN 1 END) as pending_cases,
-      COUNT(CASE WHEN c.status IN ('resolved', 'closed') THEN 1 END) as completed_cases,
+      COUNT(CASE WHEN c.status IN ('closed', 'archived') THEN 1 END) as completed_cases,
       (SELECT COUNT(*) FROM appointments 
-       WHERE client_id = $1 AND start_time > NOW() AND status = 'scheduled') as upcoming_appointments,
+       WHERE client_id = $1 AND start_date > NOW() AND status IN ('pending', 'confirmed')) as upcoming_appointments,
       (SELECT COUNT(*) FROM documents 
        WHERE uploaded_by = $1) as total_documents
     FROM users u
