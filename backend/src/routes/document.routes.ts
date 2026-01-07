@@ -33,19 +33,23 @@ const upload = multer({
  * POST /api/documents
  * Upload un document et envoie des notifications
  */
+/**
+ * POST /api/documents
+ * Upload un document et envoie des notifications
+ */
 router.post('/', authenticate, upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "Aucun fichier fourni" });
     }
 
-    const { 
-      title, 
-      document_type, 
-      case_id, 
-      is_confidential, 
+    const {
+      title,
+      document_type,
+      case_id,
+      is_confidential,
       uploaded_by,
-      description 
+      description
     } = req.body;
 
     const uploaderQuery = await pool.query(
@@ -221,6 +225,63 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
   }
 });
 
+/**
+ * GET /api/documents
+ * Récupère les documents avec filtres (user_id, case_id, etc.)
+ */
+router.get('/', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { user_id, case_id, limit = '20', offset = '0' } = req.query;
+
+    let query = `
+      SELECT 
+        d.*,
+        c.title as case_title,
+        c.case_number,
+        u.first_name as uploader_first_name,
+        u.last_name as uploader_last_name
+      FROM documents d
+      LEFT JOIN cases c ON d.case_id = c.id
+      LEFT JOIN users u ON d.uploaded_by = u.id
+      WHERE 1=1
+    `;
+
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    // Filtre par user_id (documents uploadés par ou accessibles à cet utilisateur)
+    if (user_id) {
+      query += ` AND (d.uploaded_by = $${paramIndex} OR c.client_id = $${paramIndex} OR c.lawyer_id = $${paramIndex})`;
+      params.push(user_id);
+      paramIndex++;
+    }
+
+    // Filtre par case_id
+    if (case_id) {
+      query += ` AND d.case_id = $${paramIndex}`;
+      params.push(case_id);
+      paramIndex++;
+    }
+
+    query += ` ORDER BY d.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(parseInt(limit as string), parseInt(offset as string));
+
+    const result = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        total: result.rowCount
+      }
+    });
+  } catch (error: any) {
+    console.error('Error fetching documents:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 /**
  * GET /api/documents/lawyer/:lawyerId

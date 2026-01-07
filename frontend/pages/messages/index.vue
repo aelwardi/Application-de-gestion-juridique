@@ -79,9 +79,12 @@
                       {{ conv.unread_count }}
                     </span>
                   </div>
-                  <!-- Afficher le nom du participant si c'est un dossier -->
-                  <p v-if="conv.case_info && conv.other_participants && conv.other_participants.length > 0" class="text-xs text-gray-500 mb-1 font-medium">
-                    {{ conv.other_participants[0].first_name }} {{ conv.other_participants[0].last_name }}
+                  <!-- Afficher le nom du participant -->
+                  <p v-if="conv.other_participant" class="text-xs text-gray-500 mb-1 font-medium">
+                    {{ conv.other_participant.first_name }} {{ conv.other_participant.last_name }}
+                    <span v-if="conv.other_participant.role" class="text-gray-400 capitalize">
+                      • {{ conv.other_participant.role === 'lawyer' ? 'Avocat' : 'Client' }}
+                    </span>
                   </p>
                   <p class="text-xs text-gray-600 truncate">
                     {{ conv.last_message?.message_text || 'Nouvelle conversation' }}
@@ -491,8 +494,8 @@ const closeNewConversationModal = () => {
 
 // Helper functions
 const getInitials = (conv: any) => {
-  if (!conv.other_participants || conv.other_participants.length === 0) return '?'
-  const participant = conv.other_participants[0]
+  if (!conv.other_participant) return '?'
+  const participant = conv.other_participant
   return `${participant.first_name?.[0] || ''}${participant.last_name?.[0] || ''}`.toUpperCase() || '?'
 }
 
@@ -503,14 +506,14 @@ const getConversationName = (conv: any) => {
   }
 
   // Sinon, afficher le nom du participant (conversation globale)
-  if (!conv.other_participants || conv.other_participants.length === 0) return 'Conversation'
-  const participant = conv.other_participants[0]
+  if (!conv.other_participant) return 'Conversation'
+  const participant = conv.other_participant
   return `${participant.first_name} ${participant.last_name}`
 }
 
 const getConversationRole = (conv: any) => {
-  if (!conv.other_participants || conv.other_participants.length === 0) return ''
-  const participant = conv.other_participants[0]
+  if (!conv.other_participant) return ''
+  const participant = conv.other_participant
 
   // Si c'est un dossier, afficher le nom du participant
   if (conv.case_info && conv.case_info.title) {
@@ -519,7 +522,7 @@ const getConversationRole = (conv: any) => {
 
   // Sinon, afficher le rôle (conversation globale)
   const roleLabels: Record<string, string> = {
-    avocat: 'Avocat',
+    lawyer: 'Avocat',
     client: 'Client',
     admin: 'Administrateur'
   }

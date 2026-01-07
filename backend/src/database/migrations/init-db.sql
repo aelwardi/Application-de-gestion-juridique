@@ -559,16 +559,23 @@ CREATE TABLE IF NOT EXISTS conversations (
     case_id UUID REFERENCES cases(id) ON DELETE SET NULL,
     last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_different_participants CHECK (participant1_id != participant2_id),
-    CONSTRAINT unique_conversation UNIQUE (participant1_id, participant2_id)
-    );
+    CONSTRAINT check_different_participants CHECK (participant1_id != participant2_id)
+);
 
 CREATE INDEX IF NOT EXISTS idx_conversations_participant1 ON conversations(participant1_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_participant2 ON conversations(participant2_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_case_id ON conversations(case_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_last_message_at ON conversations(last_message_at DESC);
 
-COMMENT ON TABLE conversations IS 'Conversations entre utilisateurs';
+CREATE UNIQUE INDEX IF NOT EXISTS unique_general_conversation
+ON conversations (LEAST(participant1_id, participant2_id), GREATEST(participant1_id, participant2_id))
+WHERE case_id IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS unique_case_conversation
+ON conversations (LEAST(participant1_id, participant2_id), GREATEST(participant1_id, participant2_id), case_id)
+WHERE case_id IS NOT NULL;
+
+COMMENT ON TABLE conversations IS 'Conversations entre utilisateurs (générales ou liées à un dossier)';
 
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

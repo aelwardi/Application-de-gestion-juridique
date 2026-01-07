@@ -71,18 +71,18 @@ export const optimizeRoute = async (
       SELECT 
         id,
         title,
-        start_time,
+        start_date as start_time,
         location_latitude,
         location_longitude,
         location_address
       FROM appointments
       WHERE lawyer_id = $1
-        AND start_time >= $2
-        AND start_time < $3
-        AND status IN ('scheduled', 'confirmed')
+        AND start_date >= $2
+        AND start_date < $3
+        AND status IN ('pending', 'confirmed')
         AND location_latitude IS NOT NULL
         AND location_longitude IS NOT NULL
-      ORDER BY start_time
+      ORDER BY start_date
     `;
 
     const result = await pool.query(query, [

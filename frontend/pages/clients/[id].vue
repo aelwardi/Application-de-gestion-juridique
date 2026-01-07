@@ -167,18 +167,18 @@
                 <div class="flex items-start justify-between">
                   <div>
                     <h3 class="font-semibold text-gray-900">{{ caseItem.title }}</h3>
-                    <p class="text-sm text-gray-600 mt-1">{{ caseItem.caseNumber }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ caseItem.case_number || caseItem.caseNumber }}</p>
                     <div class="flex items-center gap-2 mt-2">
-                      <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {{ caseItem.status }}
+                      <span :class="getStatusClass(caseItem.status)" class="px-2 py-1 text-xs rounded-full font-medium">
+                        {{ getStatusLabel(caseItem.status) }}
                       </span>
-                      <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-                        {{ caseItem.priority }}
+                      <span :class="getPriorityClass(caseItem.priority)" class="px-2 py-1 text-xs rounded-full font-medium">
+                        {{ getPriorityLabel(caseItem.priority) }}
                       </span>
                     </div>
                   </div>
                   <span class="text-sm text-gray-500">
-                    {{ formatDate(caseItem.createdAt) }}
+                    {{ formatDate(caseItem.created_at || caseItem.createdAt) }}
                   </span>
                 </div>
               </div>
@@ -256,7 +256,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ClientWithUser, ClientStats, ClientCase, ClientAppointment, ClientDocument } from '~/types/client';
+import type { Client, ClientStats } from '~/types/client';
 
 definePageMeta({
   middleware: ['auth', 'lawyer'],
@@ -266,11 +266,11 @@ definePageMeta({
 const route = useRoute();
 const { getClientById, getClientStats, getClientCases, getClientAppointments, getClientDocuments } = useClient();
 
-const client = ref<ClientWithUser | null>(null);
+const client = ref<Client | null>(null);
 const stats = ref<ClientStats | null>(null);
-const cases = ref<ClientCase[]>([]);
-const appointments = ref<ClientAppointment[]>([]);
-const documents = ref<ClientDocument[]>([]);
+const cases = ref<any[]>([]);
+const appointments = ref<any[]>([]);
+const documents = ref<any[]>([]);
 
 const loading = ref(true);
 const loadingCases = ref(false);
@@ -293,8 +293,8 @@ const loadClientData = async () => {
     loading.value = true;
     client.value = await getClientById(clientId);
 
-    if (client.value) {
-      stats.value = await getClientStats(client.value.userId);
+    if (client.value && client.value.id) {
+      stats.value = await getClientStats(client.value.id);
     }
   } catch (error) {
     console.error('Error loading client:', error);
@@ -308,39 +308,94 @@ watch(activeTab, async (newTab) => {
 
   if (newTab === 'cases' && cases.value.length === 0) {
     loadingCases.value = true;
-    const result = await getClientCases(client.value.userId, 20, 0);
+    const result = await getClientCases(client.value.id, 20, 0);
     cases.value = result.data;
     loadingCases.value = false;
   } else if (newTab === 'appointments' && appointments.value.length === 0) {
     loadingAppointments.value = true;
-    const result = await getClientAppointments(client.value.userId, 20, 0);
+    const result = await getClientAppointments(client.value.id, 20, 0);
     appointments.value = result.data;
     loadingAppointments.value = false;
   } else if (newTab === 'documents' && documents.value.length === 0) {
     loadingDocuments.value = true;
-    const result = await getClientDocuments(client.value.userId, 20, 0);
+    const result = await getClientDocuments(client.value.id, 20, 0);
     documents.value = result.data;
     loadingDocuments.value = false;
   }
 });
 
 const getInitials = (firstName: string, lastName: string) => {
+  if (!firstName || !lastName) return '??';
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 };
 
-const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+const formatDate = (date: Date | string) => {
+  if (!date) return 'Date non disponible';
+  try {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch (error) {
+    return 'Date invalide';
+  }
 };
 
-const formatTime = (date: Date) => {
-  return new Date(date).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+const formatTime = (date: Date | string) => {
+  if (!date) return '';
+  try {
+    return new Date(date).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch (error) {
+    return '';
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    'open': 'Ouvert',
+    'in_progress': 'En cours',
+    'pending': 'En attente',
+    'closed': 'Fermé',
+    'archived': 'Archivé',
+    'on_hold': 'En suspens'
+  };
+  return labels[status] || status;
+};
+
+const getStatusClass = (status: string) => {
+  const classes: Record<string, string> = {
+    'open': 'bg-blue-100 text-blue-800',
+    'in_progress': 'bg-yellow-100 text-yellow-800',
+    'pending': 'bg-orange-100 text-orange-800',
+    'closed': 'bg-gray-100 text-gray-800',
+    'archived': 'bg-gray-100 text-gray-600',
+    'on_hold': 'bg-red-100 text-red-800'
+  };
+  return classes[status] || 'bg-gray-100 text-gray-800';
+};
+
+const getPriorityLabel = (priority: string) => {
+  const labels: Record<string, string> = {
+    'low': 'Basse',
+    'medium': 'Moyenne',
+    'high': 'Haute',
+    'urgent': 'Urgente'
+  };
+  return labels[priority] || priority;
+};
+
+const getPriorityClass = (priority: string) => {
+  const classes: Record<string, string> = {
+    'low': 'bg-green-100 text-green-800',
+    'medium': 'bg-blue-100 text-blue-800',
+    'high': 'bg-orange-100 text-orange-800',
+    'urgent': 'bg-red-100 text-red-800'
+  };
+  return classes[priority] || 'bg-gray-100 text-gray-800';
 };
 
 onMounted(() => {

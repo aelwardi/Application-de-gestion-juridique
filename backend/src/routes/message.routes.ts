@@ -25,22 +25,23 @@ router.get('/conversations', authenticate, async (req: Request, res: Response) =
           WHERE cases.id = c.case_id
         ) as case_info,
         (
-          SELECT json_agg(
-            json_build_object(
-              'id', u.id,
-              'first_name', u.first_name,
-              'last_name', u.last_name,
-              'email', u.email,
-              'role', u.role,
-              'profile_picture_url', u.profile_picture_url
-            )
+          SELECT json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'email', u.email,
+            'role', u.role,
+            'profile_picture_url', u.profile_picture_url
           )
           FROM users u
-          WHERE u.id = ANY(c.participants) AND u.id != $1
-        ) as other_participants,
+          WHERE u.id = CASE 
+            WHEN c.participant1_id = $1 THEN c.participant2_id
+            ELSE c.participant1_id
+          END
+        ) as other_participant,
         (
           SELECT json_build_object(
-            'message_text', m.message_text,
+            'message_text', m.content,
             'created_at', m.created_at,
             'sender_id', m.sender_id,
             'is_read', m.is_read
@@ -58,7 +59,7 @@ router.get('/conversations', authenticate, async (req: Request, res: Response) =
           AND m.sender_id != $1
         ) as unread_count
       FROM conversations c
-      WHERE $1 = ANY(c.participants)
+      WHERE c.participant1_id = $1 OR c.participant2_id = $1
       ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
     `;
 
@@ -87,7 +88,7 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
     const userId = (req as any).user?.userId;
 
     const convCheck = await pool.query(
-      'SELECT * FROM conversations WHERE id = $1 AND $2 = ANY(participants)',
+      'SELECT * FROM conversations WHERE id = $1 AND (participant1_id = $2 OR participant2_id = $2)',
       [conversationId, userId]
     );
 
@@ -101,6 +102,7 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
     const query = `
       SELECT 
         m.*,
+        m.content as message_text,
         json_build_object(
           'id', u.id,
           'first_name', u.first_name,
@@ -112,7 +114,6 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
       FROM messages m
       JOIN users u ON m.sender_id = u.id
       WHERE m.conversation_id = $1
-      AND m.is_deleted = false
       ORDER BY m.created_at ASC
     `;
 
@@ -147,7 +148,7 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
 router.post('/conversations', authenticate, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.userId;
-    const { recipient_id, case_id, title } = req.body;
+    const { recipient_id, case_id } = req.body;
 
     if (!recipient_id) {
       return res.status(400).json({
@@ -156,12 +157,16 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
       });
     }
 
+    // Vérifier si une conversation existe déjà entre ces deux utilisateurs
+    // Distinction importante :
+    // - Si case_id est fourni : chercher une conversation pour CE dossier spécifique
+    // - Si case_id est NULL : chercher une conversation générale (sans dossier)
+    // Utilisation de LEAST/GREATEST pour gérer l'ordre des participants (A,B) = (B,A)
     const existingConv = await pool.query(
       `SELECT * FROM conversations 
-       WHERE conversation_type = 'direct' 
-       AND participants @> ARRAY[$1::uuid, $2::uuid]
-       AND participants <@ ARRAY[$1::uuid, $2::uuid]
-       ${case_id ? 'AND case_id = $3' : ''}
+       WHERE LEAST(participant1_id, participant2_id) = LEAST($1::uuid, $2::uuid)
+       AND GREATEST(participant1_id, participant2_id) = GREATEST($1::uuid, $2::uuid)
+       AND ${case_id ? 'case_id = $3' : 'case_id IS NULL'}
        LIMIT 1`,
       case_id ? [userId, recipient_id, case_id] : [userId, recipient_id]
     );
@@ -173,27 +178,53 @@ router.post('/conversations', authenticate, async (req: Request, res: Response) 
       });
     }
 
-    const query = `
-      INSERT INTO conversations (
-        case_id,
-        conversation_type,
-        title,
-        participants
-      ) VALUES ($1, $2, $3, $4)
-      RETURNING *
-    `;
+    // Créer une nouvelle conversation
+    try {
+      const query = `
+        INSERT INTO conversations (
+          participant1_id,
+          participant2_id,
+          case_id,
+          last_message_at
+        ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        RETURNING *
+      `;
 
-    const result = await pool.query(query, [
-      case_id || null,
-      'direct',
-      title || null,
-      [userId, recipient_id]
-    ]);
+      const result = await pool.query(query, [
+        userId,
+        recipient_id,
+        case_id || null
+      ]);
 
-    res.status(201).json({
-      success: true,
-      data: result.rows[0]
-    });
+      return res.status(201).json({
+        success: true,
+        data: result.rows[0]
+      });
+    } catch (insertError: any) {
+      // Si erreur de contrainte unique (23505), la conversation existe déjà
+      // Cela peut arriver à cause d'une race condition
+      if (insertError.code === '23505') {
+        // Récupérer la conversation existante
+        const retryConv = await pool.query(
+          `SELECT * FROM conversations 
+           WHERE LEAST(participant1_id, participant2_id) = LEAST($1::uuid, $2::uuid)
+           AND GREATEST(participant1_id, participant2_id) = GREATEST($1::uuid, $2::uuid)
+           AND ${case_id ? 'case_id = $3' : 'case_id IS NULL'}
+           LIMIT 1`,
+          case_id ? [userId, recipient_id, case_id] : [userId, recipient_id]
+        );
+
+        if (retryConv.rows.length > 0) {
+          return res.json({
+            success: true,
+            data: retryConv.rows[0]
+          });
+        }
+      }
+
+      // Si autre erreur, la propager
+      throw insertError;
+    }
   } catch (error: any) {
     console.error('Error creating conversation:', error);
     res.status(500).json({
@@ -211,7 +242,7 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
   try {
     const { id: conversationId } = req.params;
     const userId = (req as any).user?.userId;
-    const { message_text, message_type = 'text', attachments } = req.body;
+    const { message_text, attachments } = req.body;
 
     if (!message_text && !attachments) {
       return res.status(400).json({
@@ -221,7 +252,7 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
     }
 
     const convCheck = await pool.query(
-      'SELECT * FROM conversations WHERE id = $1 AND $2 = ANY(participants)',
+      'SELECT * FROM conversations WHERE id = $1 AND (participant1_id = $2 OR participant2_id = $2)',
       [conversationId, userId]
     );
 
@@ -232,23 +263,29 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
       });
     }
 
+    // Déterminer le receiver_id (l'autre participant de la conversation)
+    const conversation = convCheck.rows[0];
+    const receiverId = conversation.participant1_id === userId
+      ? conversation.participant2_id
+      : conversation.participant1_id;
+
     const messageQuery = `
       INSERT INTO messages (
         conversation_id,
         sender_id,
-        message_text,
-        message_type,
-        attachments
+        receiver_id,
+        content,
+        attachment_url
       ) VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
+      RETURNING *, content as message_text
     `;
 
     const messageResult = await pool.query(messageQuery, [
       conversationId,
       userId,
+      receiverId,
       message_text,
-      message_type,
-      attachments ? JSON.stringify(attachments) : null
+      attachments && attachments.length > 0 ? attachments[0] : null
     ]);
 
     await pool.query(
@@ -256,25 +293,21 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
       [conversationId]
     );
 
-    const conversation = convCheck.rows[0];
-    const otherParticipants = conversation.participants.filter((id: string) => id !== userId);
-
-    for (const participantId of otherParticipants) {
-      await pool.query(
-        `INSERT INTO notifications (user_id, notification_type, title, message, data)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [
-          participantId,
-          'message_received',
-          'Nouveau message',
-          message_text.substring(0, 100),
-          JSON.stringify({
-            conversation_id: conversationId,
-            sender_id: userId
-          })
-        ]
-      );
-    }
+    // Envoyer une notification au destinataire
+    await pool.query(
+      `INSERT INTO notifications (user_id, notification_type, title, message, data)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        receiverId,
+        'message_received',
+        'Nouveau message',
+        message_text.substring(0, 100),
+        JSON.stringify({
+          conversation_id: conversationId,
+          sender_id: userId
+        })
+      ]
+    );
 
     res.status(201).json({
       success: true,
@@ -301,10 +334,9 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
       SELECT COUNT(*)::int as count
       FROM messages m
       JOIN conversations c ON m.conversation_id = c.id
-      WHERE $1 = ANY(c.participants)
+      WHERE (c.participant1_id = $1 OR c.participant2_id = $1)
       AND m.sender_id != $1
       AND m.is_read = false
-      AND m.is_deleted = false
     `;
 
     const result = await pool.query(query, [userId]);

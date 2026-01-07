@@ -100,10 +100,35 @@ export const useClient = () => {
     return response.data!;
   };
 
-  // TODO: Ces méthodes ne sont pas encore implémentées dans le backend
-  // const getClientCases = async (userId: string, limit = 20, offset = 0) => { ... };
-  // const getClientAppointments = async (userId: string, limit = 20, offset = 0) => { ... };
-  // const getClientDocuments = async (userId: string, limit = 20, offset = 0) => { ... };
+  const getClientCases = async (userId: string, limit = 20, offset = 0) => {
+    try {
+      const response = await apiFetch<any>(`/cases?client_id=${userId}&limit=${limit}&offset=${offset}`);
+      return { data: response.data || [] };
+    } catch (error) {
+      console.error('Error fetching client cases:', error);
+      return { data: [] };
+    }
+  };
+
+  const getClientAppointments = async (userId: string, limit = 20, offset = 0) => {
+    try {
+      const response = await apiFetch<any>(`/appointments?client_id=${userId}&limit=${limit}&offset=${offset}`);
+      return { data: response.data || [] };
+    } catch (error) {
+      console.error('Error fetching client appointments:', error);
+      return { data: [] };
+    }
+  };
+
+  const getClientDocuments = async (userId: string, limit = 20, offset = 0) => {
+    try {
+      const response = await apiFetch<any>(`/documents?user_id=${userId}&limit=${limit}&offset=${offset}`);
+      return { data: response.data || [] };
+    } catch (error) {
+      console.error('Error fetching client documents:', error);
+      return { data: [] };
+    }
+  };
 
   return {
     // createClient, // Utiliser /auth/register à la place
@@ -115,8 +140,8 @@ export const useClient = () => {
     updateClient,
     deleteClient,
     getClientStats,
-    // getClientCases, // TODO
-    // getClientAppointments, // TODO
-    // getClientDocuments, // TODO
+    getClientCases,
+    getClientAppointments,
+    getClientDocuments,
   };
 };

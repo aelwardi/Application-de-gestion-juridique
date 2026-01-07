@@ -727,12 +727,14 @@ const contactOtherParty = () => {
     recipientName = `${caseData.value.lawyer_first_name || ''} ${caseData.value.lawyer_last_name || ''}`.trim()
   }
 
+  // Créer une conversation générale SANS lien au dossier
+  // Juste une conversation entre les deux personnes
   router.push({
     path: '/messages',
     query: {
       recipientId,
-      recipientName: encodeURIComponent(recipientName),
-      caseId: caseData.value.id
+      recipientName: encodeURIComponent(recipientName)
+      // PAS de caseId - conversation générale
     }
   })
 }

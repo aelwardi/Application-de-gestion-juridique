@@ -4,7 +4,7 @@ import { QueryResult } from 'pg';
 export interface SupportTicket {
   id: string;
   user_id: string;
-  assigned_admin_id: string | null;
+  assigned_to: string | null;
   subject: string;
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
@@ -48,7 +48,7 @@ export const getAllTickets = async (
       CONCAT(a.first_name, ' ', a.last_name) as admin_name
     FROM support_tickets st
     LEFT JOIN users u ON st.user_id = u.id
-    LEFT JOIN users a ON st.assigned_admin_id = a.id
+    LEFT JOIN users a ON st.assigned_to = a.id
     WHERE 1=1
   `;
   const params: any[] = [];
@@ -67,7 +67,7 @@ export const getAllTickets = async (
   }
 
   if (assignedToMe && adminId) {
-    query += ` AND st.assigned_admin_id = $${paramIndex}`;
+    query += ` AND st.assigned_to = $${paramIndex}`;
     params.push(adminId);
     paramIndex++;
   }
@@ -93,7 +93,7 @@ export const getUserTickets = async (userId: string): Promise<SupportTicket[]> =
       st.*,
       CONCAT(a.first_name, ' ', a.last_name) as admin_name
     FROM support_tickets st
-    LEFT JOIN users a ON st.assigned_admin_id = a.id
+    LEFT JOIN users a ON st.assigned_to = a.id
     WHERE st.user_id = $1
     ORDER BY st.created_at DESC
   `;
@@ -114,7 +114,7 @@ export const getTicketById = async (ticketId: string): Promise<SupportTicket | n
       CONCAT(a.first_name, ' ', a.last_name) as admin_name
     FROM support_tickets st
     LEFT JOIN users u ON st.user_id = u.id
-    LEFT JOIN users a ON st.assigned_admin_id = a.id
+    LEFT JOIN users a ON st.assigned_to = a.id
     WHERE st.id = $1
   `;
   const result: QueryResult<SupportTicket> = await pool.query(query, [ticketId]);
@@ -224,7 +224,7 @@ export const assignTicket = async (
 ): Promise<void> => {
   const query = `
     UPDATE support_tickets
-    SET assigned_admin_id = $1, updated_at = CURRENT_TIMESTAMP, status = 'in_progress'
+    SET assigned_to = $1, updated_at = CURRENT_TIMESTAMP, status = 'in_progress'
     WHERE id = $2
   `;
   await pool.query(query, [adminId, ticketId]);
