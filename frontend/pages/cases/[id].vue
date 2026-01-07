@@ -390,10 +390,17 @@
                       {{ formatFileSize(doc.file_size) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                      {{ formatDate(doc.uploaded_at) }}
+                      {{ formatDate(doc.created_at || doc.uploaded_at) }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                      {{ doc.uploader_name || 'N/A' }}
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                          {{ getInitials(doc.uploader_name) }}
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">
+                          {{ doc.uploader_name || 'Non disponible' }}
+                        </span>
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex items-center justify-end gap-2">
@@ -769,6 +776,37 @@ const formatFileSize = (bytes: number) => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
 
+ const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const getInitials = (name: string | null | undefined) => {
+  if (!name) return '?'
+  const parts = name.trim().split(' ').filter(p => p.length > 0)
+  if (parts.length >= 2) {
+    const first = parts[0]?.[0]
+    const last = parts[parts.length - 1]?.[0]
+    if (first && last) {
+      return (first + last).toUpperCase()
+    }
+  }
+  if (parts[0] && parts[0].length >= 2) {
+    return parts[0].substring(0, 2).toUpperCase()
+  }
+  if (parts[0] && parts[0][0]) {
+    return parts[0][0].toUpperCase()
+  }
+  return '?'
+}
+
 const getStatusClass = (status: string) => {
   const classes: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -798,15 +836,6 @@ const getPriorityLabel = (priority: string) => {
     urgent: 'Urgente'
   }
   return labels[priority] || priority
-}
-
-const formatDate = (date: string | Date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
 }
 
 onMounted(() => {

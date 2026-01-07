@@ -11,6 +11,7 @@ export interface Notification {
   is_read: boolean;
   time: string;        // Date formatée pour l'affichage
   created_at: string;  // Date brute pour le tri si besoin
+  data?: any;          // Données additionnelles (case_id, conversation_id, etc.)
 }
 
 export const useNotificationStore = defineStore('notifications', {
@@ -24,6 +25,36 @@ export const useNotificationStore = defineStore('notifications', {
   },
 
   actions: {
+    formatRelativeTime(dateString: string): string {
+      if (!dateString) return 'À l\'instant';
+
+      const now = new Date();
+      const date = new Date(dateString);
+      const diffMs = now.getTime() - date.getTime();
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSeconds < 60) {
+        return 'À l\'instant';
+      } else if (diffMinutes < 60) {
+        return `il y a ${diffMinutes} min`;
+      } else if (diffHours < 24) {
+        return `il y a ${diffHours}h`;
+      } else if (diffDays === 1) {
+        return 'Hier';
+      } else if (diffDays < 7) {
+        return `il y a ${diffDays}j`;
+      } else {
+        return date.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+    },
+
     async fetchNotifications() {
       const authStore = useAuthStore();
       const { getPendingOffers } = useCase();
@@ -35,7 +66,6 @@ export const useNotificationStore = defineStore('notifications', {
         const config = useRuntimeConfig();
         let allNotifs: Notification[] = [];
 
-        // 1. Récupération des notifications depuis l'API (documents, messages, etc.)
         try {
           const apiResponse = await $fetch<any>(`${config.public.apiBaseUrl}/notifications`, {
             method: 'GET',
@@ -43,7 +73,17 @@ export const useNotificationStore = defineStore('notifications', {
           });
 
           if (apiResponse.success && apiResponse.data) {
-            allNotifs = apiResponse.data;
+            allNotifs = apiResponse.data.map((notif: any) => ({
+              id: notif.id,
+              type: notif.type,
+              category: notif.category,
+              title: notif.title,
+              message: notif.message,
+              is_read: notif.is_read,
+              time: notif.time,
+              created_at: notif.created_at,
+              data: notif.data
+            }));
           }
         } catch (error) {
           console.error('Erreur API notifications:', error);
@@ -62,9 +102,10 @@ export const useNotificationStore = defineStore('notifications', {
               category: 'Nouveau Dossier ⚖️',
               title: 'Nouvelle demande client',
               message: `Dossier: ${o.title || 'Sans titre'}`,
-              time: o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR') : 'À l\'instant',
+              time: this.formatRelativeTime(o.created_at),
               created_at: o.created_at || new Date().toISOString(),
-              is_read: false
+              is_read: false,
+              data: { case_id: o.id, offer_id: o.id }
             }));
 
             allNotifs = [...allNotifs, ...offerNotifs];
@@ -73,6 +114,12 @@ export const useNotificationStore = defineStore('notifications', {
           }
         }
         
+        allNotifs.sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+          return dateB - dateA;
+        });
+
         this.notifications = allNotifs;
 
       } catch (error) {

@@ -234,14 +234,26 @@ router.get('/case/:caseId', authenticate, async (req: Request, res: Response) =>
     let params: any[];
 
     if (userRole === 'avocat') {
-      query = 'SELECT * FROM documents WHERE case_id = $1 ORDER BY created_at DESC';
+      query = `
+        SELECT 
+          d.*,
+          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
+        FROM documents d
+        LEFT JOIN users u ON d.uploaded_by = u.id
+        WHERE d.case_id = $1 
+        ORDER BY d.created_at DESC
+      `;
       params = [caseId];
     } else {
       query = `
-        SELECT * FROM documents 
-        WHERE case_id = $1 
-        AND (uploaded_by = $2 OR is_confidential = false)
-        ORDER BY created_at DESC
+        SELECT 
+          d.*,
+          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
+        FROM documents d
+        LEFT JOIN users u ON d.uploaded_by = u.id
+        WHERE d.case_id = $1 
+        AND (d.uploaded_by = $2 OR d.is_confidential = false)
+        ORDER BY d.created_at DESC
       `;
       params = [caseId, userId];
     }
