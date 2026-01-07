@@ -322,7 +322,7 @@ export const sendNewRequestToLawyer = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>📩 Nouvelle Demande Client</h1>
+          <h1>Nouvelle Demande Client</h1>
         </div>
         <div class="content">
           <h2>Bonjour Me ${lawyerFirstName},</h2>
@@ -659,6 +659,107 @@ export const sendDocumentUploadedEmail = async (
   return sendEmail({
     to: recipientEmail,
     subject: `Nouveau document : ${documentTitle}`,
+    html,
+  });
+};
+
+/**
+ * Envoyer un email de demande de documents au client
+ */
+export const sendDocumentRequestEmail = async (
+  clientEmail: string,
+  clientFirstName: string,
+  lawyerName: string,
+  requestTitle: string,
+  requestDescription: string,
+  caseTitle: string,
+  uploadLink: string,
+  expiresAt: Date
+): Promise<boolean> => {
+  const expirationDate = new Date(expiresAt).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f59e0b; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 30px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-top: none; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .request-box { background-color: white; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .button { display: inline-block; padding: 15px 30px; background-color: #f59e0b; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; font-size: 16px; }
+        .button:hover { background-color: #d97706; }
+        .warning-box { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .icon { font-size: 48px; text-align: center; margin: 20px 0; }
+        ul { padding-left: 20px; }
+        ul li { margin: 8px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Demande de Documents</h1>
+        </div>
+        <div class="content">
+          <h2>Bonjour ${clientFirstName},</h2>
+          <p><strong>Me ${lawyerName}</strong> vous demande de transmettre des documents pour le dossier <strong>"${caseTitle}"</strong>.</p>
+          
+          <div class="request-box">
+            <h3 style="color: #f59e0b; margin-top: 0;">Détails de la demande</h3>
+            <p><strong>Titre :</strong> ${requestTitle}</p>
+            ${requestDescription ? `<p><strong>Description :</strong><br>${requestDescription}</p>` : ''}
+          </div>
+
+          <div class="warning-box">
+            <strong>Date limite d'envoi :</strong><br>
+            Cette demande expire le <strong>${expirationDate}</strong>
+          </div>
+
+          <p><strong>Comment procéder ?</strong></p>
+          <ul>
+            <li>Cliquez sur le bouton ci-dessous pour accéder au formulaire d'upload</li>
+            <li>Aucune connexion n'est requise - utilisez simplement le lien sécurisé</li>
+            <li>Vous pouvez envoyer plusieurs documents si nécessaire</li>
+            <li>Les formats acceptés : PDF, Word, Excel, Images (JPG, PNG)</li>
+          </ul>
+
+          <center>
+            <a href="${uploadLink}" class="button">ENVOYER MES DOCUMENTS</a>
+          </center>
+
+          <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280;">
+            <strong>Lien sécurisé :</strong><br>
+            <code style="background-color: #f3f4f6; padding: 8px; border-radius: 4px; word-break: break-all; display: block; margin-top: 8px;">
+              ${uploadLink}
+            </code>
+          </p>
+
+          <p style="font-size: 14px; color: #6b7280;">
+            Si vous rencontrez des difficultés, n'hésitez pas à contacter votre avocat directement.
+          </p>
+
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+          <p style="font-size: 11px; color: #9ca3af; margin-top: 10px;">
+            Ce lien est personnel et sécurisé. Ne le partagez pas.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: clientEmail,
+    subject: `📄 Demande de documents - ${caseTitle}`,
     html,
   });
 };

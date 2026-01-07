@@ -299,16 +299,30 @@
                   {{ documents.length }}
                 </span>
               </h2>
-              <button
-                @click="showUploadModal = true"
-                class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <span class="hidden sm:inline">Ajouter un document</span>
-                <span class="sm:hidden">Ajouter</span>
-              </button>
+              <div class="flex gap-2">
+                <button
+                  v-if="authStore.isLawyer"
+                  @click="showDocumentRequestModal = true"
+                  class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span class="hidden sm:inline">Demander des documents</span>
+                  <span class="sm:hidden">Demander</span>
+                </button>
+
+                <button
+                  @click="showUploadModal = true"
+                  class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transform transition-all duration-200 flex items-center gap-2 font-medium"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span class="hidden sm:inline">Ajouter un document</span>
+                  <span class="sm:hidden">Ajouter</span>
+                </button>
+              </div>
             </div>
 
             <div v-if="loadingDocuments" class="text-center py-12">
@@ -539,6 +553,15 @@
       </div>
     </div>
   </div>
+
+  <DocumentRequestModal
+    v-if="caseData"
+    :show="showDocumentRequestModal"
+    :case-id="caseData.id"
+    :client-id="caseData.client_id"
+    @close="showDocumentRequestModal = false"
+    @success="handleDocumentRequestSuccess"
+  />
 </template>
 
 <script setup lang="ts">
@@ -548,6 +571,7 @@ import { useCase } from '~/composables/useCase'
 import { useDocument } from '~/composables/useDocument'
 import { useAuthStore } from '~/stores/auth'
 import type { CaseWithDetails } from '~/types/case'
+import DocumentRequestModal from '~/components/documents/DocumentRequestModal.vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -568,6 +592,7 @@ const statusUpdating = ref(false)
 const uploading = ref(false)
 const error = ref<string | null>(null)
 const showUploadModal = ref(false)
+const showDocumentRequestModal = ref(false)
 
 const uploadForm = ref({
   title: '',
@@ -754,7 +779,10 @@ const deleteDocument = async (docId: string) => {
   }
 }
 
-// ...existing code (utility functions)...
+const handleDocumentRequestSuccess = (data: any) => {
+  console.log('Document request created:', data);
+  alert('✅ Demande envoyée avec succès ! Le client recevra un email avec le lien pour uploader les documents.');
+};
 
 const getDocumentTypeLabel = (type: string) => {
   const labels: Record<string, string> = {

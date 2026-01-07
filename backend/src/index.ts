@@ -18,6 +18,7 @@ import offerRoutes from './routes/offer.routes';
 import lawyerRequestRoutes from './routes/lawyer-request.routes';
 import lawyerRoutes from './routes/lawyer.routes';
 import documentRoutes from "./routes/document.routes";
+import documentRequestRoutes from "./routes/document-request.routes";
 import messageRoutes from "./routes/message.routes";
 import notificationRoutes from "./routes/notification.routes";
 import appointmentSuggestionRoutes from "./routes/appointment-suggestion.routes";
@@ -66,6 +67,7 @@ app.use('/api/lawyer-requests', lawyerRequestRoutes);
 app.use('/api/lawyers', lawyerRoutes);
 
 app.use("/api/documents", documentRoutes);
+app.use("/api/document-requests", documentRequestRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/appointment-suggestions", appointmentSuggestionRoutes);
