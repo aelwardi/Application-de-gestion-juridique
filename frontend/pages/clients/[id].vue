@@ -168,105 +168,160 @@ onMounted(() => {
 
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div class="relative inline-flex">
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600 absolute top-0"></div>
+      </div>
     </div>
 
     <div v-else-if="!client" class="flex items-center justify-center min-h-screen">
-      <div class="text-center">
-        <h2 class="text-2xl font-bold text-gray-900">Client non trouvé</h2>
-        <NuxtLink to="/clients" class="mt-4 text-blue-600 hover:text-blue-700">
+      <div class="text-center bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-12">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl mb-4">
+          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Client non trouvé</h2>
+        <p class="text-gray-600 mb-6">Le client que vous recherchez n'existe pas ou a été supprimé</p>
+        <NuxtLink to="/clients" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
           Retour à la liste des clients
         </NuxtLink>
       </div>
     </div>
 
-    <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="mb-8">
-        <button
-          class="text-blue-600 hover:text-blue-700 mb-4 flex items-center"
-          @click="navigateTo('/clients')"
+        <NuxtLink
+          to="/clients"
+          class="inline-flex items-center text-sm font-semibold text-gray-600 hover:text-blue-600 mb-6 transition-all group"
         >
-          <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
-          Retour
-        </button>
+          Retour à la liste des clients
+        </NuxtLink>
 
-        <div class="flex items-start justify-between">
-          <div class="flex items-center">
-            <div
-              v-if="client.profilePictureUrl"
-              class="h-20 w-20 rounded-full bg-gray-200 mr-6"
-              :style="`background-image: url('${client.profilePictureUrl}')`"
-            ></div>
-            <div
-              v-else
-              class="h-20 w-20 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-semibold mr-6"
-            >
-              {{ getInitials(client.firstName, client.lastName) }}
-            </div>
-            <div>
-              <h1 class="text-3xl font-bold text-gray-900">
-                {{ client.firstName }} {{ client.lastName }}
-              </h1>
-              <p class="text-gray-600 mt-1">{{ client.email }}</p>
-              <div class="flex items-center gap-2 mt-2">
-                <span
-                  v-if="client.isActive"
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                >
-                  Actif
-                </span>
-                <span
-                  v-if="client.isVerified"
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                >
-                  Vérifié
-                </span>
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-6">
+              <div
+                v-if="client.profilePictureUrl"
+                class="h-24 w-24 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 ring-4 ring-white shadow-lg"
+                :style="`background-image: url('${client.profilePictureUrl}'); background-size: cover; background-position: center;`"
+              ></div>
+              <div
+                v-else
+                class="h-24 w-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold ring-4 ring-white shadow-lg"
+              >
+                {{ getInitials(client.firstName, client.lastName) }}
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
+                  {{ client.firstName }} {{ client.lastName }}
+                </h1>
+                <p class="text-gray-600 font-medium flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {{ client.email }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <span
+                    v-if="client.isActive"
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm"
+                  >
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Actif
+                  </span>
+                  <span
+                    v-if="client.isVerified"
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm"
+                  >
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Vérifié
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <button
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            @click="isEditing = true"
-          >
-            Modifier
-          </button>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Dossiers Actifs</p>
-          <p class="text-3xl font-bold text-blue-600">{{ stats?.activeCases || 0 }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600 font-medium">Dossiers Actifs</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-700">{{ stats?.activeCases || 0 }}</p>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Total Dossiers</p>
-          <p class="text-3xl font-bold text-green-600">{{ stats?.totalCases || 0 }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600 font-medium">Total Dossiers</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">{{ stats?.totalCases || 0 }}</p>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Rendez-vous à Venir</p>
-          <p class="text-3xl font-bold text-purple-600">{{ stats?.upcomingAppointments || 0 }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600 font-medium">RDV à Venir</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-700">{{ stats?.upcomingAppointments || 0 }}</p>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <p class="text-sm text-gray-600">Documents</p>
-          <p class="text-3xl font-bold text-orange-600">{{ stats?.totalDocuments || 0 }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600 font-medium">Documents</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-700">{{ stats?.totalDocuments || 0 }}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow mb-8">
-        <div class="border-b border-gray-200">
-          <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 mb-8 overflow-hidden">
+        <div class="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50">
+          <nav class="-mb-px flex space-x-2 px-6" aria-label="Tabs">
             <button
               v-for="tab in tabs"
               :key="tab.id"
               :class="[
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                  ? 'border-blue-600 bg-white/80 text-blue-600 shadow-sm'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-white/50',
+                'whitespace-nowrap py-4 px-6 border-b-2 font-bold text-sm rounded-t-lg transition-all'
               ]"
               @click="activeTab = tab.id"
             >
@@ -275,7 +330,7 @@ onMounted(() => {
           </nav>
         </div>
 
-        <div class="p-6">
+        <div class="p-8">
           <div v-if="activeTab === 'info'">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -320,58 +375,81 @@ onMounted(() => {
           </div>
 
           <div v-if="activeTab === 'cases'">
-            <div v-if="loadingCases" class="text-center py-8">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div v-if="loadingCases" class="text-center py-12">
+              <div class="relative inline-flex">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200"></div>
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-blue-600 absolute top-0"></div>
+              </div>
+              <p class="text-gray-600 mt-4 font-medium">Chargement des dossiers...</p>
             </div>
-            <div v-else-if="cases.length === 0" class="text-center py-8 text-gray-500">
-              Aucun dossier
+            <div v-else-if="cases.length === 0" class="text-center py-12">
+              <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p class="text-gray-500 text-lg">Aucun dossier</p>
             </div>
             <div v-else class="space-y-4">
               <div
                 v-for="caseItem in cases"
                 :key="caseItem.id"
-                class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer"
+                class="border-2 border-gray-100 rounded-xl p-6 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer bg-gradient-to-r from-white to-gray-50"
                 @click="navigateTo(`/cases/${caseItem.id}`)"
               >
                 <div class="flex items-start justify-between">
-                  <div>
-                    <h3 class="font-semibold text-gray-900">{{ caseItem.title }}</h3>
-                    <p class="text-sm text-gray-600 mt-1">{{ caseItem.case_number || caseItem.caseNumber }}</p>
-                    <div class="flex items-center gap-2 mt-2">
-                      <span :class="getStatusClass(caseItem.status)" class="px-2 py-1 text-xs rounded-full font-medium">
+                  <div class="flex-1">
+                    <h3 class="font-bold text-gray-900 text-lg">{{ caseItem.title }}</h3>
+                    <p class="text-sm text-gray-600 mt-1 font-medium">{{ caseItem.case_number || caseItem.caseNumber }}</p>
+                    <div class="flex items-center gap-2 mt-3">
+                      <span :class="getStatusClass(caseItem.status)" class="px-3 py-1.5 text-xs rounded-lg font-bold shadow-sm">
                         {{ getStatusLabel(caseItem.status) }}
                       </span>
-                      <span :class="getPriorityClass(caseItem.priority)" class="px-2 py-1 text-xs rounded-full font-medium">
+                      <span :class="getPriorityClass(caseItem.priority)" class="px-3 py-1.5 text-xs rounded-lg font-bold shadow-sm">
                         {{ getPriorityLabel(caseItem.priority) }}
                       </span>
                     </div>
                   </div>
-                  <span class="text-sm text-gray-500">
-                    {{ formatDate(caseItem.created_at || caseItem.createdAt) }}
-                  </span>
+                  <div class="text-right">
+                    <span class="text-sm text-gray-500 font-medium">
+                      {{ formatDate(caseItem.created_at || caseItem.createdAt) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <div v-if="activeTab === 'appointments'">
-            <div v-if="loadingAppointments" class="text-center py-8">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div v-if="loadingAppointments" class="text-center py-12">
+              <div class="relative inline-flex">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200"></div>
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-purple-600 absolute top-0"></div>
+              </div>
+              <p class="text-gray-600 mt-4 font-medium">Chargement des rendez-vous...</p>
             </div>
-            <div v-else-if="appointments.length === 0" class="text-center py-8 text-gray-500">
-              Aucun rendez-vous
+            <div v-else-if="appointments.length === 0" class="text-center py-12">
+              <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p class="text-gray-500 text-lg">Aucun rendez-vous</p>
             </div>
             <div v-else class="space-y-4">
               <div
                 v-for="appointment in appointments"
                 :key="appointment.id"
-                class="border border-gray-200 rounded-lg p-4"
+                class="border-2 border-gray-100 rounded-xl p-6 hover:border-purple-300 hover:shadow-md transition-all bg-gradient-to-r from-white to-purple-50/30"
               >
-                <h3 class="font-semibold text-gray-900">{{ appointment.title }}</h3>
-                <p class="text-sm text-gray-600 mt-1">
+                <h3 class="font-bold text-gray-900 text-lg">{{ appointment.title }}</h3>
+                <p class="text-sm text-gray-600 mt-2 flex items-center gap-2 font-medium">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
                   {{ formatDate(appointment.startTime) }} • {{ formatTime(appointment.startTime) }} - {{ formatTime(appointment.endTime) }}
                 </p>
-                <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                <span class="inline-block mt-3 px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold shadow-sm">
                   {{ appointment.status }}
                 </span>
               </div>
@@ -379,27 +457,36 @@ onMounted(() => {
           </div>
 
           <div v-if="activeTab === 'documents'">
-            <div v-if="loadingDocuments" class="text-center py-8">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div v-if="loadingDocuments" class="text-center py-12">
+              <div class="relative inline-flex">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200"></div>
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-orange-600 absolute top-0"></div>
+              </div>
+              <p class="text-gray-600 mt-4 font-medium">Chargement des documents...</p>
             </div>
-            <div v-else-if="documents.length === 0" class="text-center py-8 text-gray-500">
-              Aucun document
+            <div v-else-if="documents.length === 0" class="text-center py-12">
+              <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p class="text-gray-500 text-lg">Aucun document</p>
             </div>
-            <div v-else class="space-y-2">
+            <div v-else class="space-y-3">
               <div
                 v-for="document in documents"
                 :key="document.id"
-                class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                class="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl hover:border-orange-300 hover:shadow-md transition-all bg-gradient-to-r from-white to-orange-50/30"
               >
-                <div class="flex items-center gap-3">
-                  <div class="p-2 bg-gray-100 rounded">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center gap-4">
+                  <div class="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div>
-                    <p class="font-medium text-gray-900 text-sm">{{ document.fileName }}</p>
-                    <p class="text-xs text-gray-500">{{ document.caseTitle }} • {{ formatDate(document.createdAt) }}</p>
+                    <p class="font-bold text-gray-900 text-sm">{{ document.fileName }}</p>
+                    <p class="text-xs text-gray-500 font-medium mt-1">{{ document.caseTitle }} • {{ formatDate(document.createdAt) }}</p>
                   </div>
                 </div>
               </div>
@@ -409,12 +496,24 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="isEditing" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-        <h2 class="text-2xl font-bold mb-4">Modifier le client</h2>
-        <p class="text-gray-600 mb-4">Fonctionnalité en cours de développement</p>
+    <div v-if="isEditing" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-white/20 p-8 max-w-2xl w-full mx-4 transform transition-all">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Modifier le client</h2>
+            <p class="text-gray-600 mt-1">Fonctionnalité en cours de développement</p>
+          </div>
+        </div>
+        <div class="bg-blue-50/50 border-l-4 border-blue-600 p-4 rounded-lg mb-6">
+          <p class="text-sm text-blue-800 font-medium">Cette fonctionnalité sera bientôt disponible.</p>
+        </div>
         <button
-          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          class="w-full px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-0.5"
           @click="isEditing = false"
         >
           Fermer
