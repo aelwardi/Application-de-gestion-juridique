@@ -1,0 +1,14 @@
+# Test coverage
+coverage/
+*.lcov
+
+# Test output
+test-results/
+junit.xml
+
+# Environment files
+.env.test.local
+
+# Jest cache
+.jest/
+

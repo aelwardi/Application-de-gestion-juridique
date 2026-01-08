@@ -1,0 +1,104 @@
+export const useDocument = () => {
+  const config = useRuntimeConfig();
+  const baseURL = config.public.apiBaseUrl;
+  const authStore = useAuthStore();
+
+  const getHeaders = () => {
+    const headers: Record<string, string> = {
+      'Accept': 'application/json'
+    };
+    if (authStore.accessToken) {
+      headers['Authorization'] = `Bearer ${authStore.accessToken}`;
+    }
+    return headers;
+  };
+
+
+  const uploadDocument = async (formData: FormData): Promise<any> => {
+  console.log("Tentative d'upload vers:", `${baseURL}/documents`);
+  for (let [key, value] of formData.entries()) {
+    console.log(`FormData - ${key}:`, value);
+  }
+
+  try {
+    const response = await $fetch<any>(`${baseURL}/documents`, {
+      method: 'POST',
+      headers: { ...getHeaders() },
+      body: formData
+    });
+    return response;
+  } catch (error: any) {
+    console.error('Détails erreur 404:', error.response);
+    throw error;
+  }
+};
+
+
+const getRecentDocuments = async (lawyerId: string) => {
+  return await $fetch<any>(`${baseURL}/documents/lawyer/${lawyerId}`, {
+    headers: getHeaders()
+  });
+};
+
+const getClientDocuments = async (clientId: string, limit: number = 5) => {
+  try {
+    const response = await $fetch<any>(`${baseURL}/documents/client/${clientId}?limit=${limit}`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    return Array.isArray(response) ? response : (response.data || []);
+  } catch (error: any) {
+    console.error('Erreur récupération documents client:', error);
+    return [];
+  }
+};
+
+
+  const getDocumentsByCase = async (caseId: string): Promise<any[]> => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/documents/case/${caseId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getHeaders()
+        }
+      });
+      return Array.isArray(response) ? response : (response.data || []);
+    } catch (error: any) {
+      console.error('Erreur récupération documents:', error);
+      return [];
+    }
+  };
+
+
+  const deleteDocument = async (documentId: string): Promise<any> => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getHeaders()
+        }
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Erreur suppression document:', error);
+      throw error;
+    }
+  };
+
+
+  const getDownloadUrl = (fileUrl: string) => {
+    if (fileUrl.startsWith('http')) return fileUrl;
+    return `${baseURL}/storage/${fileUrl}`;
+  };
+
+  return {
+    uploadDocument,
+    getDocumentsByCase,
+    deleteDocument,
+    getDownloadUrl,
+    getRecentDocuments,
+    getClientDocuments
+  };
+};

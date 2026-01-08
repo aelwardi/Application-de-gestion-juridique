@@ -1,0 +1,15 @@
+# dependencies
+**/node_modules/
+
+# uploads
+backend/uploads/
+
+# env
+.env
+.env.*
+
+# build
+dist
+.nuxt
+.output
+.idea
