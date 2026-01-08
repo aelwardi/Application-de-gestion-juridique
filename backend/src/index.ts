@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from 'path';
+import fs from 'fs';
 import cookieParser from "cookie-parser";
 import { pool } from "./config/database.config";
 import { testEmailConfiguration } from "./utils/email.util";
@@ -25,6 +26,7 @@ import messageRoutes from "./routes/message.routes";
 import notificationRoutes from "./routes/notification.routes";
 import appointmentSuggestionRoutes from "./routes/appointment-suggestion.routes";
 import jobsRoutes from "./routes/jobs.routes";
+import uploadRoutes from "./routes/upload.routes";
 import { startReminderJobs } from "./jobs/appointment-reminders.job";
 
 dotenv.config();
@@ -55,6 +57,9 @@ app.get("/db-test", async (_req: Request, res: Response) => {
 
 const uploadPath = path.resolve(process.cwd(), 'uploads/documents');
 app.use('/api/storage', express.static(uploadPath));
+
+const avatarsPath = path.resolve(process.cwd(), 'uploads/avatars');
+app.use('/api/avatars', express.static(avatarsPath)); // Changé pour /api/avatars
 app.use("/api/auth", authRoutes);
 app.use("/api/auth/2fa", twoFactorRoutes);
 app.use("/api/users", userRoutes);
@@ -69,7 +74,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/lawyer-requests', lawyerRequestRoutes);
 app.use('/api/lawyers', lawyerRoutes);
-
+app.use("/api/upload", uploadRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/document-requests", documentRequestRoutes);
 app.use("/api/messages", messageRoutes);

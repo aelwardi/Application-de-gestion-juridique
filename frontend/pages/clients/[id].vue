@@ -9,6 +9,7 @@ definePageMeta({
 const route = useRoute();
 const { getClientById, getClientStats, getClientCases, getClientAppointments, getClientDocuments } = useClient();
 const toast = useToast();
+const { getAvatarUrl } = useAvatar();
 
 const client = ref<Client | null>(null);
 const stats = ref<ClientStats | null>(null);
@@ -212,7 +213,7 @@ onMounted(() => {
               <div
                 v-if="client.profilePictureUrl"
                 class="h-24 w-24 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 ring-4 ring-white shadow-lg"
-                :style="`background-image: url('${client.profilePictureUrl}'); background-size: cover; background-position: center;`"
+                :style="`background-image: url('${getAvatarUrl(client.profilePictureUrl)}'); background-size: cover; background-position: center;`"
               ></div>
               <div
                 v-else

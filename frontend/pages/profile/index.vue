@@ -286,7 +286,63 @@ const handleFileUpload = async (event: Event) => {
   const file = target.files?.[0];
   if (!file) return;
 
-  console.log('File to upload:', file);
+  if (!file.type.startsWith('image/')) {
+    toast.error('Veuillez sélectionner une image valide');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('La taille du fichier ne doit pas dépasser 5MB');
+    return;
+  }
+
+  try {
+    const config = useRuntimeConfig();
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    toast.info('Upload de la photo en cours...');
+
+    const token = authStore.accessToken;
+
+    if (!token) {
+      toast.error('Vous devez être connecté pour uploader une photo');
+      return;
+    }
+
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/upload/avatar`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+
+    if (response.success && response.data) {
+      if (authStore.user && response.data.user) {
+        const newAvatarUrl = response.data.user.profilePictureUrl;
+        console.log('Setting new avatar URL:', newAvatarUrl);
+
+        authStore.user = {
+          ...authStore.user,
+          profilePictureUrl: newAvatarUrl
+        };
+
+      }
+
+      toast.success('Photo de profil mise à jour avec succès');
+
+      await authStore.getProfile();
+    }
+  } catch (error: any) {
+    console.error('Erreur lors de l\'upload de la photo:', error);
+    toast.error(error.data?.message || 'Erreur lors de l\'upload de la photo');
+  } finally {
+    if (target) {
+      target.value = '';
+    }
+  }
 };
 
 const updatePersonalInfo = async () => {
@@ -669,6 +725,15 @@ watch(user, (newUser) => {
     };
   }
 }, { immediate: true });
+
+const { getAvatarUrl } = useAvatar();
+
+const profilePictureUrl = computed(() => {
+  const rawUrl = user.value?.profilePictureUrl;
+  const computedUrl = getAvatarUrl(rawUrl);
+
+  return computedUrl;
+});
 </script>
 
 <template>
@@ -678,9 +743,10 @@ watch(user, (newUser) => {
         <div class="flex items-center gap-6">
           <div class="relative">
             <img
-              :src="user?.profilePictureUrl || '/images/default-avatar.png'"
+              :src="profilePictureUrl"
               alt="Profile"
               class="w-28 h-28 rounded-2xl object-cover border-4 border-blue-500 shadow-lg"
+              @error="(e) => (e.target as HTMLImageElement).src = '/images/default-avatar.png'"
             />
             <button
               @click="triggerFileUpload"
@@ -1062,7 +1128,9 @@ watch(user, (newUser) => {
                       @click="specialtiesForm.languages.splice(index, 1)"
                       class="px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 flex items-center justify-center"
                     >
-                      <XMarkIcon class="h-4 w-4" />
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -1547,4 +1615,3 @@ watch(user, (newUser) => {
     </div>
   </div>
 </template>
-

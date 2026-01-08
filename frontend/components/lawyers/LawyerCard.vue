@@ -8,6 +8,8 @@ defineProps<{
 defineEmits<{
   (e: 'send-request', lawyer: Lawyer): void;
 }>();
+
+const { getAvatarUrl } = useAvatar();
 </script>
 
 
@@ -17,7 +19,7 @@ defineEmits<{
     <div class="flex flex-col md:flex-row gap-4">
       <div class="flex-shrink-0">
         <img
-          :src="lawyer.profilePictureUrl || '/images/default-avatar.png'"
+          :src="getAvatarUrl(lawyer.profilePictureUrl)"
           :alt="`${lawyer.firstName} ${lawyer.lastName}`"
           class="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
         />

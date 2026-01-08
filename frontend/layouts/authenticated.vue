@@ -9,6 +9,7 @@ import Footer from '~/components/Footer.vue'
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
 const router = useRouter()
+const { getAvatarUrl } = useAvatar()
 
 const showProfileMenu = ref(false)
 const showNotifications = ref(false)
@@ -93,6 +94,10 @@ const getInitials = () => {
   if (!authStore.user) return '?'
   return `${authStore.user.firstName?.charAt(0)}${authStore.user.lastName?.charAt(0)}`.toUpperCase()
 }
+
+const userAvatarUrl = computed(() => {
+  return getAvatarUrl(authStore.user?.profilePictureUrl)
+})
 
 watch(() => authStore.user, (newUser) => {
   if (newUser) notificationStore.fetchNotifications()
@@ -261,7 +266,7 @@ onBeforeUnmount(() => {
                   <span
                     v-if="authStore.user?.profilePictureUrl"
                     class="block w-10 h-10 rounded-full bg-cover bg-center border-2 border-blue-500 shadow-sm"
-                    :style="`background-image: url('${authStore.user.profilePictureUrl}')`"
+                    :style="`background-image: url('${userAvatarUrl}')`"
                   ></span>
                   <span
                     v-else
@@ -294,7 +299,7 @@ onBeforeUnmount(() => {
                         <span
                           v-if="authStore.user?.profilePictureUrl"
                           class="block w-12 h-12 rounded-full bg-cover bg-center border-2 border-white shadow-md"
-                          :style="`background-image: url('${authStore.user.profilePictureUrl}')`"
+                          :style="`background-image: url('${userAvatarUrl}')`"
                         ></span>
                         <span
                           v-else

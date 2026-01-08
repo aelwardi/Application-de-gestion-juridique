@@ -9,6 +9,7 @@ definePageMeta({
 const authStore = useAuthStore();
 const { getAllClients, searchClients, getClientsByLawyer } = useClient();
 const toast = useToast();
+const { getAvatarUrl } = useAvatar();
 
 const clients = ref<Client[]>([]);
 const loading = ref(true);
@@ -273,7 +274,7 @@ onBeforeUnmount(() => {
                       <div
                         v-if="client.profilePictureUrl"
                         class="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-200 to-gray-300 ring-2 ring-white shadow-sm"
-                        :style="`background-image: url('${client.profilePictureUrl}'); background-size: cover; background-position: center;`"
+                        :style="`background-image: url('${getAvatarUrl(client.profilePictureUrl)}'); background-size: cover; background-position: center;`"
                       ></div>
                       <div
                         v-else
