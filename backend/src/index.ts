@@ -7,6 +7,7 @@ import { pool } from "./config/database.config";
 import { testEmailConfiguration } from "./utils/email.util";
 import userRoutes from "./routes/user.routes";
 import authRoutes from "./routes/auth.routes";
+import twoFactorRoutes from "./routes/two-factor.routes";
 import emailRoutes from "./routes/email.routes";
 import adminRoutes from "./routes/admin.routes";
 import supportRoutes from "./routes/support.routes";
@@ -55,6 +56,7 @@ app.get("/db-test", async (_req: Request, res: Response) => {
 const uploadPath = path.resolve(process.cwd(), 'uploads/documents');
 app.use('/api/storage', express.static(uploadPath));
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/2fa", twoFactorRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/admin", adminRoutes);

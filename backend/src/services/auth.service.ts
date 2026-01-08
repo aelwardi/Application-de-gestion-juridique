@@ -14,6 +14,8 @@ import {
   markTokenAsUsed,
   deleteUserTokens
 } from '../database/queries/password-reset.queries';
+import { getTwoFactorStatus } from '../database/queries/two-factor.queries';
+import { createLoginTempToken } from './two-factor.service';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateTokens, verifyRefreshToken, TokenPayload } from '../utils/jwt.util';
 import { sendWelcomeEmail, sendPasswordChangedEmail, sendPasswordResetEmail } from '../utils/email.util';
@@ -28,6 +30,8 @@ export interface AuthResponse {
   user: UserResponse;
   accessToken: string;
   refreshToken: string;
+  requiresTwoFactor?: boolean;
+  tempToken?: string;
 }
 
 /**
@@ -100,6 +104,21 @@ export const login = async (data: LoginInput): Promise<AuthResponse> => {
     throw new Error('Invalid email or password');
   }
 
+  const twoFactorStatus = await getTwoFactorStatus(user.id);
+
+  if (twoFactorStatus.enabled) {
+    const tempToken = await createLoginTempToken(user.id);
+
+    const userResponse = formatUserResponse(userToResponse(user));
+    return {
+      user: userResponse,
+      accessToken: '',
+      refreshToken: '',
+      requiresTwoFactor: true,
+      tempToken,
+    };
+  }
+
   const tokenPayload: TokenPayload = {
     userId: user.id,
     email: user.email,
@@ -115,6 +134,7 @@ export const login = async (data: LoginInput): Promise<AuthResponse> => {
     user: userResponse,
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
+    requiresTwoFactor: false,
   };
 };
 

@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
+import * as twoFactorService from '../services/two-factor.service';
 import * as adminQueries from '../database/queries/admin.queries';
+import { findUserById, userToResponse } from '../database/queries/auth.queries';
+import { generateTokens, TokenPayload } from '../utils/jwt.util';
+import { updateLastLogin } from '../database/queries/auth.queries';
 import {
   registerSchema,
   loginSchema,
@@ -60,6 +64,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const result = await authService.login(validatedData);
 
+    if (result.requiresTwoFactor) {
+      res.status(200).json({
+        success: true,
+        message: '2FA verification required',
+        data: {
+          requiresTwoFactor: true,
+          tempToken: result.tempToken,
+          user: {
+            id: result.user.id,
+            email: result.user.email,
+            firstName: result.user.firstName,
+            lastName: result.user.lastName,
+          },
+        },
+      });
+      return;
+    }
+
     try {
       await adminQueries.createActivityLog(
         result.user.id,
@@ -88,6 +110,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         user: result.user,
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
+        requiresTwoFactor: false,
       },
     });
   } catch (error) {
@@ -114,6 +137,91 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Failed to login',
+    });
+  }
+};
+
+/**
+ * Complete login after 2FA verification
+ * POST /api/auth/login/2fa/complete
+ */
+export const completeTwoFactorLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tempToken, code } = req.body;
+
+    if (!tempToken || !code) {
+      res.status(400).json({
+        success: false,
+        message: 'Temporary token and code are required',
+      });
+      return;
+    }
+
+    const verifyResult = await twoFactorService.verifyLoginCode(tempToken, code);
+
+    if (!verifyResult.valid || !verifyResult.userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid or expired verification code',
+      });
+      return;
+    }
+
+    const user = await findUserById(verifyResult.userId);
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
+    const tokenPayload: TokenPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
+    const tokens = generateTokens(tokenPayload);
+
+    await updateLastLogin(user.id);
+
+    try {
+      await adminQueries.createActivityLog(
+        user.id,
+        'USER_LOGIN_2FA',
+        'user',
+        user.id,
+        req.ip || req.socket.remoteAddress || null,
+        req.get('user-agent') || null,
+        { email: user.email, role: user.role }
+      );
+    } catch (logError) {
+      console.error('Failed to log USER_LOGIN_2FA activity:', logError);
+    }
+
+    await twoFactorService.cleanupUserTokens(user.id);
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: userToResponse(user),
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
+    });
+  } catch (error) {
+    console.error('Complete 2FA login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to complete login',
     });
   }
 };

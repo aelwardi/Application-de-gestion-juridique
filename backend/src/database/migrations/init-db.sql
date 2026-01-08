@@ -36,6 +36,10 @@ CREATE TABLE IF NOT EXISTS users (
     notes TEXT,
     total_cases INTEGER DEFAULT 0,
     active_cases INTEGER DEFAULT 0,
+    two_factor_enabled BOOLEAN DEFAULT false,
+    two_factor_secret VARCHAR(255),
+    two_factor_backup_codes TEXT[],
+    two_factor_verified_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -53,6 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_users_city ON users(city) WHERE role = 'client';
 CREATE INDEX IF NOT EXISTS idx_users_location ON users(latitude, longitude) WHERE role = 'avocat';
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_two_factor_enabled ON users(two_factor_enabled) WHERE two_factor_enabled = true;
 
 ALTER TABLE users DROP CONSTRAINT IF EXISTS check_lawyer_bar_number;
 ALTER TABLE users ADD CONSTRAINT check_lawyer_bar_number
@@ -68,6 +73,10 @@ COMMENT ON COLUMN users.active_cases IS 'Nombre de dossiers actifs (clients et a
 COMMENT ON COLUMN users.address IS 'Adresse personnelle (clients)';
 COMMENT ON COLUMN users.office_address IS 'Adresse du cabinet (avocats)';
 COMMENT ON COLUMN users.verified_by_admin IS 'Statut de vérification par un administrateur (avocats)';
+COMMENT ON COLUMN users.two_factor_enabled IS 'Indique si l''authentification à deux facteurs est activée';
+COMMENT ON COLUMN users.two_factor_secret IS 'Secret TOTP pour la génération des codes 2FA';
+COMMENT ON COLUMN users.two_factor_backup_codes IS 'Codes de secours pour accès d''urgence';
+COMMENT ON COLUMN users.two_factor_verified_at IS 'Date de vérification initiale du 2FA';
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
                                                      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -83,6 +92,25 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tok
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at ON password_reset_tokens(expires_at);
 
 COMMENT ON TABLE password_reset_tokens IS 'Tokens de réinitialisation de mot de passe';
+
+CREATE TABLE IF NOT EXISTS two_factor_temp_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    temp_token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified BOOLEAN DEFAULT false,
+    ip_address VARCHAR(50),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_2fa_temp_tokens_user_id ON two_factor_temp_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_2fa_temp_tokens_token ON two_factor_temp_tokens(temp_token);
+CREATE INDEX IF NOT EXISTS idx_2fa_temp_tokens_expires_at ON two_factor_temp_tokens(expires_at);
+
+COMMENT ON TABLE two_factor_temp_tokens IS 'Tokens temporaires pour le processus de connexion avec 2FA';
+COMMENT ON COLUMN two_factor_temp_tokens.temp_token IS 'Token temporaire utilisé pendant le processus de connexion 2FA';
+COMMENT ON COLUMN two_factor_temp_tokens.verified IS 'Indique si le code 2FA a été vérifié avec succès';
 
 CREATE TABLE IF NOT EXISTS activity_logs (
                                              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -690,8 +718,8 @@ INSERT INTO users (
     is_active,
     is_verified
 ) VALUES (
-             '',
-             '$2b$10$rBV2R8T5fGKjKW.8xqF5..8qVx4YZ5nD7hNZO8nQqCXKZ1L0vE7Oi',
+             'a.elwardi@myskolae.fr',
+             '$2b$10$rBV2R8T5fGKjKW.8xqF5...',
              'admin',
              'Admin',
              'Système',
@@ -699,4 +727,4 @@ INSERT INTO users (
              true
          ) ON CONFLICT (email) DO NOTHING;
 
-COMMENT ON DATABASE postgres IS 'Base de données Application de Gestion Juridique - Version consolidée 2026-01-07';
+COMMENT ON DATABASE postgres IS 'Base de données Application de Gestion Juridique - Version consolidée 2026-01-08';

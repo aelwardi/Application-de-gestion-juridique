@@ -13,6 +13,7 @@ export interface User {
   lastLoginAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  twoFactorEnabled?: boolean;
 
   barNumber?: string | null;
   specialties?: string[];
@@ -94,7 +95,6 @@ export interface UpdateProfileData {
   lastName?: string;
   phone?: string;
   profilePictureUrl?: string;
-  // Champs avocats
   officeAddress?: string;
   officeCity?: string;
   description?: string;
@@ -110,4 +110,3 @@ export interface ChangePasswordData {
   currentPassword: string;
   newPassword: string;
 }
-

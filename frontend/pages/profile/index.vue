@@ -244,6 +244,21 @@ const securityLoading = ref(false);
 const securityError = ref('');
 const securitySuccess = ref('');
 
+const twoFactorStatus = ref({
+  enabled: false,
+  backupCodesCount: 0,
+});
+const twoFactorLoading = ref(false);
+const showSetupModal = ref(false);
+const setupStep = ref(1);
+const qrCodeUrl = ref('');
+const secret = ref('');
+const verificationCode = ref('');
+const backupCodes = ref<string[]>([]);
+const showDisableModal = ref(false);
+const disablePassword = ref('');
+const showBackupCodesModal = ref(false);
+
 const notificationForm = ref({
   emailNotifications: true,
   appointmentReminders: true,
@@ -481,6 +496,140 @@ const updatePassword = async () => {
     securityLoading.value = false;
   }
 };
+
+const { apiFetch } = useApi();
+
+const fetchTwoFactorStatus = async () => {
+  try {
+    const response = await apiFetch('/auth/2fa/status', { method: 'GET' });
+    if (response.success) {
+      twoFactorStatus.value = response.data;
+    }
+  } catch (err: any) {
+    console.error('Failed to fetch 2FA status:', err);
+    twoFactorStatus.value = { enabled: false, backupCodesCount: 0 };
+  }
+};
+
+const startTwoFactorSetup = async () => {
+  twoFactorLoading.value = true;
+  securityError.value = '';
+
+  try {
+    const response = await apiFetch('/auth/2fa/setup', { method: 'POST' });
+    if (response.success && response.data) {
+      qrCodeUrl.value = response.data.qrCodeUrl;
+      secret.value = response.data.secret;
+      backupCodes.value = response.data.backupCodes;
+      showSetupModal.value = true;
+      setupStep.value = 1;
+    }
+  } catch (err: any) {
+    securityError.value = err.data?.message || 'Échec de la configuration du 2FA';
+  } finally {
+    twoFactorLoading.value = false;
+  }
+};
+
+const verifyAndEnableTwoFactor = async () => {
+  twoFactorLoading.value = true;
+  securityError.value = '';
+
+  try {
+    const response = await apiFetch('/auth/2fa/enable', {
+      method: 'POST',
+      body: {
+        secret: secret.value,
+        code: verificationCode.value,
+        backupCodes: backupCodes.value,
+      },
+    });
+
+    if (response.success) {
+      setupStep.value = 3;
+    }
+  } catch (err: any) {
+    securityError.value = err.data?.message || 'Code de vérification invalide';
+    verificationCode.value = '';
+  } finally {
+    twoFactorLoading.value = false;
+  }
+};
+
+const finishTwoFactorSetup = () => {
+  showSetupModal.value = false;
+  setupStep.value = 1;
+  verificationCode.value = '';
+  securitySuccess.value = '2FA activé avec succès !';
+  fetchTwoFactorStatus();
+  setTimeout(() => { securitySuccess.value = ''; }, 5000);
+};
+
+const cancelTwoFactorSetup = () => {
+  showSetupModal.value = false;
+  setupStep.value = 1;
+  verificationCode.value = '';
+};
+
+const disableTwoFactor = async () => {
+  twoFactorLoading.value = true;
+  securityError.value = '';
+
+  try {
+    const response = await apiFetch('/auth/2fa/disable', {
+      method: 'POST',
+      body: { password: disablePassword.value },
+    });
+
+    if (response.success) {
+      showDisableModal.value = false;
+      disablePassword.value = '';
+      securitySuccess.value = '2FA désactivé avec succès';
+      fetchTwoFactorStatus();
+      setTimeout(() => { securitySuccess.value = ''; }, 5000);
+    }
+  } catch (err: any) {
+    securityError.value = err.data?.message || 'Échec de la désactivation du 2FA';
+  } finally {
+    twoFactorLoading.value = false;
+  }
+};
+
+const regenerateBackupCodes = async () => {
+  twoFactorLoading.value = true;
+  securityError.value = '';
+
+  try {
+    const response = await apiFetch('/auth/2fa/regenerate-backup-codes', {
+      method: 'POST',
+    });
+
+    if (response.success && response.data) {
+      backupCodes.value = response.data.backupCodes;
+      showBackupCodesModal.value = true;
+      fetchTwoFactorStatus();
+    }
+  } catch (err: any) {
+    securityError.value = err.data?.message || 'Échec de la régénération des codes';
+  } finally {
+    twoFactorLoading.value = false;
+  }
+};
+
+const downloadBackupCodes = () => {
+  const text = backupCodes.value.join('\n');
+  const blob = new Blob([`Codes de secours 2FA\n\nDate: ${new Date().toLocaleString('fr-FR')}\n\n${text}\n\nConservez ces codes en lieu sûr !`], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `2fa-backup-codes-${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+onMounted(() => {
+  fetchTwoFactorStatus();
+});
 
 const updateNotificationPreferences = async () => {
   notificationLoading.value = true;
@@ -1101,7 +1250,217 @@ watch(user, (newUser) => {
                 <span v-else>Modifier le mot de passe</span>
               </button>
             </form>
+
+            <div class="mt-8 pt-8 border-t border-gray-200">
+              <h3 class="text-lg font-bold text-gray-900 mb-4">Authentification à deux facteurs (2FA)</h3>
+              <p class="text-sm text-gray-600 mb-6">
+                Sécurisez votre compte avec une couche de protection supplémentaire. Vous devrez entrer un code depuis votre application mobile à chaque connexion.
+              </p>
+
+              <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center">
+                    <div :class="[
+                      'h-12 w-12 rounded-full flex items-center justify-center mr-4',
+                      twoFactorStatus.enabled ? 'bg-green-100' : 'bg-gray-100'
+                    ]">
+                      <svg v-if="twoFactorStatus.enabled" class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <svg v-else class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900">
+                        2FA {{ twoFactorStatus.enabled ? 'Activé' : 'Désactivé' }}
+                      </p>
+                      <p class="text-sm text-gray-500">
+                        {{ twoFactorStatus.enabled
+                          ? 'Votre compte est protégé'
+                          : 'Activez pour plus de sécurité'
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    v-if="!twoFactorStatus.enabled"
+                    @click="startTwoFactorSetup"
+                    :disabled="twoFactorLoading"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300"
+                  >
+                    Activer
+                  </button>
+                  <button
+                    v-else
+                    @click="showDisableModal = true"
+                    :disabled="twoFactorLoading"
+                    class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300"
+                  >
+                    Désactiver
+                  </button>
+                </div>
+
+                <div v-if="twoFactorStatus.enabled" class="pt-4 border-t border-gray-200">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm font-medium text-gray-900">Codes de secours</p>
+                      <p class="text-xs text-gray-500">{{ twoFactorStatus.backupCodesCount }} codes disponibles</p>
+                    </div>
+                    <button
+                      @click="regenerateBackupCodes"
+                      :disabled="twoFactorLoading"
+                      class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Régénérer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <Teleport to="body">
+            <div v-if="showSetupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                  <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Configurer 2FA</h2>
+                    <button @click="cancelTwoFactorSetup" class="text-gray-400 hover:text-gray-600">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div v-if="setupStep === 1" class="space-y-6">
+                    <div class="text-center">
+                      <p class="text-sm text-gray-600 mb-4">
+                        Scannez ce code QR avec Google Authenticator ou Authy
+                      </p>
+                      <div class="flex justify-center mb-4">
+                        <img v-if="qrCodeUrl" :src="qrCodeUrl" alt="QR Code" class="border-4 border-gray-200 rounded-lg" />
+                        <div v-else class="w-64 h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+                      </div>
+                      <p class="text-xs text-gray-500 mb-2">Ou entrez ce code manuellement :</p>
+                      <code class="bg-gray-100 px-4 py-2 rounded text-sm font-mono">{{ secret }}</code>
+                    </div>
+                    <button @click="setupStep = 2" class="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                      Suivant →
+                    </button>
+                  </div>
+
+                  <div v-if="setupStep === 2" class="space-y-6">
+                    <div>
+                      <p class="text-sm text-gray-600 mb-4">
+                        Entrez le code à 6 chiffres de votre application
+                      </p>
+                      <input
+                        v-model="verificationCode"
+                        type="text"
+                        maxlength="6"
+                        inputmode="numeric"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl tracking-widest"
+                        placeholder="000000"
+                        @keyup.enter="verifyAndEnableTwoFactor"
+                      />
+                    </div>
+                    <div class="flex gap-3">
+                      <button @click="setupStep = 1" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        ← Retour
+                      </button>
+                      <button
+                        @click="verifyAndEnableTwoFactor"
+                        :disabled="twoFactorLoading || verificationCode.length !== 6"
+                        class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+                      >
+                        {{ twoFactorLoading ? 'Vérification...' : 'Vérifier' }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-if="setupStep === 3" class="space-y-6">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p class="text-sm text-yellow-800">
+                         <strong>Sauvegardez ces codes de secours !</strong> Ils vous permettront d'accéder à votre compte si vous perdez votre téléphone.
+                      </p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="grid grid-cols-2 gap-3">
+                        <code v-for="(code, index) in backupCodes" :key="index" class="bg-white px-3 py-2 rounded border border-gray-200 text-center font-mono text-sm">
+                          {{ code }}
+                        </code>
+                      </div>
+                    </div>
+                    <button @click="downloadBackupCodes" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                      Télécharger les codes
+                    </button>
+                    <button @click="finishTwoFactorSetup" class="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                      J'ai sauvegardé mes codes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="showDisableModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div class="bg-white rounded-lg max-w-md w-full p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Désactiver le 2FA</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                  Entrez votre mot de passe pour confirmer
+                </p>
+                <input
+                  v-model="disablePassword"
+                  type="password"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+                  placeholder="Mot de passe"
+                />
+                <div class="flex gap-3">
+                  <button
+                    @click="showDisableModal = false; disablePassword = ''"
+                    class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    @click="disableTwoFactor"
+                    :disabled="twoFactorLoading || !disablePassword"
+                    class="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300"
+                  >
+                    {{ twoFactorLoading ? 'Désactivation...' : 'Désactiver' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="showBackupCodesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div class="bg-white rounded-lg max-w-lg w-full p-6">
+                <div class="flex justify-between items-center mb-6">
+                  <h3 class="text-xl font-bold text-gray-900">Nouveaux codes de secours</h3>
+                  <button @click="showBackupCodesModal = false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <p class="text-sm text-yellow-800">
+                    Vos anciens codes ne fonctionneront plus
+                  </p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div class="grid grid-cols-2 gap-3">
+                    <code v-for="(code, index) in backupCodes" :key="index" class="bg-white px-3 py-2 rounded border border-gray-200 text-center font-mono text-sm">
+                      {{ code }}
+                    </code>
+                  </div>
+                </div>
+                <button @click="downloadBackupCodes" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  Télécharger les codes
+                </button>
+              </div>
+            </div>
+          </Teleport>
 
           <div v-show="activeTab === 'notifications'" class="space-y-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Préférences de notifications</h2>

@@ -72,27 +72,21 @@ export const useAuthStore = defineStore('auth', {
 
 
     async register(data: RegisterData) {
-      console.log('AuthStore: register called with data:', data);
       this.isLoading = true;
       try {
         const config = useRuntimeConfig();
         const apiUrl = `${config.public.apiBaseUrl}/auth/register`;
-        console.log('AuthStore: API URL:', apiUrl);
 
         const response = await $fetch<any>(apiUrl, {
           method: 'POST',
           body: data,
         });
 
-        console.log('AuthStore: API response:', response);
-
         if (response.success && response.data) {
-          console.log('AuthStore: Registration successful, setting auth...');
           this.setAuth(response.data.user, response.data.accessToken, response.data.refreshToken);
           return { success: true, data: response.data };
         }
 
-        console.log('AuthStore: Registration failed:', response.message);
         return { success: false, message: response.message || 'Registration failed' };
       } catch (error: any) {
         console.error('AuthStore: Register error:', error);
@@ -119,6 +113,17 @@ export const useAuthStore = defineStore('auth', {
         });
 
         if (response.success && response.data) {
+          if (response.data.requiresTwoFactor && response.data.tempToken) {
+            if (process.client) {
+              navigateTo(`/auth/verify-2fa?token=${response.data.tempToken}`);
+            }
+            return {
+              success: true,
+              requiresTwoFactor: true,
+              tempToken: response.data.tempToken,
+            };
+          }
+
           this.setAuth(response.data.user, response.data.accessToken, response.data.refreshToken);
           return { success: true, data: response.data };
         }
@@ -323,4 +328,3 @@ export const useAuthStore = defineStore('auth', {
     },
   },
 });
-

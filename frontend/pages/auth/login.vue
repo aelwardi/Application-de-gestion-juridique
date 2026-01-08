@@ -30,6 +30,10 @@ const handleLogin = async () => {
     const result = await authStore.login(form.value);
 
     if (result.success) {
+      if (result.requiresTwoFactor) {
+        return;
+      }
+
       const user = authStore.user;
       if (user?.role === 'admin') {
         await router.push('/admin/stats');
@@ -254,4 +258,3 @@ const handleLogin = async () => {
 
 <style scoped>
 </style>
-

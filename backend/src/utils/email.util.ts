@@ -765,9 +765,117 @@ export const sendDocumentRequestEmail = async (
   });
 };
 
+
 /**
- * Tester la configuration email
+ * Envoyer un email de confirmation d'activation du 2FA
  */
+export const sendTwoFactorEnabledEmail = async (
+  email: string,
+  firstName: string
+): Promise<boolean> => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #10b981; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .success-box { background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .warning { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Authentification à deux facteurs activée</h1>
+        </div>
+        <div class="content">
+          <h2>Bonjour ${firstName},</h2>
+          <div class="success-box">
+            <p><strong>✓ Votre compte est maintenant plus sécurisé !</strong></p>
+            <p>L'authentification à deux facteurs (2FA) a été activée avec succès pour votre compte.</p>
+          </div>
+          <p>À partir de maintenant, vous devrez fournir un code à 6 chiffres depuis votre application d'authentification lors de chaque connexion.</p>
+          <div class="warning">
+            <strong>Important :</strong>
+            <p>Conservez vos codes de secours en lieu sûr. Ils vous permettront d'accéder à votre compte si vous perdez l'accès à votre application d'authentification.</p>
+          </div>
+          <p>Si vous n'êtes pas à l'origine de cette activation, contactez-nous immédiatement à support@gestion-juridique.com</p>
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: 'Authentification à deux facteurs activée',
+    html,
+  });
+};
+
+/**
+ * Envoyer un email de confirmation de désactivation du 2FA
+ */
+export const sendTwoFactorDisabledEmail = async (
+  email: string,
+  firstName: string
+): Promise<boolean> => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #ef4444; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .warning { background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .info { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Authentification à deux facteurs désactivée</h1>
+        </div>
+        <div class="content">
+          <h2>Bonjour ${firstName},</h2>
+          <div class="warning">
+            <p><strong>Attention</strong></p>
+            <p>L'authentification à deux facteurs (2FA) a été désactivée pour votre compte le ${new Date().toLocaleString('fr-FR')}.</p>
+          </div>
+          <p>Votre compte est maintenant moins sécurisé. Nous vous recommandons de réactiver le 2FA dès que possible.</p>
+          <div class="info">
+            <p><strong>Conseil de sécurité :</strong></p>
+            <p>L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire et protège votre compte même si votre mot de passe est compromis.</p>
+          </div>
+          <p>Si vous n'êtes pas à l'origine de cette désactivation, votre compte pourrait être compromis. Changez immédiatement votre mot de passe et contactez-nous à support@gestion-juridique.com</p>
+          <p>Cordialement,<br>L'équipe Gestion Juridique</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 Gestion Juridique. Tous droits réservés.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: 'Authentification à deux facteurs désactivée',
+    html,
+  });
+};
+
 export const testEmailConfiguration = async (): Promise<boolean> => {
   try {
     await transporter.verify();

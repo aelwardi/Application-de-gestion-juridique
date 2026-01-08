@@ -15,6 +15,10 @@ export interface User {
   last_login_at: Date | null;
   created_at: Date;
   updated_at: Date;
+  two_factor_enabled?: boolean;
+  two_factor_secret?: string | null;
+  two_factor_backup_codes?: string[];
+  two_factor_verified_at?: Date | null;
   bar_number?: string | null;
   specialties?: string[];
   experience_years?: number | null;
@@ -54,6 +58,7 @@ export interface UserResponse {
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  twoFactorEnabled?: boolean;
   barNumber?: string | null;
   specialties?: string[];
   experienceYears?: number;
@@ -301,6 +306,7 @@ export const userToResponse = (user: User): UserResponse => {
     lastLoginAt: user.last_login_at,
     createdAt: user.created_at,
     updatedAt: user.updated_at,
+    twoFactorEnabled: user.two_factor_enabled || false,
   };
 
   if (user.role === 'avocat') {
