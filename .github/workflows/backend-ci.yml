@@ -99,7 +99,7 @@ jobs:
 
     - name: Archive test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: test-results-node-${{ matrix.node-version }}
         path: |
@@ -179,7 +179,7 @@ jobs:
       run: npm run build
 
     - name: Archive production artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: backend-dist
         path: backend/dist/
