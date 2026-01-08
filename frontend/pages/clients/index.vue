@@ -9,6 +9,7 @@ definePageMeta({
 const authStore = useAuthStore();
 const { getAllClients, searchClients, getClientsByLawyer } = useClient();
 const toast = useToast();
+const { getAvatarUrl } = useAvatar();
 
 const clients = ref<Client[]>([]);
 const loading = ref(true);
@@ -129,50 +130,84 @@ onBeforeUnmount(() => {
 
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Mes Clients</h1>
-        <p class="text-gray-600 mt-2">Gérez vos clients et consultez leurs dossiers</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                Mes Clients
+              </h1>
+              <p class="text-gray-600 mt-1">Gérez vos clients et consultez leurs dossiers</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
+            <label class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Rechercher
+            </label>
             <input
               v-model="filters.name"
               type="text"
               placeholder="Nom du client..."
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
               @input="debouncedSearch"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Email
+            </label>
             <input
               v-model="filters.email"
               type="text"
               placeholder="Email..."
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
               @input="debouncedSearch"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+            <label class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Ville
+            </label>
             <input
               v-model="filters.city"
               type="text"
               placeholder="Ville..."
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
               @input="debouncedSearch"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Filtres</label>
+            <label class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filtres
+            </label>
             <select
               v-model="filters.hasActiveCases"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm font-medium"
               @change="handleSearch"
             >
               <option :value="undefined">Tous les clients</option>
@@ -183,67 +218,73 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow">
-        <div v-if="loading" class="text-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+        <div v-if="loading" class="text-center py-16">
+          <div class="relative inline-flex">
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600 absolute top-0"></div>
+          </div>
+          <p class="text-gray-600 mt-4 font-medium">Chargement des clients...</p>
         </div>
 
-        <div v-else-if="clients.length === 0" class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun client trouvé</h3>
-          <p class="mt-1 text-sm text-gray-500">Essayez de modifier vos critères de recherche</p>
+        <div v-else-if="clients.length === 0" class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">Aucun client trouvé</h3>
+          <p class="text-gray-500 mt-2">Essayez de modifier vos critères de recherche</p>
         </div>
 
         <div v-else class="overflow-hidden">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+          <table class="min-w-full divide-y divide-gray-100">
+            <thead class="bg-gradient-to-r from-gray-50 to-blue-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                   Client
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                   Contact
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                   Ville
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                   Dossiers
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                   Status
                 </th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-gray-100">
               <tr
                 v-for="client in clients"
                 :key="client.id"
-                class="hover:bg-gray-50 cursor-pointer"
+                class="hover:bg-blue-50/50 cursor-pointer transition-all"
                 @click="viewClient(client.id)"
               >
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-5 whitespace-nowrap">
                   <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
+                    <div class="flex-shrink-0 h-12 w-12">
                       <div
                         v-if="client.profilePictureUrl"
-                        class="h-10 w-10 rounded-full bg-gray-200"
-                        :style="`background-image: url('${client.profilePictureUrl}')`"
+                        class="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-200 to-gray-300 ring-2 ring-white shadow-sm"
+                        :style="`background-image: url('${getAvatarUrl(client.profilePictureUrl)}'); background-size: cover; background-position: center;`"
                       ></div>
                       <div
                         v-else
-                        class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
+                        class="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg ring-2 ring-white shadow-md"
                       >
                         {{ getInitials(client.firstName, client.lastName) }}
                       </div>
                     </div>
                     <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">
+                      <div class="text-sm font-bold text-gray-900">
                         {{ client.firstName }} {{ client.lastName }}
                       </div>
                       <div class="text-sm text-gray-500">
@@ -252,49 +293,55 @@ onBeforeUnmount(() => {
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ client.phone || '-' }}</div>
+                <td class="px-6 py-5 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ client.phone || '-' }}</div>
                   <div v-if="client.emergencyContactPhone" class="text-sm text-gray-500">
-                    Urgence: {{ client.emergencyContactPhone }}
+                    <span class="text-red-600 font-semibold">SOS:</span> {{ client.emergencyContactPhone }}
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ client.city || '-' }}</div>
+                <td class="px-6 py-5 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ client.city || '-' }}</div>
                   <div v-if="client.postalCode" class="text-sm text-gray-500">{{ client.postalCode }}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-5 whitespace-nowrap">
                   <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm">
                       {{ client.activeCases }} actifs
                     </span>
-                    <span class="text-xs text-gray-500">
+                    <span class="text-xs text-gray-500 font-medium">
                       / {{ client.totalCases }} total
                     </span>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-5 whitespace-nowrap">
                   <span
                     v-if="client.isActive"
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm"
                   >
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
                     Actif
                   </span>
                   <span
                     v-else
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-sm"
                   >
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
                     Inactif
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
                   <button
-                    class="text-blue-600 hover:text-blue-900 mr-3"
+                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all transform hover:-translate-y-0.5 mr-2"
                     @click.stop="viewClient(client.id)"
                   >
                     Voir
                   </button>
                   <button
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="px-4 py-2 border-2 border-indigo-200 text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all"
                     @click.stop="viewClientCases(client.id)"
                   >
                     Dossiers
@@ -305,19 +352,19 @@ onBeforeUnmount(() => {
           </table>
         </div>
 
-        <div v-if="pagination.totalPages > 1" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+        <div v-if="pagination.totalPages > 1" class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-t border-gray-100">
           <div class="flex items-center justify-between">
             <div class="flex-1 flex justify-between sm:hidden">
               <button
                 :disabled="pagination.page === 1"
-                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                class="relative inline-flex items-center px-5 py-2.5 border-2 border-gray-200 text-sm font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 @click="changePage(pagination.page - 1)"
               >
                 Précédent
               </button>
               <button
                 :disabled="pagination.page === pagination.totalPages"
-                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                class="ml-3 relative inline-flex items-center px-5 py-2.5 border-2 border-gray-200 text-sm font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 @click="changePage(pagination.page + 1)"
               >
                 Suivant
@@ -325,21 +372,21 @@ onBeforeUnmount(() => {
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
-                <p class="text-sm text-gray-700">
+                <p class="text-sm text-gray-700 font-medium">
                   Affichage de
-                  <span class="font-medium">{{ (pagination.page - 1) * pagination.limit + 1 }}</span>
+                  <span class="font-bold text-blue-600">{{ (pagination.page - 1) * pagination.limit + 1 }}</span>
                   à
-                  <span class="font-medium">{{ Math.min(pagination.page * pagination.limit, pagination.total) }}</span>
+                  <span class="font-bold text-blue-600">{{ Math.min(pagination.page * pagination.limit, pagination.total) }}</span>
                   sur
-                  <span class="font-medium">{{ pagination.total }}</span>
+                  <span class="font-bold text-blue-600">{{ pagination.total }}</span>
                   clients
                 </p>
               </div>
               <div>
-                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <nav class="relative z-0 inline-flex rounded-xl shadow-sm gap-1">
                   <button
                     :disabled="pagination.page === 1"
-                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    class="relative inline-flex items-center px-3 py-2 rounded-lg border-2 border-gray-200 bg-white text-sm font-semibold text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     @click="changePage(pagination.page - 1)"
                   >
                     <span class="sr-only">Précédent</span>
@@ -352,9 +399,9 @@ onBeforeUnmount(() => {
                     :key="page"
                     :class="[
                       page === pagination.page
-                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50',
-                      'relative inline-flex items-center px-4 py-2 border text-sm font-medium'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                        : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50',
+                      'relative inline-flex items-center px-4 py-2 text-sm font-bold rounded-lg transition-all'
                     ]"
                     @click="changePage(page)"
                   >
@@ -362,7 +409,7 @@ onBeforeUnmount(() => {
                   </button>
                   <button
                     :disabled="pagination.page === pagination.totalPages"
-                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    class="relative inline-flex items-center px-3 py-2 rounded-lg border-2 border-gray-200 bg-white text-sm font-semibold text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     @click="changePage(pagination.page + 1)"
                   >
                     <span class="sr-only">Suivant</span>

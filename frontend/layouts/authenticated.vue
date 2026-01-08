@@ -9,10 +9,12 @@ import Footer from '~/components/Footer.vue'
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
 const router = useRouter()
+const { getAvatarUrl } = useAvatar()
 
 const showProfileMenu = ref(false)
 const showNotifications = ref(false)
 const activeTab = ref('toutes')
+const showMobileMenu = ref(false)
 
 const fullJournalLink = computed(() => authStore.isClient ? '/clients/notifications' : '/notifications')
 
@@ -32,12 +34,20 @@ const notificationCount = computed(() => notificationStore.unreadCount)
 const toggleNotifications = () => {
   showNotifications.value = !showNotifications.value
   showProfileMenu.value = false
+  showMobileMenu.value = false
   if (showNotifications.value) notificationStore.fetchNotifications()
 }
 
 const toggleProfileMenu = () => {
   showProfileMenu.value = !showProfileMenu.value
   showNotifications.value = false
+  showMobileMenu.value = false
+}
+
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+  showNotifications.value = false
+  showProfileMenu.value = false
 }
 
 const markAllAsRead = () => {
@@ -85,6 +95,10 @@ const getInitials = () => {
   return `${authStore.user.firstName?.charAt(0)}${authStore.user.lastName?.charAt(0)}`.toUpperCase()
 }
 
+const userAvatarUrl = computed(() => {
+  return getAvatarUrl(authStore.user?.profilePictureUrl)
+})
+
 watch(() => authStore.user, (newUser) => {
   if (newUser) notificationStore.fetchNotifications()
 }, { immediate: true })
@@ -94,6 +108,7 @@ const handleClickOutside = (event: MouseEvent) => {
   if (!target.closest('.relative')) {
     showNotifications.value = false
     showProfileMenu.value = false
+    showMobileMenu.value = false
   }
 }
 
@@ -132,7 +147,7 @@ onBeforeUnmount(() => {
           <div class="flex items-center space-x-8">
             <NuxtLink to="/dashboard" class="text-xl font-bold text-blue-600">Gestion Juridique</NuxtLink>
             <ClientOnly>
-              <div class="hidden md:flex space-x-4">
+              <div class="hidden lg:flex space-x-4">
                 <NuxtLink v-if="authStore.isLawyer" to="/cases" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Dossiers</NuxtLink>
                 <NuxtLink v-if="authStore.isClient" to="/cases" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Mes Dossiers</NuxtLink>
                 <NuxtLink v-if="authStore.isClient" to="/lawyers" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition">Avocats</NuxtLink>
@@ -173,7 +188,7 @@ onBeforeUnmount(() => {
                 >
                   <div
                     v-show="showNotifications"
-                    class="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden"
+                    class="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden"
                     @click.stop
                   >
                     <div class="p-4 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-between">
@@ -251,7 +266,7 @@ onBeforeUnmount(() => {
                   <span
                     v-if="authStore.user?.profilePictureUrl"
                     class="block w-10 h-10 rounded-full bg-cover bg-center border-2 border-blue-500 shadow-sm"
-                    :style="`background-image: url('${authStore.user.profilePictureUrl}')`"
+                    :style="`background-image: url('${userAvatarUrl}')`"
                   ></span>
                   <span
                     v-else
@@ -260,7 +275,7 @@ onBeforeUnmount(() => {
                     {{ getInitials() }}
                   </span>
                   <svg
-                    class="w-4 h-4 text-gray-500 transition-transform duration-200"
+                    class="w-4 h-4 text-gray-500 transition-transform duration-200 hidden sm:block"
                     :class="{ 'rotate-180': showProfileMenu }"
                     fill="none"
                     stroke="currentColor"
@@ -278,13 +293,13 @@ onBeforeUnmount(() => {
                   leave-from-class="transform opacity-100 scale-100"
                   leave-to-class="transform opacity-0 scale-95"
                 >
-                  <div v-show="showProfileMenu" class="absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                  <div v-show="showProfileMenu" class="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
                     <div class="p-4 bg-gradient-to-r from-blue-500 to-blue-600">
                       <div class="flex items-center gap-3">
                         <span
                           v-if="authStore.user?.profilePictureUrl"
                           class="block w-12 h-12 rounded-full bg-cover bg-center border-2 border-white shadow-md"
-                          :style="`background-image: url('${authStore.user.profilePictureUrl}')`"
+                          :style="`background-image: url('${userAvatarUrl}')`"
                         ></span>
                         <span
                           v-else
@@ -363,9 +378,119 @@ onBeforeUnmount(() => {
                   </div>
                 </transition>
               </div>
+
+              <!-- Burger Menu Button (Mobile) -->
+              <button
+                @click.stop="toggleMobileMenu"
+                class="lg:hidden p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200 border border-transparent hover:border-blue-200"
+                :class="{ 'bg-blue-50 text-blue-600 border-blue-200': showMobileMenu }"
+                aria-label="Toggle menu"
+              >
+                <svg v-if="!showMobileMenu" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           </ClientOnly>
         </div>
+
+        <!-- Mobile Menu -->
+        <transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="opacity-0 -translate-y-2"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 -translate-y-2"
+        >
+          <div v-show="showMobileMenu" class="lg:hidden border-t border-gray-200 bg-white">
+            <div class="px-4 pt-2 pb-4 space-y-1">
+              <NuxtLink
+                v-if="authStore.isLawyer"
+                to="/cases"
+                @click="showMobileMenu = false"
+                class="block px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Dossiers
+                </div>
+              </NuxtLink>
+
+              <NuxtLink
+                v-if="authStore.isClient"
+                to="/cases"
+                @click="showMobileMenu = false"
+                class="block px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Mes Dossiers
+                </div>
+              </NuxtLink>
+
+              <NuxtLink
+                v-if="authStore.isClient"
+                to="/lawyers"
+                @click="showMobileMenu = false"
+                class="block px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Avocats
+                </div>
+              </NuxtLink>
+
+              <NuxtLink
+                :to="authStore.isClient ? '/clients/appointments' : '/appointments'"
+                @click="showMobileMenu = false"
+                class="block px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Rendez-vous
+                </div>
+              </NuxtLink>
+
+              <NuxtLink
+                to="/messages"
+                @click="showMobileMenu = false"
+                class="block px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Messages
+                </div>
+              </NuxtLink>
+
+              <NuxtLink
+                to="/documents"
+                @click="showMobileMenu = false"
+                class="block px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  Documents
+                </div>
+              </NuxtLink>
+            </div>
+          </div>
+        </transition>
       </div>
     </nav>
 

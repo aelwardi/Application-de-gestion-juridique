@@ -286,7 +286,63 @@ const handleFileUpload = async (event: Event) => {
   const file = target.files?.[0];
   if (!file) return;
 
-  console.log('File to upload:', file);
+  if (!file.type.startsWith('image/')) {
+    toast.error('Veuillez sélectionner une image valide');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('La taille du fichier ne doit pas dépasser 5MB');
+    return;
+  }
+
+  try {
+    const config = useRuntimeConfig();
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    toast.info('Upload de la photo en cours...');
+
+    const token = authStore.accessToken;
+
+    if (!token) {
+      toast.error('Vous devez être connecté pour uploader une photo');
+      return;
+    }
+
+    const response: any = await $fetch(`${config.public.apiBaseUrl}/upload/avatar`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+
+    if (response.success && response.data) {
+      if (authStore.user && response.data.user) {
+        const newAvatarUrl = response.data.user.profilePictureUrl;
+        console.log('Setting new avatar URL:', newAvatarUrl);
+
+        authStore.user = {
+          ...authStore.user,
+          profilePictureUrl: newAvatarUrl
+        };
+
+      }
+
+      toast.success('Photo de profil mise à jour avec succès');
+
+      await authStore.getProfile();
+    }
+  } catch (error: any) {
+    console.error('Erreur lors de l\'upload de la photo:', error);
+    toast.error(error.data?.message || 'Erreur lors de l\'upload de la photo');
+  } finally {
+    if (target) {
+      target.value = '';
+    }
+  }
 };
 
 const updatePersonalInfo = async () => {
@@ -669,24 +725,34 @@ watch(user, (newUser) => {
     };
   }
 }, { immediate: true });
+
+const { getAvatarUrl } = useAvatar();
+
+const profilePictureUrl = computed(() => {
+  const rawUrl = user.value?.profilePictureUrl;
+  const computedUrl = getAvatarUrl(rawUrl);
+
+  return computedUrl;
+});
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-6">
         <div class="flex items-center gap-6">
           <div class="relative">
             <img
-              :src="user?.profilePictureUrl || '/images/default-avatar.png'"
+              :src="profilePictureUrl"
               alt="Profile"
-              class="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
+              class="w-28 h-28 rounded-2xl object-cover border-4 border-blue-500 shadow-lg"
+              @error="(e) => (e.target as HTMLImageElement).src = '/images/default-avatar.png'"
             />
             <button
               @click="triggerFileUpload"
-              class="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition shadow-lg"
+              class="absolute bottom-0 right-0 p-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-0.5"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -701,17 +767,22 @@ watch(user, (newUser) => {
           </div>
 
           <div class="flex-grow">
-            <h1 class="text-3xl font-bold text-gray-900">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
               {{ user?.firstName }} {{ user?.lastName }}
             </h1>
-            <p class="text-gray-600 mt-1">{{ user?.email }}</p>
-            <div class="flex items-center gap-2 mt-2">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+            <p class="text-gray-600 mt-2 font-medium flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              {{ user?.email }}
+            </p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm">
                 {{ getRoleLabel(user?.role) }}
               </span>
               <span
                 v-if="user?.isVerified"
-                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+                class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm"
               >
                 <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -723,16 +794,16 @@ watch(user, (newUser) => {
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow-md mb-6">
-        <div class="border-b border-gray-200">
-          <nav class="flex -mb-px">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 mb-6 overflow-hidden">
+        <div class="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50">
+          <nav class="flex -mb-px overflow-x-auto">
             <button
               v-for="tab in tabs"
               :key="tab.id"
               @click="activeTab = tab.id"
-              class="px-6 py-4 text-sm font-medium border-b-2 transition"
+              class="px-6 py-4 text-sm font-bold border-b-2 transition whitespace-nowrap"
               :class="activeTab === tab.id
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-blue-600 text-blue-600 bg-white/80'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
             >
               {{ tab.label }}
@@ -740,7 +811,7 @@ watch(user, (newUser) => {
           </nav>
         </div>
 
-        <div class="p-6">
+        <div class="p-8">
           <div v-show="activeTab === 'personal'" class="space-y-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Informations personnelles</h2>
             <form @submit.prevent="updatePersonalInfo" class="space-y-4">
@@ -1008,7 +1079,7 @@ watch(user, (newUser) => {
           </div>
 
           <div v-if="user?.role === 'avocat'" v-show="activeTab === 'specialties'" class="space-y-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">🎓 Spécialités & Compétences</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Spécialités & Compétences</h2>
             <form @submit.prevent="updateSpecialties" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -1057,7 +1128,9 @@ watch(user, (newUser) => {
                       @click="specialtiesForm.languages.splice(index, 1)"
                       class="px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 flex items-center justify-center"
                     >
-                      <XMarkIcon class="h-4 w-4" />
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -1542,4 +1615,3 @@ watch(user, (newUser) => {
     </div>
   </div>
 </template>
-
