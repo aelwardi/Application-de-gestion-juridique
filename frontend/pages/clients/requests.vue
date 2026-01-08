@@ -140,42 +140,89 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-white shadow">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h1 class="text-3xl font-bold text-gray-900">Mes demandes d'avocat</h1>
-        <p class="mt-2 text-sm text-gray-600">
-          Suivez l'état de vos demandes envoyées aux avocats
-        </p>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mb-8">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                Mes demandes d'avocat
+              </h1>
+              <p class="text-gray-600 mt-1">Suivez l'état de vos demandes envoyées aux avocats</p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Total</p>
-          <p class="text-3xl font-bold text-gray-900">{{ stats.total }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-600 uppercase">Total</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-700 to-gray-900">{{ stats.total }}</p>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">En attente</p>
-          <p class="text-3xl font-bold text-yellow-600">{{ stats.pending }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-600 uppercase">En attente</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-orange-600">{{ stats.pending }}</p>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Acceptées</p>
-          <p class="text-3xl font-bold text-green-600">{{ stats.accepted }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-600 uppercase">Acceptées</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">{{ stats.accepted }}</p>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Rejetées</p>
-          <p class="text-3xl font-bold text-red-600">{{ stats.rejected }}</p>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-600 uppercase">Rejetées</p>
+              <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-600">{{ stats.rejected }}</p>
+            </div>
+          </div>
         </div>
       </div>
 
       <div v-if="showRequestForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div class="p-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">
+        <div class="bg-white/95 backdrop-blur-md rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-500 to-indigo-600">
+            <h2 class="text-2xl font-bold text-white">
               {{ editingRequest ? 'Modifier la demande' : 'Nouvelle demande' }}
             </h2>
+          </div>
+          <div class="p-6">
             <ClientsClientRequestForm
               :initial-data="editingRequest"
               @success="handleRequestSuccess"
@@ -185,50 +232,76 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div v-if="loading" class="text-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+        <div v-if="loading" class="text-center py-16">
+          <div class="relative inline-flex">
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600 absolute top-0"></div>
+          </div>
+          <p class="text-gray-600 mt-4 font-medium">Chargement des demandes...</p>
         </div>
 
-        <div v-else-if="requests.length === 0" class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune demande</h3>
-          <p class="mt-1 text-sm text-gray-500 text-[10px] uppercase font-bold">Commencez par créer une nouvelle demande</p>
+        <div v-else-if="requests.length === 0" class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">Aucune demande</h3>
+          <p class="text-gray-500 mt-2">Commencez par créer une nouvelle demande</p>
         </div>
 
         <div v-else class="divide-y divide-gray-100">
           <div
             v-for="request in requests"
             :key="request.id"
-            class="p-6 hover:bg-gray-50/50 transition-colors"
+            class="p-6 hover:bg-blue-50/50 transition-all"
           >
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                  <h3 class="text-lg font-bold text-gray-900 uppercase italic">{{ request.title }}</h3>
+                <div class="flex items-center gap-3 mb-3 flex-wrap">
+                  <h3 class="text-lg font-bold text-gray-900">{{ request.title }}</h3>
                   <span
-                    class="px-2 py-0.5 text-[10px] font-black uppercase rounded-full"
+                    class="px-3 py-1.5 text-xs font-bold uppercase rounded-lg shadow-sm"
                     :class="getStatusClass(request.status)"
                   >
                     {{ getStatusLabel(request.status) }}
                   </span>
                   <span
-                    class="px-2 py-0.5 text-[10px] font-black uppercase rounded-full"
+                    class="px-3 py-1.5 text-xs font-bold uppercase rounded-lg shadow-sm"
                     :class="getUrgencyClass(request.urgency)"
                   >
                     {{ getUrgencyLabel(request.urgency) }}
                   </span>
                 </div>
 
-                <p class="text-sm text-gray-600 mb-4">{{ request.description }}</p>
+                <p class="text-sm text-gray-600 mb-4 leading-relaxed">{{ request.description }}</p>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] uppercase font-bold text-gray-500">
-                  <div>TYPE: <span class="text-gray-900">{{ getRequestTypeLabel(request.request_type) }}</span></div>
-                  <div v-if="request.case_category">CATÉGORIE: <span class="text-gray-900">{{ request.case_category }}</span></div>
-                  <div v-if="request.budget_min">BUDGET: <span class="text-gray-900">{{ request.budget_min }}€ - {{ request.budget_max }}€</span></div>
-                  <div>SOUMIS LE: <span class="text-gray-900">{{ formatDate(request.created_at) }}</span></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-semibold text-gray-500">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <span class="text-gray-900">{{ getRequestTypeLabel(request.request_type) }}</span>
+                  </div>
+                  <div v-if="request.case_category" class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <span class="text-gray-900">{{ request.case_category }}</span>
+                  </div>
+                  <div v-if="request.budget_min" class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-gray-900">{{ request.budget_min }}€ - {{ request.budget_max }}€</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-gray-900">{{ formatDate(request.created_at) }}</span>
+                  </div>
                 </div>
               </div>
 
@@ -236,14 +309,14 @@ onMounted(() => {
                 <button
                   v-if="request.status === 'pending'"
                   @click="handleEdit(request)"
-                  class="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-black uppercase rounded-lg transition"
+                  class="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold uppercase rounded-lg hover:shadow-lg transition-all transform hover:-translate-y-0.5"
                 >
                   Modifier
                 </button>
                 <button
                   v-if="request.status === 'pending'"
                   @click="cancelRequest(request.id)"
-                  class="w-full py-2 text-red-600 hover:bg-red-50 text-[10px] font-black uppercase rounded-lg transition border border-red-50"
+                  class="w-full px-4 py-2 border-2 border-red-200 text-red-600 text-xs font-bold uppercase rounded-lg hover:bg-red-50 transition-all"
                 >
                   Annuler
                 </button>
