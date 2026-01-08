@@ -1,10 +1,10 @@
 # Frontend Dockerfile
-FROM node:20-alpine AS base
+FROM node:25-alpine AS base
 
 WORKDIR /app
 
 # Development stage
-FROM node:20-alpine AS development
+FROM node:25-alpine AS development
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ ENV PORT=3001
 CMD ["npm", "run", "dev"]
 
 # Build stage
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:25-alpine AS production
 
 WORKDIR /app
 
