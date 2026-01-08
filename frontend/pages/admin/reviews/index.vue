@@ -6,6 +6,7 @@ definePageMeta({
 });
 
 const { apiFetch } = useApi();
+const toast = useToast();
 const feedbacks = ref<any[]>([]);
 const stats = ref<any>(null);
 const loading = ref(true);
@@ -79,7 +80,7 @@ const cancelReply = () => {
 
 const submitReply = async (feedbackId: string) => {
   if (!replyForm.value.response.trim()) {
-    alert('Veuillez saisir une réponse');
+    toast.warning('Veuillez saisir une réponse');
     return;
   }
 
@@ -91,14 +92,14 @@ const submitReply = async (feedbackId: string) => {
     });
 
     if (response.success) {
-      alert('Réponse envoyée ! L\'utilisateur a reçu une notification.');
+      toast.success('Réponse envoyée ! L\'utilisateur a reçu une notification');
       await loadFeedbacks();
       await loadStats();
       cancelReply();
     }
   } catch (error) {
     console.error('Erreur envoi réponse:', error);
-    alert('Erreur lors de l\'envoi de la réponse');
+    toast.error('Erreur lors de l\'envoi de la réponse');
   } finally {
     submittingReply.value = false;
   }
@@ -114,10 +115,11 @@ const updateStatus = async (feedbackId: string, status: string) => {
     if (response.success) {
       await loadFeedbacks();
       await loadStats();
+      toast.success('Statut mis à jour avec succès');
     }
   } catch (error) {
     console.error('Erreur mise à jour statut:', error);
-    alert('Erreur lors de la mise à jour du statut');
+    toast.error('Erreur lors de la mise à jour du statut');
   }
 };
 
@@ -139,7 +141,7 @@ const visiblePages = computed(() => {
 });
 
 const viewDetails = (feedback: any) => {
-  alert(`Détails du feedback:\n\nID: ${feedback.id}\nUtilisateur: ${feedback.user_first_name} ${feedback.user_last_name}\nEmail: ${feedback.user_email}`);
+  toast.info(`Détails du feedback - ID: ${feedback.id} - Utilisateur: ${feedback.user_first_name} ${feedback.user_last_name} (${feedback.user_email})`);
 };
 
 const formatDate = (dateString: string) => {

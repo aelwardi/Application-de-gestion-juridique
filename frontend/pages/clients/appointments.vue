@@ -11,6 +11,8 @@ definePageMeta({
 const authStore = useAuthStore();
 const { getAllAppointments, updateAppointment, getAppointmentStats } = useAppointment();
 const config = useRuntimeConfig();
+const toast = useToast();
+const confirmModal = useConfirm();
 
 const appointments = ref<any[]>([]);
 const stats = ref<any>({});
@@ -49,7 +51,7 @@ const fetchInitialData = async () => {
 const openSuggestionModal = (lawyerId: string, appointmentId?: string) => {
   console.log('[DEBUG] Opening suggestion modal with lawyerId:', lawyerId, 'appointmentId:', appointmentId);
   if (!lawyerId) {
-    alert('Aucun avocat associé trouvé pour ce rendez-vous');
+    toast.error('Aucun avocat associé trouvé pour ce rendez-vous');
     return;
   }
   selectedLawyerId.value = lawyerId;
@@ -94,11 +96,11 @@ const confirmCancel = async () => {
     if (res.success) {
       await fetchInitialData();
       showCancelModal.value = false;
-      alert('Rendez-vous annulé avec succès');
+      toast.success('Rendez-vous annulé avec succès');
     }
   } catch (error) {
     console.error('Erreur lors de l\'annulation:', error);
-    alert('Erreur lors de l\'annulation du rendez-vous');
+    toast.error('Erreur lors de l\'annulation du rendez-vous');
   } finally {
     cancelling.value = false;
   }

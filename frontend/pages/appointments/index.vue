@@ -11,6 +11,8 @@ definePageMeta({ middleware: 'auth', layout: 'authenticated' });
 
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
+const confirmModal = useConfirm();
 const { getAllAppointments, createAppointment, updateAppointment, getAppointmentStats } = useAppointment();
 const { getAllCases } = useCase();
 const { geocodeAddress } = useGeolocation();
@@ -249,8 +251,16 @@ const toISOStringLocal = (dateTimeLocal: string) => {
 const handleSubmit = async () => {
   const start = new Date(form.value.start_time).getTime();
   const end = new Date(form.value.end_time).getTime();
-  if (end <= start) { alert("L'heure de fin doit être après l'heure de début."); return; }
-  if (isEditing.value && isLocked(form.value.start_time)) { alert("Modification impossible à moins de 24h."); return; }
+
+  if (end <= start) {
+    toast.error("L'heure de fin doit être après l'heure de début.");
+    return;
+  }
+
+  if (isEditing.value && isLocked(form.value.start_time)) {
+    toast.warning("Modification impossible à moins de 24h.");
+    return;
+  }
 
   const conflictCheck = await checkConflicts(
       form.value.lawyer_id || authStore.user?.id || '',
@@ -304,13 +314,13 @@ const saveAppointment = async () => {
     if (res.success) {
       await fetchInitialData();
       closeModal();
-      alert(isEditing.value ? 'Rendez-vous mis à jour !' : 'Rendez-vous créé !');
+      toast.success(isEditing.value ? 'Rendez-vous mis à jour !' : 'Rendez-vous créé !');
     } else {
-      alert(res.message || 'Erreur lors de la sauvegarde');
+      toast.error(res.message || 'Erreur lors de la sauvegarde');
     }
   } catch (error: any) {
     console.error('Erreur création rendez-vous:', error);
-    alert(error.data?.message || error.message || 'Erreur lors de la création du rendez-vous');
+    toast.error(error.data?.message || error.message || 'Erreur lors de la création du rendez-vous');
   } finally {
     submitting.value = false;
   }
@@ -320,9 +330,19 @@ const handleSelectSlot = (slot: any) => {
   form.value.start_time = new Date(slot.start).toISOString().slice(0, 16);
   form.value.end_time = new Date(slot.end).toISOString().slice(0, 16);
   showConflictModal.value = false;
+  toast.success('Créneau horaire sélectionné');
 };
 
 const handleForceCreate = async () => {
+  const confirmed = await confirmModal.confirm({
+    title: 'Conflit détecté',
+    message: 'Êtes-vous sûr de vouloir créer ce rendez-vous malgré le conflit d\'horaire ?',
+    confirmText: 'Forcer la création',
+    cancelText: 'Annuler',
+  });
+
+  if (!confirmed) return;
+
   showConflictModal.value = false;
   await saveAppointment();
 };

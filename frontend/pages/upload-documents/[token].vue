@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
+const toast = useToast();
 const token = route.params.token as string;
 
 const loading = ref(true);
@@ -73,12 +74,13 @@ const handleUpload = async () => {
 
     if (response.success) {
       uploadSuccess.value = true;
+      toast.success('Document envoyé avec succès !');
     } else {
-      alert(response.message || 'Erreur lors de l\'envoi');
+      toast.error(response.message || 'Erreur lors de l\'envoi');
     }
   } catch (err: any) {
     console.error('Upload error:', err);
-    alert(err.data?.message || 'Erreur lors de l\'envoi du document');
+    toast.error(err.data?.message || 'Erreur lors de l\'envoi du document');
   } finally {
     uploading.value = false;
   }

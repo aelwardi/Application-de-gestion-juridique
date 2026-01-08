@@ -9,6 +9,8 @@ definePageMeta({ middleware: 'auth', layout: 'authenticated' });
 const { getAllCases } = useCase();
 const { uploadDocument, getDocumentsByCase, deleteDocument, getDownloadUrl, getRecentDocuments } = useDocument();
 const authStore = useAuthStore();
+const toast = useToast()
+const confirm = useConfirm()
 
 const documents = ref<any[]>([]);
 const cases = ref<any[]>([]);
@@ -114,9 +116,10 @@ const handleUpload = async () => {
     await uploadDocument(fd);
     showUploadModal.value = false;
     uploadForm.value = { title: '', document_type: 'other', case_id: null, is_confidential: false, file: null };
+    toast.success("Document uploadé avec succès");
     await loadDocuments();
   } catch (err) {
-    alert("Erreur lors de l'upload");
+    toast.error("Erreur lors de l'upload");
   } finally {
     uploading.value = false;
   }
@@ -125,12 +128,19 @@ const handleUpload = async () => {
 const downloadDoc = (doc: any) => window.open(getDownloadUrl(doc.file_url), '_blank');
 
 const confirmDelete = async (doc: any) => {
-  if (confirm(`Supprimer "${doc.title || doc.file_name}" ?`)) {
+  const confirmed = await confirm.confirm({
+    title: 'Confirmer la suppression',
+    message: `Êtes-vous sûr de vouloir supprimer "${doc.title || doc.file_name}" ?`,
+    confirmText: 'Supprimer',
+    cancelText: 'Annuler',
+  });
+  if (confirmed) {
     try {
       await deleteDocument(doc.id);
       documents.value = documents.value.filter(d => d.id !== doc.id);
+      toast.success("Document supprimé avec succès");
     } catch (e) {
-      alert("Erreur de suppression");
+      toast.error("Erreur de suppression");
     }
   }
 };

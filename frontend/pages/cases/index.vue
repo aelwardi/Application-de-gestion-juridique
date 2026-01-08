@@ -9,6 +9,7 @@ definePageMeta({
 
 const authStore = useAuthStore();
 const { getAllCases } = useCase();
+const toast = useToast();
 
 const cases = ref<any[]>([]);
 const loading = ref(true);
@@ -166,7 +167,7 @@ const editCase = (caseId: string) => {
 const exportCases = () => {
   // TODO: Implémenter l'export
   console.log('Export cases');
-  alert('Fonctionnalité d\'export en cours de développement...');
+  toast.info('Fonctionnalité d\'export en cours de développement...');
 };
 
 const loadCases = async () => {

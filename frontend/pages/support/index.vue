@@ -13,6 +13,7 @@ definePageMeta({
 const router = useRouter()
 const { createTicket, getMyTickets, addTicketMessage } = useSupport()
 const authStore = useAuthStore()
+const toast = useToast()
 
 const showCreateModal = ref(false)
 const submitting = ref(false)
@@ -67,6 +68,7 @@ const loadTickets = async () => {
     }
   } catch (error) {
     console.error('Error loading tickets:', error)
+    toast.error('Erreur lors du chargement des tickets')
   } finally {
     loadingTickets.value = false
   }
@@ -92,9 +94,11 @@ const submitTicket = async () => {
       if (newTicket) {
         selectedTicket.value = newTicket
       }
+      toast.success('Ticket créé avec succès')
     }
   } catch (error) {
     console.error('Error creating ticket:', error)
+    toast.error('Erreur lors de la création du ticket')
   } finally {
     submitting.value = false
   }
@@ -118,8 +122,10 @@ const sendMessage = async () => {
     nextTick(() => {
       scrollToBottom()
     })
+    toast.success('Message envoyé avec succès')
   } catch (error) {
     console.error('Error sending message:', error)
+    toast.error('Erreur lors de l\'envoi du message')
   } finally {
     sendingMessage.value = false
   }

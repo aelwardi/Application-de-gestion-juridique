@@ -14,6 +14,7 @@ interface AdminStats {
 }
 
 const { apiFetch } = useApi();
+const toast = useToast();
 const stats = ref<AdminStats | null>(null);
 const comprehensiveStats = ref<any>(null);
 const loading = ref(false);
@@ -70,15 +71,15 @@ const sendBulkEmail = async () => {
     });
 
     if (response.success) {
-      alert('Emails envoyés avec succès !');
+      toast.success('Emails envoyés avec succès');
       showBulkEmailModal.value = false;
       bulkEmailForm.value = { role: '', subject: '', message: '' };
     } else {
-      alert('Erreur lors de l\'envoi des emails');
+      toast.error('Erreur lors de l\'envoi des emails');
     }
   } catch (error) {
     console.error('Failed to send bulk email:', error);
-    alert('Erreur lors de l\'envoi des emails');
+    toast.error('Erreur lors de l\'envoi des emails');
   } finally {
     bulkEmailLoading.value = false;
   }

@@ -8,6 +8,7 @@ definePageMeta({
 
 const route = useRoute();
 const { getClientById, getClientStats, getClientCases, getClientAppointments, getClientDocuments } = useClient();
+const toast = useToast();
 
 const client = ref<Client | null>(null);
 const stats = ref<ClientStats | null>(null);
@@ -41,6 +42,7 @@ const loadClientData = async () => {
     }
   } catch (error) {
     console.error('Error loading client:', error);
+    toast.error('Erreur lors du chargement des informations du client');
   } finally {
     loading.value = false;
   }
@@ -50,20 +52,38 @@ watch(activeTab, async (newTab) => {
   if (!client.value) return;
 
   if (newTab === 'cases' && cases.value.length === 0) {
-    loadingCases.value = true;
-    const result = await getClientCases(client.value.id, 20, 0);
-    cases.value = result.data;
-    loadingCases.value = false;
+    try {
+      loadingCases.value = true;
+      const result = await getClientCases(client.value.id, 20, 0);
+      cases.value = result.data;
+    } catch (error) {
+      console.error('Error loading cases:', error);
+      toast.error('Erreur lors du chargement des dossiers');
+    } finally {
+      loadingCases.value = false;
+    }
   } else if (newTab === 'appointments' && appointments.value.length === 0) {
-    loadingAppointments.value = true;
-    const result = await getClientAppointments(client.value.id, 20, 0);
-    appointments.value = result.data;
-    loadingAppointments.value = false;
+    try {
+      loadingAppointments.value = true;
+      const result = await getClientAppointments(client.value.id, 20, 0);
+      appointments.value = result.data;
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      toast.error('Erreur lors du chargement des rendez-vous');
+    } finally {
+      loadingAppointments.value = false;
+    }
   } else if (newTab === 'documents' && documents.value.length === 0) {
-    loadingDocuments.value = true;
-    const result = await getClientDocuments(client.value.id, 20, 0);
-    documents.value = result.data;
-    loadingDocuments.value = false;
+    try {
+      loadingDocuments.value = true;
+      const result = await getClientDocuments(client.value.id, 20, 0);
+      documents.value = result.data;
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      toast.error('Erreur lors du chargement des documents');
+    } finally {
+      loadingDocuments.value = false;
+    }
   }
 });
 

@@ -5,6 +5,8 @@ definePageMeta({
 });
 
 const { apiFetch } = useApi();
+const toast = useToast();
+const confirmModal = useConfirm();
 
 const tickets = ref<any[]>([]);
 const selectedTicket = ref<any>(null);
@@ -112,7 +114,7 @@ const sendMessage = async () => {
     }
   } catch (error) {
     console.error('Failed to send message:', error);
-    alert('Erreur lors de l\'envoi du message');
+    toast.error('Erreur lors de l\'envoi du message');
   } finally {
     sendingMessage.value = false;
   }
@@ -121,9 +123,15 @@ const sendMessage = async () => {
 const closeTicket = async () => {
   if (!selectedTicket.value) return;
 
-  if (!confirm('Etes-vous sur de vouloir cloturer ce ticket ? Le client/avocat devra creer un nouveau ticket pour vous contacter a nouveau.')) {
-    return;
-  }
+  const confirmed = await confirmModal.confirm({
+    title: 'Clôturer le ticket',
+    message: 'Êtes-vous sûr de vouloir clôturer ce ticket ? Le client/avocat devra créer un nouveau ticket pour vous contacter à nouveau.',
+    confirmText: 'Clôturer',
+    cancelText: 'Annuler',
+    type: 'warning'
+  });
+
+  if (!confirmed) return;
 
   try {
     await apiFetch(`/support/tickets/${selectedTicket.value.id}/status`, {
@@ -138,10 +146,10 @@ const closeTicket = async () => {
       tickets.value[ticketIndex].status = 'closed';
     }
 
-    alert('Ticket cloture avec succes');
+    toast.success('Ticket clôturé avec succès');
   } catch (error) {
     console.error('Failed to close ticket:', error);
-    alert('Erreur lors de la cloture du ticket');
+    toast.error('Erreur lors de la clôture du ticket');
   }
 };
 

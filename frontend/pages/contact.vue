@@ -9,6 +9,7 @@ definePageMeta({
 
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToast()
 
 const activeTab = ref('contact')
 const submittingContact = ref(false)
@@ -79,7 +80,7 @@ const submitContact = async () => {
   submittingContact.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
-    alert('Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.')
+    toast.success('Votre message a été envoyé avec succès !', 'Nous vous répondrons dans les plus brefs délais.')
     contactForm.value = {
       name: authStore.user ? `${authStore.user.firstName} ${authStore.user.lastName}` : '',
       email: authStore.user?.email || '',
@@ -87,7 +88,7 @@ const submitContact = async () => {
       message: ''
     }
   } catch (error) {
-    alert('Erreur lors de l\'envoi du message. Veuillez réessayer.')
+    toast.error('Erreur lors de l\'envoi du message', 'Veuillez réessayer.')
   } finally {
     submittingContact.value = false
   }
@@ -95,14 +96,14 @@ const submitContact = async () => {
 
 const submitFeedback = async () => {
   if (feedbackForm.value.rating === 0) {
-    alert('Veuillez donner une note')
+    toast.warning('Veuillez donner une note')
     return
   }
 
   submittingFeedback.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
-    alert('Merci pour votre retour ! Votre avis a été enregistré.')
+    toast.success('Merci pour votre retour !', 'Votre avis a été enregistré.')
     feedbackForm.value = {
       rating: 0,
       category: '',
@@ -110,7 +111,7 @@ const submitFeedback = async () => {
       suggestions: ''
     }
   } catch (error) {
-    alert('Erreur lors de l\'envoi de votre avis. Veuillez réessayer.')
+    toast.error('Erreur lors de l\'envoi de votre avis', 'Veuillez réessayer.')
   } finally {
     submittingFeedback.value = false
   }

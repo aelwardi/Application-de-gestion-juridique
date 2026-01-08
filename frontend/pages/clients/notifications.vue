@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 
 const notificationStore = useNotificationStore()
 const router = useRouter()
+const toast = useToast()
 
 const activeFilter = ref('toutes')
 const tabs = [
@@ -61,7 +62,23 @@ const handleNotificationClick = async (notif: any) => {
 }
 
 const markAsRead = async (id: string) => {
-  await notificationStore.markAsRead(id)
+  try {
+    await notificationStore.markAsRead(id)
+    toast.success('Notification marquée comme lue')
+  } catch (error) {
+    console.error('Error marking notification as read:', error)
+    toast.error('Erreur lors du marquage de la notification')
+  }
+}
+
+const markAllAsRead = async () => {
+  try {
+    await notificationStore.markAllAsRead()
+    toast.success('Toutes les notifications ont été marquées comme lues')
+  } catch (error) {
+    console.error('Error marking all as read:', error)
+    toast.error('Erreur lors du marquage des notifications')
+  }
 }
 
 

@@ -3,6 +3,9 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+
+   <CommonToastContainer />
+   <CommonConfirmModal />
   </div>
 </template>
 

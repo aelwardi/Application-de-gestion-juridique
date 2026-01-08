@@ -7,6 +7,7 @@ definePageMeta({
 });
 
 const authStore = useAuthStore();
+const toast = useToast();
 const user = computed(() => authStore.user);
 
 const activeTab = ref('personal');
@@ -143,8 +144,6 @@ const handleOfficeAddressSearch = async () => {
 };
 
 const selectOfficeSuggestion = (suggestion: any) => {
-  console.log('🏢 Adresse cabinet sélectionnée:', suggestion);
-
   officeForm.value.officeAddress = suggestion.formattedAddress || suggestion.address;
 
   const addressParts = (suggestion.formattedAddress || suggestion.address || '').split(',');
@@ -312,9 +311,11 @@ const updatePersonalInfo = async () => {
       authStore.user = response.data;
     }
     personalSuccess.value = 'Informations personnelles mises à jour avec succès';
+    toast.success('Informations personnelles mises à jour avec succès');
     setTimeout(() => personalSuccess.value = '', 3000);
   } catch (error: any) {
     personalError.value = error.message || 'Une erreur est survenue';
+    toast.error('Erreur lors de la mise à jour des informations personnelles');
   } finally {
     personalLoading.value = false;
   }
@@ -343,9 +344,11 @@ const updateProfessionalInfo = async () => {
       authStore.user = response.data;
     }
     professionalSuccess.value = 'Informations professionnelles mises à jour avec succès';
+    toast.success('Informations professionnelles mises à jour avec succès');
     setTimeout(() => professionalSuccess.value = '', 3000);
   } catch (error: any) {
     professionalError.value = error.message || 'Une erreur est survenue';
+    toast.error('Erreur lors de la mise à jour des informations professionnelles');
   } finally {
     professionalLoading.value = false;
   }
@@ -374,9 +377,11 @@ const updateOfficeInfo = async () => {
       authStore.user = response.data;
     }
     officeSuccess.value = 'Informations du cabinet mises à jour avec succès';
+    toast.success('Informations du cabinet mises à jour avec succès');
     setTimeout(() => officeSuccess.value = '', 3000);
   } catch (error: any) {
     officeError.value = error.message || 'Une erreur est survenue';
+    toast.error('Erreur lors de la mise à jour des informations du cabinet');
   } finally {
     officeLoading.value = false;
   }
@@ -405,9 +410,11 @@ const updateSpecialties = async () => {
       authStore.user = response.data;
     }
     specialtiesSuccess.value = 'Spécialités et langues mises à jour avec succès';
+    toast.success('Spécialités et langues mises à jour avec succès');
     setTimeout(() => specialtiesSuccess.value = '', 3000);
   } catch (error: any) {
     specialtiesError.value = error.message || 'Une erreur est survenue';
+    toast.error('Erreur lors de la mise à jour des spécialités');
   } finally {
     specialtiesLoading.value = false;
   }
@@ -435,9 +442,11 @@ const updateAddressInfo = async () => {
       authStore.user = response.data;
     }
     addressSuccess.value = 'Adresse mise à jour avec succès';
+    toast.success('Adresse mise à jour avec succès');
     setTimeout(() => addressSuccess.value = '', 3000);
   } catch (error: any) {
     addressError.value = error.message || 'Une erreur est survenue';
+    toast.error('Erreur lors de la mise à jour de l\'adresse');
   } finally {
     addressLoading.value = false;
   }
@@ -463,9 +472,11 @@ const updateEmergencyContact = async () => {
       authStore.user = response.data;
     }
     emergencySuccess.value = 'Contact d\'urgence mis à jour avec succès';
+    toast.success('Contact d\'urgence mis à jour avec succès');
     setTimeout(() => emergencySuccess.value = '', 3000);
   } catch (error: any) {
     emergencyError.value = error.message || 'Une erreur est survenue';
+    toast.error('Erreur lors de la mise à jour du contact d\'urgence');
   } finally {
     emergencyLoading.value = false;
   }
@@ -478,6 +489,7 @@ const updatePassword = async () => {
 
   if (securityForm.value.newPassword !== securityForm.value.confirmPassword) {
     securityError.value = 'Les mots de passe ne correspondent pas';
+    toast.warning('Les mots de passe ne correspondent pas');
     securityLoading.value = false;
     return;
   }
@@ -485,6 +497,7 @@ const updatePassword = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1000));
     securitySuccess.value = 'Mot de passe modifié avec succès';
+    toast.success('Mot de passe modifié avec succès');
     securityForm.value = {
       currentPassword: '',
       newPassword: '',
@@ -492,6 +505,7 @@ const updatePassword = async () => {
     };
   } catch (error: any) {
     securityError.value = error.message || 'Une erreur est survenue';
+    toast.error('Erreur lors de la modification du mot de passe');
   } finally {
     securityLoading.value = false;
   }
@@ -636,8 +650,10 @@ const updateNotificationPreferences = async () => {
 
   try {
     await new Promise(resolve => setTimeout(resolve, 1000));
+    toast.success('Préférences de notification mises à jour');
   } catch (error) {
     console.error('Error updating notification preferences:', error);
+    toast.error('Erreur lors de la mise à jour des préférences');
   } finally {
     notificationLoading.value = false;
   }

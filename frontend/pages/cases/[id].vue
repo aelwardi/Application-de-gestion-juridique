@@ -6,6 +6,8 @@ import { useDocument } from '~/composables/useDocument'
 import { useAuthStore } from '~/stores/auth'
 import type { CaseWithDetails } from '~/types/case'
 import DocumentRequestModal from '~/components/documents/DocumentRequestModal.vue'
+import { useToast } from '~/composables/useToast'
+import { useConfirm } from '~/composables/useConfirm'
 
 definePageMeta({
   middleware: 'auth',
@@ -15,6 +17,8 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToast()
+const confirmModal = useConfirm()
 const { getCaseById, updateCase } = useCase()
 const { getDocumentsByCase, uploadDocument, deleteDocument: deleteDoc, getDownloadUrl } = useDocument()
 
@@ -114,7 +118,7 @@ const handleUpload = async () => {
     await loadDocuments()
   } catch (err) {
     console.error('Upload error:', err)
-    alert("Erreur lors de l'upload du document")
+    toast.error("Erreur lors de l'upload du document")
   } finally {
     uploading.value = false
   }
@@ -162,7 +166,7 @@ const contactOtherParty = () => {
     query: {
       recipientId,
       recipientName: encodeURIComponent(recipientName),
-      caseId: caseData.value.id,  // ✅ ID du dossier actuel
+      caseId: caseData.value.id,
       caseTitle: encodeURIComponent(caseData.value.title),  // Titre pour affichage
       caseNumber: encodeURIComponent(caseData.value.case_number)  // Numéro du dossier
     }
@@ -183,12 +187,13 @@ const handleStatusChange = async (event: Event) => {
       if (newStatus === 'closed') {
         caseData.value.closing_date = new Date().toISOString()
       }
+      toast.success("Statut mis à jour avec succès")
     } else {
-      alert("Erreur lors de la mise à jour du statut")
+      toast.error("Erreur lors de la mise à jour du statut")
     }
   } catch (err) {
     console.error('Update status error:', err)
-    alert("Une erreur est survenue")
+    toast.error("Une erreur est survenue")
   } finally {
     statusUpdating.value = false
   }
@@ -200,20 +205,28 @@ const downloadDocument = (doc: any) => {
 }
 
 const deleteDocument = async (docId: string) => {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return
+  const confirmed = await confirmModal.confirm({
+    title: 'Supprimer le document',
+    message: 'Êtes-vous sûr de vouloir supprimer ce document ?',
+    confirmText: 'Supprimer',
+    cancelText: 'Annuler',
+  });
+
+  if (!confirmed) return
 
   try {
     await deleteDoc(docId)
     documents.value = documents.value.filter(d => d.id !== docId)
+    toast.success('Document supprimé avec succès')
   } catch (err) {
     console.error('Delete error:', err)
-    alert('Erreur lors de la suppression du document')
+    toast.error('Erreur lors de la suppression du document')
   }
 }
 
 const handleDocumentRequestSuccess = (data: any) => {
   console.log('Document request created:', data);
-  alert('Demande envoyée avec succès ! Le client recevra un email avec le lien pour uploader les documents.');
+  toast.success('Demande envoyée avec succès ! Le client recevra un email avec le lien pour uploader les documents');
 };
 
 const getDocumentTypeLabel = (type: string) => {

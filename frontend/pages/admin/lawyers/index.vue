@@ -19,6 +19,8 @@ interface Lawyer {
 }
 
 const { apiFetch } = useApi();
+const toast = useToast();
+const confirmModal = useConfirm();
 const lawyers = ref<Lawyer[]>([]);
 const specialties = ref<any[]>([]);
 const stats = ref<any>(null);
@@ -97,21 +99,27 @@ const resetFilters = () => {
 };
 
 const verifyLawyer = async (lawyer: Lawyer) => {
-  if (!confirm(`Vérifier l'avocat ${lawyer.firstName} ${lawyer.lastName} ?`)) {
-    return;
-  }
+  const confirmed = await confirmModal.confirm({
+    title: 'Vérifier l\'avocat',
+    message: `Voulez-vous vérifier l'avocat ${lawyer.firstName} ${lawyer.lastName} ?`,
+    confirmText: 'Vérifier',
+    cancelText: 'Annuler',
+    type: 'info'
+  });
+
+  if (!confirmed) return;
 
   try {
     const response = await apiFetch(`/admin/lawyers/${lawyer.id}/verify`, { method: 'PATCH' });
 
     if (response.success) {
       lawyer.verifiedByAdmin = true;
-      alert('Avocat vérifié avec succès !');
+      toast.success('Avocat vérifié avec succès');
       fetchStats();
     }
   } catch (error) {
     console.error('Failed to verify lawyer:', error);
-    alert('Erreur lors de la vérification');
+    toast.error('Erreur lors de la vérification');
   }
 };
 

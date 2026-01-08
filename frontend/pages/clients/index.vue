@@ -8,6 +8,7 @@ definePageMeta({
 
 const authStore = useAuthStore();
 const { getAllClients, searchClients, getClientsByLawyer } = useClient();
+const toast = useToast();
 
 const clients = ref<Client[]>([]);
 const loading = ref(true);
@@ -74,6 +75,7 @@ const loadClients = async () => {
     }
   } catch (error) {
     console.error('Error loading clients:', error);
+    toast.error('Erreur lors du chargement des clients');
   } finally {
     loading.value = false;
   }

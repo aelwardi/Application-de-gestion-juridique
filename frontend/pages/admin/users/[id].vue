@@ -6,6 +6,8 @@ definePageMeta({
 
 const route = useRoute();
 const { apiFetch } = useApi();
+const toast = useToast();
+const confirmModal = useConfirm();
 
 const user = ref<any>(null);
 const loading = ref(true);
@@ -28,9 +30,15 @@ const fetchUser = async () => {
 };
 
 const toggleStatus = async () => {
-  if (!confirm(`Voulez-vous vraiment ${user.value.is_active ? 'désactiver' : 'activer'} cet utilisateur ?`)) {
-    return;
-  }
+  const confirmed = await confirmModal.confirm({
+    title: `${user.value.is_active ? 'Désactiver' : 'Activer'} l'utilisateur`,
+    message: `Voulez-vous vraiment ${user.value.is_active ? 'désactiver' : 'activer'} cet utilisateur ?`,
+    confirmText: user.value.is_active ? 'Désactiver' : 'Activer',
+    cancelText: 'Annuler',
+    type: 'warning'
+  });
+
+  if (!confirmed) return;
 
   try {
     const response = await apiFetch(`/admin/users/${user.value.id}/status`, {
@@ -40,17 +48,24 @@ const toggleStatus = async () => {
 
     if (response.success) {
       user.value.is_active = !user.value.is_active;
+      toast.success(`Utilisateur ${user.value.is_active ? 'activé' : 'désactivé'} avec succès`);
     }
   } catch (error) {
     console.error('Failed to toggle user status:', error);
-    alert('Erreur lors de la mise à jour');
+    toast.error('Erreur lors de la mise à jour');
   }
 };
 
 const verifyUser = async () => {
-  if (!confirm('Voulez-vous vraiment vérifier cet utilisateur ?')) {
-    return;
-  }
+  const confirmed = await confirmModal.confirm({
+    title: 'Vérifier l\'utilisateur',
+    message: 'Voulez-vous vraiment vérifier cet utilisateur ?',
+    confirmText: 'Vérifier',
+    cancelText: 'Annuler',
+    type: 'info'
+  });
+
+  if (!confirmed) return;
 
   try {
     const response = await apiFetch(`/admin/users/${user.value.id}/verify`, {
@@ -59,17 +74,24 @@ const verifyUser = async () => {
 
     if (response.success) {
       user.value.is_verified = true;
+      toast.success('Utilisateur vérifié avec succès');
     }
   } catch (error) {
     console.error('Failed to verify user:', error);
-    alert('Erreur lors de la vérification');
+    toast.error('Erreur lors de la vérification');
   }
 };
 
 const deleteUser = async () => {
-  if (!confirm(`Êtes-vous sûr de vouloir supprimer ${user.value.first_name} ${user.value.last_name} ? Cette action est irréversible.`)) {
-    return;
-  }
+  const confirmed = await confirmModal.confirm({
+    title: 'Supprimer l\'utilisateur',
+    message: `Êtes-vous sûr de vouloir supprimer ${user.value.first_name} ${user.value.last_name} ? Cette action est irréversible.`,
+    confirmText: 'Supprimer',
+    cancelText: 'Annuler',
+    type: 'error'
+  });
+
+  if (!confirmed) return;
 
   try {
     const response = await apiFetch(`/admin/users/${user.value.id}`, {
@@ -77,12 +99,12 @@ const deleteUser = async () => {
     });
 
     if (response.success) {
-      alert('Utilisateur supprimé avec succès');
+      toast.success('Utilisateur supprimé avec succès');
       navigateTo('/admin/users');
     }
   } catch (error) {
     console.error('Failed to delete user:', error);
-    alert('Erreur lors de la suppression');
+    toast.error('Erreur lors de la suppression');
   }
 };
 

@@ -38,15 +38,6 @@ async function runCompleteMigration(): Promise<void> {
       await client.query(sql);
       await client.query("COMMIT");
     }
-
-    const tablesResult = await client.query(`
-      SELECT tablename 
-      FROM pg_tables 
-      WHERE schemaname = 'public' 
-      ORDER BY tablename
-    `);
-
-    const usersResult = await client.query("SELECT COUNT(*) as count FROM users");
   } catch (error: any) {
     await client.query("ROLLBACK");
     console.error("\nErreur lors de la migration:", error.message);

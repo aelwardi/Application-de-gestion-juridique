@@ -6,6 +6,7 @@ definePageMeta({
 });
 
 const { getLawyers } = useCase();
+const toast = useToast();
 const lawyers = ref<any[]>([]);
 const loadingLawyers = ref(true);
 const selectedLawyer = ref<any>(null);
@@ -62,7 +63,7 @@ const loadLawyers = async () => {
 
 const onDemandeSuccess = () => {
   selectedLawyer.value = null;
-  alert("Votre demande a été envoyée avec succès !");
+  toast.success("Votre demande a été envoyée avec succès !");
 };
 
 onMounted(loadLawyers);

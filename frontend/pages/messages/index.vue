@@ -12,6 +12,7 @@ definePageMeta({
 const route = useRoute()
 const authStore = useAuthStore()
 const { getConversations, getMessages, createOrGetConversation, sendMessage } = useMessage()
+const toast = useToast()
 
 const conversations = ref<any[]>([])
 const selectedConversation = ref<any>(null)
@@ -113,7 +114,7 @@ const sendNewMessage = async () => {
     }
   } catch (error) {
     console.error('Error sending message:', error)
-    alert('Erreur lors de l\'envoi du message')
+    toast.error('Erreur lors de l\'envoi du message')
   } finally {
     sending.value = false
   }
@@ -200,7 +201,7 @@ const startConversationWith = async (user: any) => {
     }
   } catch (error) {
     console.error('Error starting conversation:', error)
-    alert('Erreur lors de la création de la conversation')
+    toast.error('Erreur lors de la création de la conversation')
   }
 }
 

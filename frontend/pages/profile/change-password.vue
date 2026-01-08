@@ -6,6 +6,7 @@ definePageMeta({
 
 const authStore = useAuthStore();
 const router = useRouter();
+const toast = useToast();
 
 const form = ref({
   currentPassword: '',
@@ -24,6 +25,7 @@ const handleChangePassword = async () => {
 
   if (form.value.newPassword !== confirmPassword.value) {
     errorMessage.value = 'Les nouveaux mots de passe ne correspondent pas';
+    toast.warning('Les nouveaux mots de passe ne correspondent pas');
     isLoading.value = false;
     return;
   }
@@ -33,6 +35,7 @@ const handleChangePassword = async () => {
 
     if (result.success) {
       successMessage.value = 'Mot de passe changé avec succès';
+      toast.success('Mot de passe changé avec succès');
       form.value.currentPassword = '';
       form.value.newPassword = '';
       confirmPassword.value = '';
@@ -42,10 +45,12 @@ const handleChangePassword = async () => {
       }, 2000);
     } else {
       errorMessage.value = result.message || 'Échec du changement de mot de passe';
+      toast.error(result.message || 'Échec du changement de mot de passe');
     }
   } catch (error: any) {
     console.error('Change password error:', error);
     errorMessage.value = 'Une erreur est survenue lors du changement de mot de passe';
+    toast.error('Une erreur est survenue lors du changement de mot de passe');
   } finally {
     isLoading.value = false;
   }

@@ -7,6 +7,8 @@ definePageMeta({
 const route = useRoute();
 const { apiFetch } = useApi();
 const authStore = useAuthStore();
+const toast = useToast();
+const confirmModal = useConfirm();
 
 const ticket = ref<any>(null);
 const messages = ref<any[]>([]);
@@ -47,9 +49,10 @@ const updateStatus = async () => {
       body: JSON.stringify({ status: newStatus.value }),
     });
     ticket.value.status = newStatus.value;
+    toast.success('Statut mis à jour avec succès');
   } catch (error) {
     console.error('Failed to update status:', error);
-    alert('Erreur lors de la mise à jour');
+    toast.error('Erreur lors de la mise à jour');
   }
 };
 
@@ -60,17 +63,23 @@ const assignToMe = async () => {
       body: JSON.stringify({ adminId: authStore.user?.id }),
     });
     ticket.value.admin_name = authStore.fullName;
-    alert('Ticket assigné avec succès');
+    toast.success('Ticket assigné avec succès');
   } catch (error) {
     console.error('Failed to assign ticket:', error);
-    alert('Erreur lors de l\'assignation');
+    toast.error('Erreur lors de l\'assignation');
   }
 };
 
 const closeTicket = async () => {
-  if (!confirm('Êtes-vous sûr de vouloir clôturer ce ticket ? L\'utilisateur devra créer un nouveau ticket pour vous contacter à nouveau.')) {
-    return;
-  }
+  const confirmed = await confirmModal.confirm({
+    title: 'Clôturer le ticket',
+    message: 'Êtes-vous sûr de vouloir clôturer ce ticket ? L\'utilisateur devra créer un nouveau ticket pour vous contacter à nouveau.',
+    confirmText: 'Clôturer',
+    cancelText: 'Annuler',
+    type: 'warning'
+  });
+
+  if (!confirmed) return;
 
   try {
     await apiFetch(`/support/tickets/${ticket.value.id}/status`, {
@@ -79,10 +88,10 @@ const closeTicket = async () => {
     });
     ticket.value.status = 'closed';
     newStatus.value = 'closed';
-    alert('Ticket clôturé avec succès');
+    toast.success('Ticket clôturé avec succès');
   } catch (error) {
     console.error('Failed to close ticket:', error);
-    alert('Erreur lors de la clôture du ticket');
+    toast.error('Erreur lors de la clôture du ticket');
   }
 };
 
@@ -101,10 +110,11 @@ const sendMessage = async () => {
       messages.value.push(response.data);
       newMessage.value = '';
       isInternalMessage.value = false;
+      toast.success('Message envoyé avec succès');
     }
   } catch (error) {
     console.error('Failed to send message:', error);
-    alert('Erreur lors de l\'envoi');
+    toast.error('Erreur lors de l\'envoi');
   } finally {
     sending.value = false;
   }

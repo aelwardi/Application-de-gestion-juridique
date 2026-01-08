@@ -8,6 +8,8 @@ definePageMeta({
 });
 
 const authStore = useAuthStore();
+const toast = useToast();
+const confirmModal = useConfirm();
 const {
   getSentSuggestions,
   getReceivedSuggestions,
@@ -38,18 +40,25 @@ const loadSuggestions = async () => {
 };
 
 const acceptCounterSuggestion = async (suggestionId: string) => {
-  if (!confirm('Accepter cette contre-proposition et créer le rendez-vous ?')) return;
+  const confirmed = await confirmModal.confirm({
+    title: 'Accepter la contre-proposition',
+    message: 'Accepter cette contre-proposition et créer le rendez-vous ?',
+    confirmText: 'Accepter',
+    cancelText: 'Annuler',
+  });
+
+  if (!confirmed) return;
 
   try {
     const response = await acceptSuggestion(suggestionId);
     if (response.success) {
-      alert('Rendez-vous créé avec succès !');
+      toast.success('Rendez-vous créé avec succès !');
       await loadSuggestions();
       navigateTo('/clients/appointments');
     }
   } catch (error) {
     console.error('Erreur acceptation:', error);
-    alert('Erreur lors de l\'acceptation');
+    toast.error('Erreur lors de l\'acceptation');
   }
 };
 
@@ -60,12 +69,12 @@ const rejectCounterSuggestion = async (suggestionId: string) => {
   try {
     const response = await rejectSuggestion(suggestionId, reason || undefined);
     if (response.success) {
-      alert('Contre-proposition refusée');
+      toast.success('Contre-proposition refusée');
       await loadSuggestions();
     }
   } catch (error) {
     console.error('Erreur refus:', error);
-    alert('Erreur lors du refus');
+    toast.error('Erreur lors du refus');
   }
 };
 

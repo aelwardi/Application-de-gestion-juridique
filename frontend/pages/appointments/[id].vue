@@ -3,6 +3,8 @@ import type { AppointmentSuggestion } from '~/types/suggestion';
 
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
+const confirmModal = useConfirm();
 const { getAppointmentById, confirmAppointment, cancelAppointment } = useAppointment();
 const { getAppointmentSuggestions, acceptSuggestion, rejectSuggestion } = useSuggestion();
 
@@ -39,15 +41,19 @@ const handleAction = async (action: 'confirm' | 'cancel') => {
   const now = new Date();
 
   if (endTime < now) {
-    alert('Ce rendez-vous est déjà passé et a été automatiquement marqué comme terminé.\n\nVous ne pouvez plus modifier son statut.');
-
-
+    toast.warning('Ce rendez-vous est déjà passé et a été automatiquement marqué comme terminé.\n\nVous ne pouvez plus modifier son statut.');
     await loadData();
     return;
   }
 
-  if (action === 'cancel' && !confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) return;
-  if (action === 'confirm' && !confirm('Confirmer ce rendez-vous ?')) return;
+  const confirmed = await confirmModal.confirm({
+    title: action === 'cancel' ? 'Annuler le rendez-vous' : 'Confirmer le rendez-vous',
+    message: action === 'cancel' ? 'Êtes-vous sûr de vouloir annuler ce rendez-vous ?' : 'Confirmer ce rendez-vous ?',
+    confirmText: action === 'cancel' ? 'Annuler' : 'Confirmer',
+    cancelText: 'Retour',
+  });
+
+  if (!confirmed) return;
 
   try {
     let res;
@@ -61,11 +67,11 @@ const handleAction = async (action: 'confirm' | 'cancel') => {
         confirm: 'Rendez-vous confirmé avec succès',
         cancel: 'Rendez-vous annulé'
       };
-      alert(messages[action]);
+      toast.success(messages[action] || 'Action effectuée');
     }
   } catch (err) {
     console.error('Erreur action:', err);
-    alert('Action échouée');
+    toast.error('Action échouée');
   }
 };
 
@@ -75,23 +81,30 @@ const acceptSuggestionAction = async (suggestionId: string) => {
     const now = new Date();
 
     if (endTime < now) {
-      alert('Ce rendez-vous est déjà passé.\n\nVous ne pouvez plus accepter de propositions pour ce rendez-vous.');
+      toast.warning('Ce rendez-vous est déjà passé.\n\nVous ne pouvez plus accepter de propositions pour ce rendez-vous.');
       await loadData();
       return;
     }
   }
 
-  if (!confirm('Accepter cette proposition ? Cela modifiera la date du rendez-vous.')) return;
+  const confirmed = await confirmModal.confirm({
+    title: 'Accepter la proposition',
+    message: 'Accepter cette proposition ? Cela modifiera la date du rendez-vous.',
+    confirmText: 'Accepter',
+    cancelText: 'Annuler',
+  });
+
+  if (!confirmed) return;
 
   try {
     const response = await acceptSuggestion(suggestionId);
     if (response.success) {
-      alert('Proposition acceptée ! Le rendez-vous a été mis à jour.');
+      toast.success('Proposition acceptée ! Le rendez-vous a été mis à jour.');
       await loadData();
     }
   } catch (error) {
     console.error('Erreur acceptation:', error);
-    alert('Erreur lors de l\'acceptation');
+    toast.error('Erreur lors de l\'acceptation');
   }
 };
 
@@ -102,12 +115,12 @@ const rejectSuggestionAction = async (suggestionId: string) => {
   try {
     const response = await rejectSuggestion(suggestionId, reason || undefined);
     if (response.success) {
-      alert('Proposition refusée');
+      toast.success('Proposition refusée');
       await loadData();
     }
   } catch (error) {
     console.error('Erreur refus:', error);
-    alert('Erreur lors du refus');
+    toast.error('Erreur lors du refus');
   }
 };
 

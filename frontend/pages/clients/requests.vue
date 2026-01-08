@@ -6,6 +6,8 @@ definePageMeta({
 
 const authStore = useAuthStore();
 const { apiFetch } = useApi();
+const toast = useToast();
+const confirmModal = useConfirm();
 
 const requests = ref<any[]>([]);
 const loading = ref(true);
@@ -49,12 +51,22 @@ const handleRequestSuccess = () => {
 };
 
 const cancelRequest = async (id: string) => {
-  if (!confirm('Êtes-vous sûr de vouloir annuler cette demande ?')) return;
+  const confirmed = await confirmModal.confirm({
+    title: 'Annuler la demande',
+    message: 'Êtes-vous sûr de vouloir annuler cette demande ?',
+    confirmText: 'Annuler la demande',
+    cancelText: 'Retour',
+  });
+
+  if (!confirmed) return;
+
   try {
     await apiFetch(`/clients-extended/requests/${id}/cancel`, { method: 'PUT' });
+    toast.success('Demande annulée');
     loadRequests();
   } catch (error) {
     console.error('Error canceling request:', error);
+    toast.error('Erreur lors de l\'annulation');
   }
 };
 

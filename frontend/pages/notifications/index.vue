@@ -10,6 +10,8 @@ definePageMeta({
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
 const { acceptOffer: acceptOfferApi, declineOffer } = useCase();
+const toast = useToast();
+const confirmModal = useConfirm();
 
 const loading = ref(false);
 const activeFilter = ref('all');
@@ -65,9 +67,17 @@ const markAllRead = async () => {
 };
 
 const deleteNotif = async (notificationId: string) => {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) return;
+  const confirmed = await confirmModal.confirm({
+    title: 'Confirmer la suppression',
+    message: 'Êtes-vous sûr de vouloir supprimer cette notification ?',
+    confirmText: 'Supprimer',
+    cancelText: 'Annuler',
+  });
+
+  if (!confirmed) return;
 
   await notificationStore.markAsRead(notificationId);
+  toast.success('Notification supprimée');
   loadNotifications();
 };
 
@@ -85,7 +95,7 @@ const showOfferDetails = async (notification: Notification) => {
       showOfferModal.value = true;
     } else {
       console.error('Offre reçue sans ID valide:', selectedOffer.value);
-      alert('Impossible de charger les détails de l\'offre');
+      toast.error('Impossible de charger les détails de l\'offre');
     }
   } catch (error: any) {
     console.error('Erreur lors du chargement des détails:', error);
@@ -93,7 +103,7 @@ const showOfferDetails = async (notification: Notification) => {
 
     if (!offerId) {
       console.error('Impossible de déterminer l\'ID de l\'offre');
-      alert('Impossible d\'identifier l\'offre');
+      toast.error('Impossible d\'identifier l\'offre');
       return;
     }
 
@@ -109,34 +119,48 @@ const showOfferDetails = async (notification: Notification) => {
 };
 
 const acceptOffer = async (notification: Notification) => {
-  if (!confirm('Êtes-vous sûr de vouloir accepter cette offre ?\n\nUn nouveau dossier sera automatiquement créé.')) return;
+  const confirmed = await confirmModal.confirm({
+    title: 'Accepter l\'offre',
+    message: 'Êtes-vous sûr de vouloir accepter cette offre ?\n\nUn nouveau dossier sera automatiquement créé.',
+    confirmText: 'Accepter',
+    cancelText: 'Annuler',
+  });
+
+  if (!confirmed) return;
 
   loading.value = true;
   try {
     await acceptOfferApi(notification.id);
     await notificationStore.markAsRead(notification.id);
     await loadNotifications();
-    alert('Offre acceptée avec succès ! Le dossier a été créé.');
+    toast.success('Offre acceptée avec succès ! Le dossier a été créé.');
   } catch (error) {
     console.error('Erreur lors de l\'acceptation:', error);
-    alert('Erreur lors de l\'acceptation de l\'offre');
+    toast.error('Erreur lors de l\'acceptation de l\'offre');
   } finally {
     loading.value = false;
   }
 };
 
 const rejectOffer = async (notification: Notification) => {
-  if (!confirm('Êtes-vous sûr de vouloir refuser cette offre ?')) return;
+  const confirmed = await confirmModal.confirm({
+    title: 'Refuser l\'offre',
+    message: 'Êtes-vous sûr de vouloir refuser cette offre ?',
+    confirmText: 'Refuser',
+    cancelText: 'Annuler',
+  });
+
+  if (!confirmed) return;
 
   loading.value = true;
   try {
     await declineOffer(notification.id);
     await notificationStore.markAsRead(notification.id);
     await loadNotifications();
-    alert('Offre refusée');
+    toast.success('Offre refusée');
   } catch (error) {
     console.error('Erreur lors du refus:', error);
-    alert('Erreur lors du refus de l\'offre');
+    toast.error('Erreur lors du refus de l\'offre');
   } finally {
     loading.value = false;
   }
@@ -150,7 +174,7 @@ const closeOfferModal = () => {
 const handleOfferAcceptFromModal = async () => {
   if (!selectedOffer.value || !selectedOffer.value.id) {
     console.error('Pas d\'offre sélectionnée ou ID manquant');
-    alert('Erreur : impossible d\'identifier l\'offre');
+    toast.error('Erreur : impossible d\'identifier l\'offre');
     return;
   }
 
@@ -162,11 +186,10 @@ const handleOfferAcceptFromModal = async () => {
     closeOfferModal();
     await notificationStore.markAsRead(offerId);
     await loadNotifications();
-    alert('Offre acceptée avec succès ! Le dossier a été créé.');
-    // Rester sur la page des notifications
+    toast.success('Offre acceptée avec succès ! Le dossier a été créé.');
   } catch (error) {
     console.error('Erreur lors de l\'acceptation:', error);
-    alert('Erreur lors de l\'acceptation de l\'offre');
+    toast.error('Erreur lors de l\'acceptation de l\'offre');
   } finally {
     loading.value = false;
   }
@@ -175,7 +198,7 @@ const handleOfferAcceptFromModal = async () => {
 const handleOfferRejectFromModal = async () => {
   if (!selectedOffer.value || !selectedOffer.value.id) {
     console.error('Pas d\'offre sélectionnée ou ID manquant');
-    alert('Erreur : impossible d\'identifier l\'offre');
+    toast.error('Erreur : impossible d\'identifier l\'offre');
     return;
   }
 
@@ -187,10 +210,10 @@ const handleOfferRejectFromModal = async () => {
     closeOfferModal();
     await notificationStore.markAsRead(offerId);
     await loadNotifications();
-    alert('Offre refusée avec succès');
+    toast.success('Offre refusée avec succès');
   } catch (error) {
     console.error('Erreur lors du refus:', error);
-    alert('Erreur lors du refus de l\'offre');
+    toast.error('Erreur lors du refus de l\'offre');
   } finally {
     loading.value = false;
   }
