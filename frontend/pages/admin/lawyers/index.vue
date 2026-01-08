@@ -259,9 +259,10 @@ onMounted(() => {
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
                   v-if="lawyer.verifiedByAdmin"
-                  class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+                  class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 flex items-center gap-1"
                 >
-                  ✓ Vérifié
+                  <CheckCircleIcon class="h-3 w-3" />
+                  Vérifié
                 </span>
                 <span
                   v-else

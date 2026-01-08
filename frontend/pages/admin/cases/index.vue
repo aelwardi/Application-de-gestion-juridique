@@ -46,9 +46,18 @@ definePageMeta({
               <strong>Accès autorisé pour :</strong>
             </p>
             <ul class="mt-2 text-sm text-blue-700 space-y-1">
-              <li>✓ Le client propriétaire du dossier</li>
-              <li>✓ L'avocat assigné au dossier</li>
-              <li>✗ Les administrateurs (accès restreint)</li>
+              <li class="flex items-center gap-2">
+                <CheckCircleIcon class="h-4 w-4 text-green-600" />
+                Le client propriétaire du dossier
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircleIcon class="h-4 w-4 text-green-600" />
+                L'avocat assigné au dossier
+              </li>
+              <li class="flex items-center gap-2">
+                <XCircleIcon class="h-4 w-4 text-red-600" />
+                Les administrateurs (accès restreint)
+              </li>
             </ul>
           </div>
         </div>

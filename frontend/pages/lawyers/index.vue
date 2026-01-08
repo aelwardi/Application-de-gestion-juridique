@@ -1,5 +1,8 @@
 
 <script setup lang="ts">
+import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { StarIcon as StarIconOutline } from '@heroicons/vue/24/outline'
+import { StarIcon as StarIconSolid } from '@heroicons/vue/20/solid'
 definePageMeta({
   middleware: ['auth', 'client'],
   layout: 'authenticated'
@@ -390,9 +393,8 @@ onMounted(loadLawyers);
                 <span class="text-3xl font-black text-gray-900">{{ lawyerDetails.rating > 0 ? lawyerDetails.rating.toFixed(1) : '5.0' }}</span>
                 <div>
                   <div class="flex text-yellow-400 text-xs">
-                    <span v-for="i in 5" :key="i">
-                      {{ i <= Math.round(lawyerDetails.rating || 5) ? '★' : '☆' }}
-                    </span>
+                    <StarIconSolid v-for="i in Math.round(lawyerDetails.rating || 5)" :key="'filled-' + i" class="h-4 w-4" />
+                    <StarIconOutline v-for="i in (5 - Math.round(lawyerDetails.rating || 5))" :key="'empty-' + i" class="h-4 w-4" />
                   </div>
                   <p class="text-[10px] font-bold text-gray-400 uppercase">
                     {{ lawyerDetails.review_count || 0 }} avis vérifiés

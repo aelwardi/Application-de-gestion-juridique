@@ -569,7 +569,7 @@ if (process.client) {
             </li>
             <li class="flex items-start gap-2">
               <span class="font-bold min-w-[24px]">4.</span>
-              <span>Vérifiez que l'encadré vert <strong>"✓ Adresse géolocalisée"</strong> apparaît</span>
+              <span>Vérifiez que l'encadré vert <strong>"Adresse géolocalisée"</strong> apparaît</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="font-bold min-w-[24px]">5.</span>

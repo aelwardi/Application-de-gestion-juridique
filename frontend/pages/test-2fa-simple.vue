@@ -110,7 +110,7 @@ const finishSetup = () => {
   showSetupModal.value = false;
   setupStep.value = 1;
   verificationCode.value = '';
-  successMessage.value = '✅ 2FA activé avec succès !';
+  successMessage.value = '2FA activé avec succès !';
   addLog('Configuration terminée');
   fetchStatus();
 };

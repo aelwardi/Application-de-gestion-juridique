@@ -795,7 +795,7 @@ export const sendTwoFactorEnabledEmail = async (
         <div class="content">
           <h2>Bonjour ${firstName},</h2>
           <div class="success-box">
-            <p><strong>✓ Votre compte est maintenant plus sécurisé !</strong></p>
+            <p><strong>&#10004; Votre compte est maintenant plus sécurisé !</strong></p>
             <p>L'authentification à deux facteurs (2FA) a été activée avec succès pour votre compte.</p>
           </div>
           <p>À partir de maintenant, vous devrez fournir un code à 6 chiffres depuis votre application d'authentification lors de chaque connexion.</p>

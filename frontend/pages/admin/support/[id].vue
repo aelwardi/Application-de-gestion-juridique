@@ -182,9 +182,10 @@ onMounted(() => {
             <button
               v-if="ticket.status !== 'closed'"
               @click="closeTicket"
-              class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+              class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 flex items-center gap-2"
             >
-              ✓ Clôturer
+              <CheckIcon class="h-4 w-4" />
+              Clôturer
             </button>
             <button
               @click="assignToMe"

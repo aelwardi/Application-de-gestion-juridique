@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 import type { AppointmentSuggestion } from '~/types/suggestion';
 
 const route = useRoute();
@@ -417,15 +419,17 @@ onMounted(loadData);
                 <div v-if="suggestion.status === 'pending' && authStore.user?.id === suggestion.suggested_to_user_id" class="flex flex-col gap-2 ml-4">
                   <button
                     @click="acceptSuggestionAction(suggestion.id)"
-                    class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs font-semibold whitespace-nowrap"
+                    class="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-xs font-semibold whitespace-nowrap flex items-center gap-1"
                   >
-                    ✓ Accepter
+                    <CheckIcon class="h-3 w-3" />
+                    Accepter
                   </button>
                   <button
                     @click="rejectSuggestionAction(suggestion.id)"
-                    class="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-semibold whitespace-nowrap"
+                    class="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-semibold whitespace-nowrap flex items-center gap-1"
                   >
-                    ✗ Refuser
+                    <XMarkIcon class="h-3 w-3" />
+                    Refuser
                   </button>
                 </div>
               </div>

@@ -1055,9 +1055,9 @@ watch(user, (newUser) => {
                     <button
                       type="button"
                       @click="specialtiesForm.languages.splice(index, 1)"
-                      class="px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
+                      class="px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 flex items-center justify-center"
                     >
-                      ✕
+                      <XMarkIcon class="h-4 w-4" />
                     </button>
                   </div>
                 </div>

@@ -791,9 +791,10 @@ watch(viewMode, (newMode) => {
             <button
                 type="submit"
                 :disabled="submitting"
-                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+              class="w-full bg-gradient-to-r from-blue-700 to-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-tight hover:from-blue-800 hover:to-blue-600 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {{ submitting ? '⏳ Chargement...' : (isEditing ? '✓ Enregistrer' : '✓ Confirmer') }}
+              <CheckIcon v-if="!submitting" class="h-5 w-5" />
+              {{ submitting ? 'Chargement...' : (isEditing ? 'Enregistrer' : 'Confirmer') }}
             </button>
           </div>
         </form>

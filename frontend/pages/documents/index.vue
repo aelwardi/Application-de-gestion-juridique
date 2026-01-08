@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { XMarkIcon, CheckIcon } from '@heroicons/vue/24/solid'
 import { useAuthStore } from '~/stores/auth'
 import { useCase } from '~/composables/useCase'
 import { useDocument } from '~/composables/useDocument'
@@ -462,7 +463,9 @@ const debouncedSearch = () => {
       <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100">
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <h2 class="text-xl font-black text-gray-900 tracking-tight italic uppercase">Dépôt de pièce</h2>
-          <button @click="showUploadModal = false" class="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-500">✕</button>
+          <button @click="showUploadModal = false" class="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-500">
+            <XMarkIcon class="h-5 w-5" />
+          </button>
         </div>
         
         <form @submit.prevent="handleUpload" class="p-6 space-y-5">
@@ -476,7 +479,9 @@ const debouncedSearch = () => {
               <p class="text-xs text-gray-400 mt-1">PDF, PNG, JPG (Max 10MB)</p>
             </div>
             <div v-else class="flex items-center justify-center gap-2">
-              <span class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold">✓</span>
+              <span class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                <CheckIcon class="h-5 w-5" />
+              </span>
               <div class="text-left">
                 <p class="text-sm font-black text-gray-900 truncate max-w-[200px]">{{ uploadForm.file.name }}</p>
                 <p class="text-[10px] text-gray-500">{{ formatFileSize(uploadForm.file.size) }}</p>

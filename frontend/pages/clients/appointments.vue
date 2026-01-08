@@ -445,9 +445,10 @@ const handleSelectAppointment = (id: string) => {
             <button
               @click="confirmCancel"
               :disabled="cancelling"
-              class="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-2"
             >
-              {{ cancelling ? 'Annulation...' : '✓ Confirmer l\'annulation' }}
+              <CheckIcon v-if="!cancelling" class="h-5 w-5" />
+              {{ cancelling ? 'Annulation...' : 'Confirmer l\'annulation' }}
             </button>
           </div>
         </div>

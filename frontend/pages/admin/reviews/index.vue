@@ -391,13 +391,14 @@ onMounted(() => {
             <div class="flex items-start justify-between mb-4">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
-                  <div class="flex items-center gap-1">
-                    <span
+                  <div class="flex gap-0.5">
+                    <component
+                      :is="n <= feedback.rating ? StarIconSolid : StarIconOutline"
                       v-for="n in 10"
                       :key="n"
                       :class="n <= feedback.rating ? 'text-yellow-400' : 'text-gray-300'"
-                      class="text-xl"
-                    >★</span>
+                      class="h-5 w-5"
+                    />
                   </div>
                   <span class="text-2xl font-black text-gray-900">{{ feedback.rating }}/10</span>
                   <span :class="getRatingBadgeClass(feedback.rating)" class="px-3 py-1 rounded-full text-xs font-bold">

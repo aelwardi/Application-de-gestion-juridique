@@ -225,7 +225,7 @@ export const sendBulkEmailByRole = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>📧 ${subject}</h1>
+          <h1>${subject}</h1>
         </div>
         <div class="content">
           <div class="message">

@@ -101,7 +101,10 @@ onMounted(() => {
       </NuxtLink>
 
       <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Notifications 🔔</h1>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          Notifications
+          <BellIcon class="h-7 w-7 text-gray-700" />
+        </h1>
         <button v-if="notificationStore.notifications.length > 0" @click="notificationStore.markAllAsRead" class="text-sm text-blue-600 hover:underline font-bold uppercase tracking-tighter">
           Tout marquer comme lu
         </button>
@@ -209,4 +212,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
