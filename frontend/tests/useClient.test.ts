@@ -1,16 +1,40 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { useClient } from '~/composables/useClient';
+import { createMockAuthStore, mockFetchSuccess, mockFetchError } from './helpers/test-utils';
 
-describe('Client Management Logic', () => {
+vi.mock('~/composables/useApi', () => ({
+  useApi: () => ({
+    apiFetch: (url: string, options?: any) => {
+      return $fetch(url, options);
+    }
+  })
+}));
+
+describe('useClient Composable', () => {
+  let mockAuthStore: ReturnType<typeof createMockAuthStore>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuthStore = createMockAuthStore({ accessToken: 'test-token' });
+    (globalThis as any).useAuthStore = vi.fn(() => mockAuthStore);
   });
 
-  describe('Client Search', () => {
-    it('devrait rechercher des clients par nom', () => {
+  const mockClient = (overrides = {}) => ({
+    id: '1',
+    first_name: 'Jean',
+    last_name: 'Dupont',
+    email: 'jean@test.com',
+    phone: '+1234567890',
+    created_at: new Date().toISOString(),
+    ...overrides,
+  });
+
+  describe('Search Clients', () => {
+    it('should search clients by name', () => {
       const clients = [
-        { id: '1', first_name: 'Jean', last_name: 'Dupont' },
-        { id: '2', first_name: 'Marie', last_name: 'Martin' },
-        { id: '3', first_name: 'Jean', last_name: 'Durand' }
+        mockClient({ id: '1', first_name: 'Jean', last_name: 'Dupont' }),
+        mockClient({ id: '2', first_name: 'Marie', last_name: 'Martin' }),
+        mockClient({ id: '3', first_name: 'Jean', last_name: 'Durand' }),
       ];
 
       const searchTerm = 'Jean';
@@ -18,48 +42,165 @@ describe('Client Management Logic', () => {
         c.first_name.includes(searchTerm) || c.last_name.includes(searchTerm)
       );
 
-      expect(results.length).toBe(2);
+      expect(results).toHaveLength(2);
+      expect(results.every(c => c.first_name === 'Jean')).toBe(true);
     });
 
-    it('devrait filtrer par email', () => {
+    it('should filter by email', () => {
       const clients = [
-        { id: '1', email: 'jean@test.com' },
-        { id: '2', email: 'marie@test.com' }
+        mockClient({ id: '1', email: 'jean@test.com' }),
+        mockClient({ id: '2', email: 'marie@test.com' }),
       ];
 
       const result = clients.find(c => c.email === 'jean@test.com');
+
       expect(result).toBeDefined();
       expect(result?.email).toBe('jean@test.com');
     });
+
+    it('should handle case-insensitive search', () => {
+      const clients = [
+        mockClient({ first_name: 'Jean', last_name: 'Dupont' }),
+      ];
+
+      const results = clients.filter(c =>
+        c.first_name.toLowerCase().includes('jean'.toLowerCase())
+      );
+
+      expect(results).toHaveLength(1);
+    });
   });
 
-  describe('Client Retrieval', () => {
-    it('devrait récupérer un client par ID', async () => {
-      const mockResponse = {
-        data: {
-          id: '1',
-          first_name: 'Jean',
-          last_name: 'Dupont',
-          email: 'jean@test.com'
-        }
-      };
+  describe('Get Client', () => {
+    it('should fetch client by ID', async () => {
+      const { getClient } = useClient();
+      const client = mockClient({ id: '1' });
+      mockFetchSuccess({ data: client });
 
-      vi.mocked($fetch).mockResolvedValue(mockResponse);
+      const result = await getClient('1');
 
-      const response: any = await $fetch('/clients/1');
-      expect(response.data.id).toBe('1');
+      expect(result.data.id).toBe('1');
+      expect(result.data.email).toBe('jean@test.com');
+    });
+
+    it('should handle not found error', async () => {
+      const { getClient } = useClient();
+      mockFetchError(404, 'Client not found');
+
+      await expect(getClient('nonexistent')).rejects.toThrow();
     });
   });
 
   describe('Pagination', () => {
-    it('devrait gérer la pagination', () => {
+    it('should calculate pagination correctly', () => {
       const page = 1;
       const limit = 10;
       const total = 25;
+
       const totalPages = Math.ceil(total / limit);
+      const offset = (page - 1) * limit;
 
       expect(totalPages).toBe(3);
+      expect(offset).toBe(0);
+    });
+
+    it('should handle last page with partial results', () => {
+      const page = 3;
+      const limit = 10;
+      const total = 25;
+
+      const totalPages = Math.ceil(total / limit);
+      const itemsOnPage = total - (page - 1) * limit;
+
+      expect(totalPages).toBe(3);
+      expect(itemsOnPage).toBe(5);
+    });
+
+    it('should handle empty results', () => {
+      const total = 0;
+      const limit = 10;
+
+      const totalPages = Math.ceil(total / limit);
+
+      expect(totalPages).toBe(0);
+    });
+  });
+
+  describe('Create Client', () => {
+    it('should create client successfully', async () => {
+      const { createClient } = useClient();
+      const clientData = {
+        first_name: 'New',
+        last_name: 'Client',
+        email: 'new@test.com',
+        phone: '+1234567890',
+      };
+
+      mockFetchSuccess(mockClient(clientData));
+
+      const result = await createClient(clientData);
+
+      expect(result.success).toBe(true);
+      expect(result.data.email).toBe('new@test.com');
+    });
+
+    it('should handle duplicate email error', async () => {
+      const { createClient } = useClient();
+      mockFetchError(409, 'Email already exists');
+
+      const result = await createClient({
+        first_name: 'Test',
+        last_name: 'User',
+        email: 'existing@test.com',
+      });
+
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('Update Client', () => {
+    it('should update client successfully', async () => {
+      const { updateClient } = useClient();
+      const updateData = { phone: '+9876543210' };
+      mockFetchSuccess(mockClient({ id: '1', ...updateData }));
+
+      const result = await updateClient('1', updateData);
+
+      expect(result.success).toBe(true);
+      expect(result.data.phone).toBe('+9876543210');
+    });
+  });
+
+  describe('Delete Client', () => {
+    it('should delete client successfully', async () => {
+      const { deleteClient } = useClient();
+      mockFetchSuccess({ success: true });
+
+      const result = await deleteClient('1');
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle empty client list', async () => {
+      const { getClients } = useClient();
+      mockFetchSuccess({ data: [], total: 0 });
+
+      const result = await getClients();
+
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
+    });
+
+    it('should handle search with no results', () => {
+      const clients = [mockClient()];
+
+      const results = clients.filter(c =>
+        c.first_name.includes('NonExistent')
+      );
+
+      expect(results).toHaveLength(0);
     });
   });
 });
-

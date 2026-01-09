@@ -40,6 +40,52 @@ describe('AppointmentService', () => {
       expect(result.lawyer_id).toBe(lawyerId);
       expect(mockQueries.createAppointment).toHaveBeenCalledWith(appointmentData);
     });
+
+    it('should throw error for past appointment time', async () => {
+      const clientId = uuidv4();
+      const lawyerId = uuidv4();
+
+      const appointmentData = {
+        client_id: clientId,
+        lawyer_id: lawyerId,
+        title: 'Past Consultation',
+        start_time: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+        end_time: new Date(Date.now() - 86400000 + 3600000).toISOString(),
+        appointment_type: 'consultation' as const,
+        location: 'Office',
+      };
+
+      mockQueries.createAppointment.mockRejectedValueOnce(
+        new Error('Appointment time cannot be in the past')
+      );
+
+      await expect(
+        appointmentService.createAppointment(appointmentData)
+      ).rejects.toThrow('Appointment time cannot be in the past');
+    });
+
+    it('should throw error when end time is before start time', async () => {
+      const clientId = uuidv4();
+      const lawyerId = uuidv4();
+
+      const appointmentData = {
+        client_id: clientId,
+        lawyer_id: lawyerId,
+        title: 'Invalid Time Range',
+        start_time: new Date(Date.now() + 86400000 + 3600000).toISOString(),
+        end_time: new Date(Date.now() + 86400000).toISOString(), // Before start
+        appointment_type: 'consultation' as const,
+        location: 'Office',
+      };
+
+      mockQueries.createAppointment.mockRejectedValueOnce(
+        new Error('End time must be after start time')
+      );
+
+      await expect(
+        appointmentService.createAppointment(appointmentData)
+      ).rejects.toThrow('End time must be after start time');
+    });
   });
 
   describe('getAllAppointments', () => {

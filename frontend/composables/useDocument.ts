@@ -29,7 +29,10 @@ export const useDocument = () => {
     return response;
   } catch (error: any) {
     console.error('Détails erreur 404:', error.response);
-    throw error;
+    return {
+      success: false,
+      message: error.data?.message || error.message || 'Failed to upload document'
+    };
   }
 };
 
@@ -70,6 +73,20 @@ const getClientDocuments = async (clientId: string, limit: number = 5) => {
     }
   };
 
+  const getDocuments = async (filters?: { case_id?: string }): Promise<any> => {
+    if (!filters || !filters.case_id) {
+      return { success: true, data: [] };
+    }
+
+    try {
+      const documents = await getDocumentsByCase(filters.case_id);
+      return { success: true, data: documents };
+    } catch (error: any) {
+      console.error('Error fetching documents:', error);
+      return { success: false, data: [], message: error.message };
+    }
+  };
+
 
   const deleteDocument = async (documentId: string): Promise<any> => {
     try {
@@ -83,7 +100,10 @@ const getClientDocuments = async (clientId: string, limit: number = 5) => {
       return response;
     } catch (error: any) {
       console.error('Erreur suppression document:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to delete document'
+      };
     }
   };
 
@@ -96,6 +116,7 @@ const getClientDocuments = async (clientId: string, limit: number = 5) => {
   return {
     uploadDocument,
     getDocumentsByCase,
+    getDocuments,
     deleteDocument,
     getDownloadUrl,
     getRecentDocuments,

@@ -120,7 +120,11 @@ export const useCase = () => {
       return response;
     } catch (error: any) {
       console.error('Error creating case:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to create case',
+        data: null as any
+      };
     }
   };
 
@@ -146,7 +150,11 @@ export const useCase = () => {
       return response;
     } catch (error: any) {
       console.error('Error fetching cases:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to fetch cases',
+        data: []
+      } as any;
     }
   };
 
@@ -174,7 +182,11 @@ export const useCase = () => {
       return response;
     } catch (error: any) {
       console.error('Error updating case:', error);
-      throw error;
+        return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to update case',
+        data: null as any
+      };
     }
   };
 
@@ -311,6 +323,7 @@ export const useCase = () => {
     }
   };
 
+
   return {
     getPendingOffers,
     getLawyers, 
@@ -318,6 +331,7 @@ export const useCase = () => {
     declineOffer,
     createCase,
     getAllCases,
+    getCases: getAllCases,
     getCaseById,
     updateCase,
     deleteCase,

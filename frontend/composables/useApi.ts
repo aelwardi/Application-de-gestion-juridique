@@ -1,42 +1,36 @@
+import type { ApiResponse } from '~/types/api';
+
 export const useApi = () => {
   const config = useRuntimeConfig();
+  const baseURL = config.public.apiBaseUrl;
+  const authStore = useAuthStore();
 
-  const apiFetch = async <T>(url: string, options: any = {}) => {
-    const authStore = useAuthStore();
-
+  const getHeaders = () => {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
+      'Content-Type': 'application/json'
     };
-
     if (authStore.accessToken) {
       headers['Authorization'] = `Bearer ${authStore.accessToken}`;
     }
-
-    try {
-      const response = await $fetch<T>(`${config.public.apiBaseUrl}${url}`, {
-        ...options,
-        headers,
-      });
-      return response;
-    } catch (error: any) {
-      if (error.status === 401 || error.statusCode === 401) {
-        if (error.data?.code === 'TOKEN_EXPIRED') {
-          const refreshed = await authStore.refreshAccessToken();
-          if (refreshed) {
-            headers['Authorization'] = `Bearer ${authStore.accessToken}`;
-            return await $fetch<T>(`${config.public.apiBaseUrl}${url}`, {
-              ...options,
-              headers,
-            });
-          }
-        }
-        authStore.clearAuth();
-        navigateTo('/auth/login');
-      }
-      throw error;
-    }
+    return headers;
   };
 
-  return { apiFetch };
+  const apiFetch = async <T = any>(
+    endpoint: string,
+    options?: RequestInit & { method?: string; body?: any }
+  ): Promise<T> => {
+    const url = endpoint.startsWith('http') ? endpoint : `${baseURL}${endpoint}`;
+
+    return await $fetch<T>(url, {
+      ...options,
+      headers: {
+        ...getHeaders(),
+        ...options?.headers
+      }
+    });
+  };
+
+  return {
+    apiFetch
+  };
 };

@@ -21,11 +21,12 @@ export const useNotificationStore = defineStore('notifications', {
 
   getters: {
     unreadCount: (state) => state.notifications.filter(n => !n.is_read).length,
+    isLoading: (state) => state.loading,
   },
 
   actions: {
     formatRelativeTime(dateString: string): string {
-      if (!dateString) return 'À l\'instant';
+      if (!dateString) return 'Just now';
 
       const now = new Date();
       const date = new Date(dateString);
@@ -36,17 +37,17 @@ export const useNotificationStore = defineStore('notifications', {
       const diffDays = Math.floor(diffHours / 24);
 
       if (diffSeconds < 60) {
-        return 'À l\'instant';
+        return `${diffSeconds} seconds ago`;
       } else if (diffMinutes < 60) {
-        return `il y a ${diffMinutes} min`;
+        return `${diffMinutes} minutes ago`;
       } else if (diffHours < 24) {
-        return `il y a ${diffHours}h`;
+        return `${diffHours} hours ago`;
       } else if (diffDays === 1) {
-        return 'Hier';
+        return 'Yesterday';
       } else if (diffDays < 7) {
-        return `il y a ${diffDays}j`;
+        return `${diffDays} days ago`;
       } else {
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('en-US', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric'
@@ -156,6 +157,28 @@ export const useNotificationStore = defineStore('notifications', {
         console.error('Erreur markAllAsRead:', error);
         this.notifications.forEach(n => n.is_read = true);
       }
+    },
+
+    async deleteNotification(id: string) {
+      const authStore = useAuthStore();
+      try {
+        const config = useRuntimeConfig();
+        await $fetch(`${config.public.apiBaseUrl}/notifications/${id}`, {
+          method: 'DELETE',
+          headers: authStore.getAuthHeaders(),
+        });
+        this.notifications = this.notifications.filter(n => n.id !== id);
+      } catch (error) {
+        console.error('Erreur deleteNotification:', error);
+        // Remove from local state even if API call fails
+        this.notifications = this.notifications.filter(n => n.id !== id);
+      }
+    },
+
+    formatDate(dateString: string): string {
+      return this.formatRelativeTime(dateString);
     }
   }
 });
+
+export const useNotificationsStore = useNotificationStore;
