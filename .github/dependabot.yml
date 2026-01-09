@@ -10,6 +10,9 @@ updates:
     open-pull-requests-limit: 10
     reviewers:
       - "aelwardi"
+      - "zakariaMaarifi"
+      - "Bakayoko99"
+      - "ahmataffadine99"
     labels:
       - "dependencies"
       - "backend"
@@ -31,6 +34,9 @@ updates:
     open-pull-requests-limit: 10
     reviewers:
       - "aelwardi"
+      - "zakariaMaarifi"
+      - "Bakayoko99"
+      - "ahmataffadine99"
     labels:
       - "dependencies"
       - "frontend"
