@@ -1,4 +1,9 @@
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
+import { config } from '@vue/test-utils';
+
+config.global.mocks = {
+  $fetch: vi.fn(),
+};
 
 (globalThis as any).useRuntimeConfig = vi.fn(() => ({
   public: {
@@ -11,15 +16,14 @@ import { vi } from 'vitest';
 (globalThis as any).$fetch = vi.fn();
 
 (globalThis as any).useAuthStore = vi.fn(() => ({
-  accessToken: 'test-token',
-  refreshToken: 'test-refresh-token',
+  accessToken: null,
+  refreshToken: null,
   user: null,
   isAuthenticated: false,
   refreshAccessToken: vi.fn(),
   clearAuth: vi.fn(),
-  getAuthHeaders: vi.fn(() => ({
-    'Authorization': 'Bearer test-token'
-  })),
+  setAuth: vi.fn(),
+  getAuthHeaders: vi.fn(() => ({})),
 }));
 
 if (typeof global.process === 'undefined') {
@@ -27,16 +31,42 @@ if (typeof global.process === 'undefined') {
 }
 (global as any).process.client = true;
 
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
+const createStorageMock = () => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: vi.fn((index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    }),
+    __getStore: () => store,
+    __setStore: (newStore: Record<string, string>) => {
+      store = newStore;
+    },
+  };
 };
+
+const localStorageMock = createStorageMock();
+const sessionStorageMock = createStorageMock();
+
 globalThis.localStorage = localStorageMock as any;
+globalThis.sessionStorage = sessionStorageMock as any;
 
-globalThis.sessionStorage = localStorageMock as any;
-
-
+beforeEach(() => {
+  vi.clearAllMocks();
+  (localStorageMock as any).__setStore({});
+  (sessionStorageMock as any).__setStore({});
+});

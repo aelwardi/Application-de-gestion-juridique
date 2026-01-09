@@ -144,6 +144,7 @@ describe('AuthController', () => {
         },
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
+        requiresTwoFactor: false,
       };
 
       mockAuthService.login.mockResolvedValueOnce(authResult as any);
@@ -208,6 +209,77 @@ describe('AuthController', () => {
       await authController.login(req, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    it('should handle login with two-factor authentication enabled', async () => {
+      const loginData = {
+        email: 'test@test.com',
+        password: 'Password123!',
+      };
+
+      const userId = uuidv4();
+      const authResult = {
+        user: {
+          id: userId,
+          email: loginData.email,
+          role: 'client',
+          firstName: 'Test',
+          lastName: 'User',
+        },
+        accessToken: '',
+        refreshToken: '',
+        requiresTwoFactor: true,
+        tempToken: 'temp-token-123',
+      };
+
+      mockAuthService.login.mockResolvedValueOnce(authResult as any);
+
+      const req = mockRequest({
+        body: loginData,
+        ip: '127.0.0.1',
+      });
+      const res = mockResponse();
+
+      await authController.login(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.cookie).not.toHaveBeenCalled(); // No cookie set when 2FA is required
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: '2FA verification required',
+        data: {
+          requiresTwoFactor: true,
+          tempToken: 'temp-token-123',
+          user: {
+            id: userId,
+            email: loginData.email,
+            firstName: 'Test',
+            lastName: 'User',
+          },
+        },
+      });
+    });
+
+    it('should return 401 for deactivated account', async () => {
+      const loginData = {
+        email: 'test@test.com',
+        password: 'Password123!',
+      };
+
+      mockAuthService.login.mockRejectedValueOnce(
+        new Error('Account is deactivated. Please contact support.')
+      );
+
+      const req = mockRequest({ body: loginData });
+      const res = mockResponse();
+
+      await authController.login(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Account is deactivated. Please contact support.',
+      });
     });
   });
 

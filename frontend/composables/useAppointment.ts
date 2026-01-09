@@ -37,7 +37,11 @@ export const useAppointment = () => {
       return response;
     } catch (error: any) {
       console.error('Error creating appointment:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to create appointment',
+        data: null as any
+      };
     }
   };
 
@@ -68,7 +72,11 @@ export const useAppointment = () => {
       return response;
     } catch (error: any) {
       console.error('Error fetching appointments:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to fetch appointments',
+        data: { appointments: [], total: 0 }
+      } as any;
     }
   };
 
@@ -97,7 +105,11 @@ export const useAppointment = () => {
       return response;
     } catch (error: any) {
       console.error('Error updating appointment:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to update appointment',
+        data: null as any
+      };
     }
   };
 
@@ -111,7 +123,11 @@ export const useAppointment = () => {
       return response;
     } catch (error: any) {
       console.error('Error deleting appointment:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.data?.message || error.message || 'Failed to delete appointment',
+        data: null as any
+      };
     }
   };
 
@@ -304,6 +320,7 @@ export const useAppointment = () => {
   return {
     createAppointment,
     getAllAppointments,
+    getAppointments: getAllAppointments,
     getAppointmentById,
     updateAppointment,
     deleteAppointment,

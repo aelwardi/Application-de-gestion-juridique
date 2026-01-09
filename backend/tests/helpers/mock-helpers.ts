@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
+import { Request, Response, NextFunction } from 'express';
 
 /**
- * Mock helpers pour les tests sans base de données
+ * Mock helpers for backend tests - fully isolated from database and external services
  */
 
 export const mockUser = (overrides: any = {}) => ({
@@ -29,14 +30,22 @@ export const mockUser = (overrides: any = {}) => ({
 });
 
 export const mockLawyer = (overrides: any = {}) => mockUser({
-  role: 'lawyer',
-  specializations: ['Droit civil'],
+  role: 'avocat',
+  specializations: ['Droit civil', 'Droit pénal'],
   years_of_experience: 5,
   bar_number: 'BAR123456',
-  office_address: '123 Test Street',
-  bio: 'Experienced lawyer',
+  office_address: '123 Test Street, Paris',
+  bio: 'Avocat expérimenté en droit civil et pénal',
   hourly_rate: 150.00,
   availability_radius_km: 50,
+  ...overrides,
+});
+
+export const mockAdmin = (overrides: any = {}) => mockUser({
+  role: 'admin',
+  first_name: 'Admin',
+  last_name: 'User',
+  email: 'admin@example.com',
   ...overrides,
 });
 
@@ -90,7 +99,7 @@ export const mockDocument = (overrides: any = {}) => ({
   file_name: 'test-document.pdf',
   file_path: '/uploads/documents/test.pdf',
   file_type: 'application/pdf',
-  file_size: 1024,
+  file_size: 1024 * 1024,
   document_type: 'contract',
   description: 'Test document',
   created_at: new Date(),
@@ -98,7 +107,7 @@ export const mockDocument = (overrides: any = {}) => ({
 });
 
 /**
- * Créer un mock de résultat de query PostgreSQL
+ * Create a mock PostgreSQL query result
  */
 export const mockQueryResult = (rows: any[] = [], rowCount?: number) => ({
   rows,
@@ -109,11 +118,14 @@ export const mockQueryResult = (rows: any[] = [], rowCount?: number) => ({
 });
 
 /**
- * Mock pour le pool de base de données
+ * Mock for the PostgreSQL pool
  */
 export const createMockPool = () => {
   const mockQuery = jest.fn();
-  const mockConnect = jest.fn();
+  const mockConnect = jest.fn().mockResolvedValue({
+    query: jest.fn(),
+    release: jest.fn(),
+  });
   const mockEnd = jest.fn();
 
   return {
@@ -129,33 +141,120 @@ export const createMockPool = () => {
 };
 
 /**
- * Mock pour Request Express
+ * Create a mock Express Request object
  */
-export const mockRequest = (overrides: any = {}) => ({
-  body: {},
-  params: {},
-  query: {},
-  headers: {},
-  user: undefined,
-  get: jest.fn((header: string) => overrides.headers?.[header] || null),
-  ...overrides,
-});
+export const mockRequest = (overrides: any = {}): any => {
+  const req: any = {
+    body: {},
+    params: {},
+    query: {},
+    headers: {},
+    cookies: {},
+    user: undefined,
+    ip: '127.0.0.1',
+    method: 'GET',
+    path: '/',
+    get: jest.fn((header: string) => {
+      const headers = req.headers as Record<string, string>;
+      return headers[header.toLowerCase()] || undefined;
+    }),
+    ...overrides,
+  };
+  return req;
+};
 
 /**
- * Mock pour Response Express
+ * Create a mock Express Response object
  */
-export const mockResponse = () => {
-  const res: any = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
-  res.send = jest.fn().mockReturnValue(res);
-  res.cookie = jest.fn().mockReturnValue(res);
-  res.clearCookie = jest.fn().mockReturnValue(res);
+export const mockResponse = (): any => {
+  const res: any = {
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn().mockReturnThis(),
+    send: jest.fn().mockReturnThis(),
+    cookie: jest.fn().mockReturnThis(),
+    clearCookie: jest.fn().mockReturnThis(),
+    setHeader: jest.fn().mockReturnThis(),
+    redirect: jest.fn().mockReturnThis(),
+  };
   return res;
 };
 
 /**
- * Mock pour Next Express
+ * Create a mock Express NextFunction
  */
-export const mockNext = () => jest.fn();
+export const mockNext = (): NextFunction => jest.fn();
 
+/**
+ * Create a successful API response
+ */
+export const mockSuccessResponse = <T>(data: T, message = 'Success') => ({
+  success: true,
+  message,
+  data,
+});
+
+/**
+ * Create an error API response
+ */
+export const mockErrorResponse = (message: string, errors?: any[]) => ({
+  success: false,
+  message,
+  errors,
+});
+
+/**
+ * Generate multiple mock users
+ */
+export const generateMockUsers = (count: number, overrides: any = {}) => {
+  return Array.from({ length: count }, (_, i) =>
+    mockUser({ email: `user${i}@test.com`, ...overrides })
+  );
+};
+
+/**
+ * Generate multiple mock appointments
+ */
+export const generateMockAppointments = (count: number, overrides: any = {}) => {
+  return Array.from({ length: count }, () => mockAppointment(overrides));
+};
+
+/**
+ * Generate multiple mock cases
+ */
+export const generateMockCases = (count: number, overrides: any = {}) => {
+  return Array.from({ length: count }, () => mockCase(overrides));
+};
+
+/**
+ * Create a date in the future
+ */
+export const futureDate = (daysAhead: number = 1) => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return date;
+};
+
+/**
+ * Create a date in the past
+ */
+export const pastDate = (daysAgo: number = 1) => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date;
+};
+
+/**
+ * Check if a value is a valid UUID
+ */
+export const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+/**
+ * Check if a value is a valid email
+ */
+export const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
