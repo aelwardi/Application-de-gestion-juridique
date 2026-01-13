@@ -143,11 +143,28 @@ export const useCase = () => {
       const queryString = params.toString();
       const url = queryString ? `${baseURL}/cases?${queryString}` : `${baseURL}/cases`;
       
-      const response = await $fetch<CasesResponse>(url, {
+      const response = await $fetch<any>(url, {
         method: 'GET',
         headers: getHeaders()
       });
-      return response;
+
+      if (response.success !== undefined) {
+        return response;
+      } else if (response.data && response.total !== undefined) {
+        return {
+          success: true,
+          data: response.data,
+          total: response.total,
+          message: 'Cases fetched successfully'
+        } as any;
+      } else {
+        return {
+          success: true,
+          data: Array.isArray(response) ? response : [],
+          total: Array.isArray(response) ? response.length : 0,
+          message: 'Cases fetched successfully'
+        } as any;
+      }
     } catch (error: any) {
       console.error('Error fetching cases:', error);
       return {

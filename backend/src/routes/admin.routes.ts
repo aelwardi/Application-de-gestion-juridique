@@ -52,6 +52,21 @@ router.patch('/reviews/:id/reject', lawyersController.rejectReview);
 router.get('/logs', adminController.getActivityLogs);
 
 /**
+ * Lawyer Requests
+ */
+router.get('/lawyer-requests', adminController.getLawyerRequests);
+
+/**
+ * Reports
+ */
+router.get('/reports', adminController.getReports);
+
+/**
+ * Activity Logs
+ */
+router.get('/activity-logs', adminController.getActivityLogs);
+
+/**
  * Bulk Operations
  */
 router.post('/email/bulk', adminController.sendBulkEmail);

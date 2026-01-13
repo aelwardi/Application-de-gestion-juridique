@@ -3,14 +3,14 @@ import { fileURLToPath } from 'node:url';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue() as any],
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
         'tests/',
@@ -19,9 +19,36 @@ export default defineConfig({
         '**/mockData',
         'dist/',
         '.nuxt/',
+        '**/__mocks__/**',
+        '**/fixtures/**', '**/*.test.ts',
+        '**/*.spec.ts',
+        '**/types/**',
+        'public/',
+        'plugins/leaflet.client.ts', // Plugin spécifique client-side
+      ],
+      thresholds: {
+        statements: 30,
+        branches: 50,
+        functions: 45,
+        lines: 30,
+      },
+      all: true,
+      include: [
+        'components/**/*.vue',
+        'composables/**/*.ts',
+        'utils/**/*.ts',
+        'middleware/**/*.ts',
+        'stores/**/*.ts',
       ],
     },
     include: ['tests/**/*.test.ts'],
+    testTimeout: 10000,
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+      },
+    },
   },
   resolve: {
     alias: {

@@ -77,11 +77,87 @@ export const useSupport = () => {
     }
   };
 
+  const getTickets = async (userId: string, filters?: { status?: string }) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters?.status) queryParams.set('status', filters.status);
+      const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+
+      const response = await $fetch<any>(`${baseURL}/support/tickets${query}`, {
+        method: 'GET',
+        headers: getHeaders()
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching tickets:', error);
+      throw error;
+    }
+  };
+
+  const updateTicket = async (ticketId: string, data: any) => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/support/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Error updating ticket:', error);
+      throw error;
+    }
+  };
+
+  const closeTicket = async (ticketId: string) => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/support/tickets/${ticketId}/close`, {
+        method: 'PATCH',
+        headers: getHeaders()
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Error closing ticket:', error);
+      throw error;
+    }
+  };
+
+  const addComment = async (ticketId: string, comment: string) => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/support/tickets/${ticketId}/comments`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ comment })
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  };
+
+  const getTicketById = async (ticketId: string) => {
+    try {
+      const response = await $fetch<any>(`${baseURL}/support/tickets/${ticketId}`, {
+        method: 'GET',
+        headers: getHeaders()
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching ticket:', error);
+      throw error;
+    }
+  };
+
   return {
     createTicket,
     getMyTickets,
     getTicketDetails,
-    addTicketMessage
+    addTicketMessage,
+    getTickets,
+    updateTicket,
+    closeTicket,
+    addComment,
+    getTicketById,
   };
 };
 

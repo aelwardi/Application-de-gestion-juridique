@@ -150,7 +150,7 @@ export const AppointmentStatusLabels: Record<AppointmentStatus, string> = {
   cancelled: 'Annulé',
   completed: 'Terminé',
   no_show: 'Absent'
-};
+} as Record<AppointmentStatus, string>;
 
 export const AppointmentStatusColors: Record<AppointmentStatus, string> = {
   scheduled: '#FCD34D',
@@ -158,7 +158,7 @@ export const AppointmentStatusColors: Record<AppointmentStatus, string> = {
   cancelled: '#F87171',
   completed: '#34D399',
   no_show: '#F59E0B'
-};
+} as Record<AppointmentStatus, string>;
 
 export const AppointmentTypeLabels: Record<AppointmentType, string> = {
   consultation: 'Consultation',
@@ -168,7 +168,7 @@ export const AppointmentTypeLabels: Record<AppointmentType, string> = {
   mediation: 'Médiation',
   signature: 'Signature',
   autre: 'Autre'
-};
+} as Record<AppointmentType, string>;
 
 export const AppointmentLocationTypeLabels: Record<AppointmentLocationType, string> = {
   office: 'Cabinet',
@@ -176,4 +176,4 @@ export const AppointmentLocationTypeLabels: Record<AppointmentLocationType, stri
   client_location: 'Chez le client',
   online: 'En ligne',
   other: 'Autre'
-};
+} as Record<AppointmentLocationType, string>;

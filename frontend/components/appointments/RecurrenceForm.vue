@@ -32,12 +32,12 @@ watch(isRecurring, (value) => {
 
 watch(recurrence, (value) => {
   if (isRecurring.value) {
-    const cleaned = { ...value }
+    const cleaned: any = { ...value }
     if (endType.value === 'never' || endType.value === 'after') {
       cleaned.endDate = undefined
     }
     if (endType.value === 'never' || endType.value === 'on') {
-      cleaned.occurrences = undefined
+      cleaned.occurrences = undefined as number | undefined
     }
     emit('update:modelValue', cleaned)
   }

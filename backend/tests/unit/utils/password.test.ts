@@ -9,7 +9,7 @@ describe('Password Utility', () => {
       expect(hash).toBeDefined();
       expect(hash).not.toBe(password);
       expect(hash.length).toBeGreaterThan(0);
-      expect(hash).toMatch(/^\$2[aby]\$/); // bcrypt format
+      expect(hash).toMatch(/^\$2[aby]\$/);
     });
 
     it('should generate different hashes for the same password', async () => {

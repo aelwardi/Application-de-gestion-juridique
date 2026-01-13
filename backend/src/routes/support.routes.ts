@@ -300,4 +300,58 @@ router.get('/stats', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * DELETE /api/support/tickets/:id
+ * Delete a ticket
+ */
+router.delete('/tickets/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const ticketId = req.params.id;
+    const userId = req.user!.userId;
+
+    const result = await supportService.deleteTicket(ticketId, userId);
+
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ticket not found or access denied',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Ticket deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete ticket error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete ticket',
+    });
+  }
+});
+
+/**
+ * GET /api/support/faq
+ * Get FAQ items
+ */
+router.get('/faq', async (req: Request, res: Response) => {
+  try {
+    const category = req.query.category as string | undefined;
+
+    const result = await supportService.getFAQItems(category);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error('Get FAQ error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch FAQ items',
+    });
+  }
+});
+
 export default router;

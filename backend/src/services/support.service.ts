@@ -130,3 +130,28 @@ export const assignToAdmin = async (
 export const getTicketStats = async () => {
   return await supportQueries.getTicketStats();
 };
+
+/**
+ * Delete a ticket
+ */
+export const deleteTicket = async (ticketId: string, userId: string) => {
+  const ticket = await supportQueries.getTicketById(ticketId);
+
+  if (!ticket) {
+    return { success: false, message: 'Ticket not found' };
+  }
+
+  if (ticket.user_id !== userId) {
+    return { success: false, message: 'Access denied' };
+  }
+
+  await supportQueries.deleteTicket(ticketId);
+  return { success: true };
+};
+
+/**
+ * Get FAQ items
+ */
+export const getFAQItems = async (category?: string) => {
+  return await supportQueries.getFAQItems(category);
+};

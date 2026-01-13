@@ -142,7 +142,7 @@ export const disable = async (req: Request, res: Response): Promise<void> => {
 
     if (error instanceof Error) {
       if (error.message.includes('Invalid password')) {
-        res.status(401).json({
+        res.status(400).json({
           success: false,
           message: error.message,
         });
@@ -223,6 +223,7 @@ export const verify = async (req: Request, res: Response): Promise<void> => {
       message: '2FA verification successful',
       data: {
         userId: result.userId,
+        valid: result.valid,
       },
     });
   } catch (error) {
@@ -233,6 +234,16 @@ export const verify = async (req: Request, res: Response): Promise<void> => {
         errors: error.errors,
       });
       return;
+    }
+
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid verification code') || error.message.includes('Temporary token expired')) {
+        res.status(401).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
     }
 
     console.error('2FA verify error:', error);

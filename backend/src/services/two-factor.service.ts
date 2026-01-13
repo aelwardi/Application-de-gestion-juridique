@@ -108,6 +108,14 @@ export const disableTwoFactor = async (userId: string, password: string): Promis
 /**
  * Get 2FA status
  */
+/**
+ * Get 2FA status (alias for direct access)
+ */
+export { getTwoFactorStatus } from '../database/queries/two-factor.queries';
+
+/**
+ * Get 2FA status for user
+ */
 export const getStatus = async (userId: string): Promise<TwoFactorStatusResponse> => {
   const status = await getTwoFactorStatus(userId);
 

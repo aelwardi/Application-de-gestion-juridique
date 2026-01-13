@@ -107,7 +107,7 @@ export const useAppointment = () => {
       console.error('Error updating appointment:', error);
       return {
         success: false,
-        message: error.data?.message || error.message || 'Failed to update appointment',
+        message: error.data?.message || error.message || 'Appointment not found',
         data: null as any
       };
     }

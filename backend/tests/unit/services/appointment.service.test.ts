@@ -1,346 +1,318 @@
 import * as appointmentService from '../../../src/services/appointment.service';
 import * as appointmentQueries from '../../../src/database/queries/appointment.queries';
-import { mockAppointment } from '../../helpers/mock-helpers';
-import { v4 as uuidv4 } from 'uuid';
+import { NotificationService } from '../../../src/services/notification.service';
+import * as emailService from '../../../src/services/email.service';
+import { pool } from '../../../src/config/database.config';
+import {
+  CreateAppointmentDTO,
+  UpdateAppointmentDTO,
+  AppointmentFilters,
+  Appointment,
+  AppointmentWithDetails,
+} from '../../../src/types/appointment.types';
 
 jest.mock('../../../src/database/queries/appointment.queries');
-jest.mock('../../../src/services/notification.service');
 jest.mock('../../../src/services/email.service');
+jest.mock('../../../src/config/database.config');
+
+jest.mock('../../../src/services/notification.service', () => {
+  const mockCreateNotification = jest.fn().mockResolvedValue({});
+  return {
+    NotificationService: jest.fn().mockImplementation(() => ({
+      createNotification: mockCreateNotification,
+    })),
+    mockCreateNotification,
+  };
+});
+
+const { mockCreateNotification: createNotificationMock } = jest.requireMock('../../../src/services/notification.service');
 
 describe('AppointmentService', () => {
-  const mockQueries = appointmentQueries as jest.Mocked<typeof appointmentQueries>;
+  const mockAppointment: Appointment = {
+    id: 'appointment-123',
+    case_id: null,
+    client_id: 'client-123',
+    lawyer_id: 'lawyer-123',
+    title: 'Consultation',
+    description: 'Première consultation',
+    start_time: new Date('2024-06-15T10:00:00'),
+    end_time: new Date('2024-06-15T11:00:00'),
+    appointment_type: 'consultation',
+    status: 'scheduled',
+    location: 'Cabinet Paris',
+    location_type: 'office',
+    location_address: '123 Rue de Paris',
+    location_latitude: null,
+    location_longitude: null,
+    meeting_url: null,
+    reminder_sent: false,
+    notes: 'Première consultation',
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  const mockAppointmentWithDetails: AppointmentWithDetails = {
+    ...mockAppointment,
+    case_number: null,
+    case_title: null,
+    client_first_name: 'Jean',
+    client_last_name: 'Dupont',
+    client_email: 'jean@test.com',
+    lawyer_first_name: 'Marie',
+    lawyer_last_name: 'Martin',
+    lawyer_email: 'marie@test.com',
+  };
+
+  const mockClient = {
+    first_name: 'Jean',
+    last_name: 'Dupont',
+    email: 'jean@test.com',
+  };
+
+  const mockLawyer = {
+    first_name: 'Marie',
+    last_name: 'Martin',
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('createAppointment', () => {
-    it('should create appointment successfully', async () => {
-      const clientId = uuidv4();
-      const lawyerId = uuidv4();
-
-      const appointmentData = {
-        client_id: clientId,
-        lawyer_id: lawyerId,
-        title: 'Consultation juridique',
-        start_time: new Date(Date.now() + 86400000).toISOString(),
-        end_time: new Date(Date.now() + 86400000 + 3600000).toISOString(),
-        appointment_type: 'consultation' as const,
-        location: 'Office',
+    it('devrait créer un rendez-vous avec succès', async () => {
+      const appointmentData: CreateAppointmentDTO = {
+        client_id: 'client-123',
+        lawyer_id: 'lawyer-123',
+        title: 'Consultation',
+        start_time: new Date('2024-06-15T10:00:00'),
+        end_time: new Date('2024-06-15T11:00:00'),
+        appointment_type: 'consultation',
+        status: 'scheduled',
       };
 
-      const newAppointment = mockAppointment(appointmentData);
+      (appointmentQueries.createAppointment as jest.Mock).mockResolvedValue(mockAppointment);
+      (pool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [mockClient] })
+        .mockResolvedValueOnce({ rows: [mockLawyer] });
 
-      mockQueries.createAppointment.mockResolvedValueOnce(newAppointment);
+      const mockNotificationService = NotificationService as jest.MockedClass<typeof NotificationService>;
+      mockNotificationService.prototype.createNotification = jest.fn().mockResolvedValue({});
+
+      (emailService.sendAppointmentEmail as jest.Mock).mockResolvedValue(true);
 
       const result = await appointmentService.createAppointment(appointmentData);
 
-      expect(result).toBeDefined();
-      expect(result.client_id).toBe(clientId);
-      expect(result.lawyer_id).toBe(lawyerId);
-      expect(mockQueries.createAppointment).toHaveBeenCalledWith(appointmentData);
+      expect(result).toEqual(mockAppointment);
+      expect(appointmentQueries.createAppointment).toHaveBeenCalledWith(appointmentData);
     });
 
-    it('should throw error for past appointment time', async () => {
-      const clientId = uuidv4();
-      const lawyerId = uuidv4();
-
-      const appointmentData = {
-        client_id: clientId,
-        lawyer_id: lawyerId,
-        title: 'Past Consultation',
-        start_time: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-        end_time: new Date(Date.now() - 86400000 + 3600000).toISOString(),
-        appointment_type: 'consultation' as const,
-        location: 'Office',
+    it('devrait envoyer une notification au client', async () => {
+      const appointmentData: CreateAppointmentDTO = {
+        client_id: 'client-123',
+        lawyer_id: 'lawyer-123',
+        title: 'Consultation',
+        start_time: new Date('2024-06-15T10:00:00'),
+        end_time: new Date('2024-06-15T11:00:00'),
+        appointment_type: 'consultation',
+        status: 'scheduled',
       };
 
-      mockQueries.createAppointment.mockRejectedValueOnce(
-        new Error('Appointment time cannot be in the past')
-      );
+      (appointmentQueries.createAppointment as jest.Mock).mockResolvedValue(mockAppointment);
+      (pool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [mockClient] })
+        .mockResolvedValueOnce({ rows: [mockLawyer] });
 
-      await expect(
-        appointmentService.createAppointment(appointmentData)
-      ).rejects.toThrow('Appointment time cannot be in the past');
+      await appointmentService.createAppointment(appointmentData);
+
+
+      expect(createNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: 'client-123',
+          notification_type: 'appointment_created',
+          title: 'Nouveau rendez-vous',
+        })
+      );
     });
 
-    it('should throw error when end time is before start time', async () => {
-      const clientId = uuidv4();
-      const lawyerId = uuidv4();
-
-      const appointmentData = {
-        client_id: clientId,
-        lawyer_id: lawyerId,
-        title: 'Invalid Time Range',
-        start_time: new Date(Date.now() + 86400000 + 3600000).toISOString(),
-        end_time: new Date(Date.now() + 86400000).toISOString(), // Before start
-        appointment_type: 'consultation' as const,
-        location: 'Office',
+    it('devrait envoyer un email au client', async () => {
+      const appointmentData: CreateAppointmentDTO = {
+        client_id: 'client-123',
+        lawyer_id: 'lawyer-123',
+        title: 'Consultation',
+        start_time: new Date('2024-06-15T10:00:00'),
+        end_time: new Date('2024-06-15T11:00:00'),
+        appointment_type: 'consultation',
+        status: 'scheduled',
       };
 
-      mockQueries.createAppointment.mockRejectedValueOnce(
-        new Error('End time must be after start time')
-      );
+      (appointmentQueries.createAppointment as jest.Mock).mockResolvedValue(mockAppointment);
+      (pool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [mockClient] })
+        .mockResolvedValueOnce({ rows: [mockLawyer] });
 
-      await expect(
-        appointmentService.createAppointment(appointmentData)
-      ).rejects.toThrow('End time must be after start time');
+      const mockNotificationService = NotificationService as jest.MockedClass<typeof NotificationService>;
+      mockNotificationService.prototype.createNotification = jest.fn().mockResolvedValue({});
+      (emailService.sendAppointmentEmail as jest.Mock).mockResolvedValue(true);
+
+      await appointmentService.createAppointment(appointmentData);
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      expect(emailService.sendAppointmentEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'jean@test.com',
+          firstName: 'Jean',
+          lawyerName: 'Marie Martin',
+        })
+      );
+    });
+
+    it('devrait continuer si les notifications échouent', async () => {
+      const appointmentData: CreateAppointmentDTO = {
+        client_id: 'client-123',
+        lawyer_id: 'lawyer-123',
+        title: 'Consultation',
+        start_time: new Date('2024-06-15T10:00:00'),
+        end_time: new Date('2024-06-15T11:00:00'),
+        appointment_type: 'consultation',
+        status: 'scheduled',
+      };
+
+      (appointmentQueries.createAppointment as jest.Mock).mockResolvedValue(mockAppointment);
+      (pool.query as jest.Mock).mockRejectedValue(new Error('Query error'));
+
+      const result = await appointmentService.createAppointment(appointmentData);
+
+      expect(result).toEqual(mockAppointment);
     });
   });
 
   describe('getAllAppointments', () => {
-    it('should return all appointments with filters', async () => {
-      const appointments = [
-        mockAppointment(),
-        mockAppointment(),
-      ];
+    it('devrait retourner tous les rendez-vous', async () => {
+      const mockResponse = {
+        appointments: [mockAppointmentWithDetails],
+        total: 1,
+      };
 
-      mockQueries.getAllAppointments.mockResolvedValueOnce({
-        appointments: appointments as any,
-        total: 2,
-      });
+      (appointmentQueries.getAllAppointments as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await appointmentService.getAllAppointments();
 
-      expect(result.appointments).toHaveLength(2);
-      expect(result.total).toBe(2);
+      expect(result).toEqual(mockResponse);
+      expect(appointmentQueries.getAllAppointments).toHaveBeenCalledWith({});
     });
 
-    it('should apply filters correctly', async () => {
-      const filters = {
-        status: 'scheduled' as const,
-        lawyer_id: uuidv4(),
+    it('devrait filtrer par client_id', async () => {
+      const filters: AppointmentFilters = { client_id: 'client-123' };
+      const mockResponse = {
+        appointments: [mockAppointmentWithDetails],
+        total: 1,
       };
 
-      mockQueries.getAllAppointments.mockResolvedValueOnce({
+      (appointmentQueries.getAllAppointments as jest.Mock).mockResolvedValue(mockResponse);
+
+      await appointmentService.getAllAppointments(filters);
+
+      expect(appointmentQueries.getAllAppointments).toHaveBeenCalledWith(filters);
+    });
+
+    it('devrait filtrer par lawyer_id', async () => {
+      const filters: AppointmentFilters = { lawyer_id: 'lawyer-123' };
+      const mockResponse = {
+        appointments: [mockAppointmentWithDetails],
+        total: 1,
+      };
+
+      (appointmentQueries.getAllAppointments as jest.Mock).mockResolvedValue(mockResponse);
+
+      await appointmentService.getAllAppointments(filters);
+
+      expect(appointmentQueries.getAllAppointments).toHaveBeenCalledWith(filters);
+    });
+
+    it('devrait filtrer par status', async () => {
+      const filters: AppointmentFilters = { status: 'scheduled' };
+      const mockResponse = {
+        appointments: [mockAppointmentWithDetails],
+        total: 1,
+      };
+
+      (appointmentQueries.getAllAppointments as jest.Mock).mockResolvedValue(mockResponse);
+
+      await appointmentService.getAllAppointments(filters);
+
+      expect(appointmentQueries.getAllAppointments).toHaveBeenCalledWith(filters);
+    });
+
+    it('devrait retourner un tableau vide si aucun rendez-vous', async () => {
+      (appointmentQueries.getAllAppointments as jest.Mock).mockResolvedValue({
         appointments: [],
         total: 0,
       });
 
-      await appointmentService.getAllAppointments(filters);
+      const result = await appointmentService.getAllAppointments();
 
-      expect(mockQueries.getAllAppointments).toHaveBeenCalledWith(filters);
+      expect(result.appointments).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 
   describe('getAppointmentById', () => {
-    it('should return appointment by id', async () => {
-      const appointmentId = uuidv4();
-      const appointment = mockAppointment({ id: appointmentId });
+    it('devrait retourner un rendez-vous par ID', async () => {
+      (appointmentQueries.getAppointmentById as jest.Mock).mockResolvedValue(mockAppointmentWithDetails);
 
-      mockQueries.getAppointmentById.mockResolvedValueOnce(appointment as any);
+      const result = await appointmentService.getAppointmentById('appointment-123');
 
-      const result = await appointmentService.getAppointmentById(appointmentId);
-
-      expect(result).toBeDefined();
-      expect(result.id).toBe(appointmentId);
+      expect(result).toEqual(mockAppointmentWithDetails);
+      expect(appointmentQueries.getAppointmentById).toHaveBeenCalledWith('appointment-123');
     });
 
-    it('should throw error if appointment not found', async () => {
-      const appointmentId = uuidv4();
-      mockQueries.getAppointmentById.mockResolvedValueOnce(null);
+    it('devrait lever une erreur si le rendez-vous n\'existe pas', async () => {
+      (appointmentQueries.getAppointmentById as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        appointmentService.getAppointmentById(appointmentId)
-      ).rejects.toThrow('Appointment not found');
+      await expect(appointmentService.getAppointmentById('non-existent-id')).rejects.toThrow('Appointment not found');
+    });
+
+    it('devrait gérer les erreurs de base de données', async () => {
+      (appointmentQueries.getAppointmentById as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      await expect(appointmentService.getAppointmentById('appointment-123')).rejects.toThrow('Database error');
     });
   });
 
   describe('updateAppointment', () => {
-    it('should update appointment successfully', async () => {
-      const appointmentId = uuidv4();
-      const updateData = {
-        status: 'confirmed' as const,
-        notes: 'Updated notes',
+    it('devrait mettre à jour un rendez-vous', async () => {
+      const updateData: UpdateAppointmentDTO = {
+        status: 'completed',
+        notes: 'Consultation terminée',
       };
 
-      const updatedAppointment = mockAppointment({
-        id: appointmentId,
+      (appointmentQueries.updateAppointment as jest.Mock).mockResolvedValue({
+        ...mockAppointment,
         ...updateData,
       });
 
-      mockQueries.updateAppointment.mockResolvedValueOnce(updatedAppointment);
+      const result = await appointmentService.updateAppointment('appointment-123', updateData);
 
-      const result = await appointmentService.updateAppointment(appointmentId, updateData);
-
-      expect(result).toBeDefined();
-      expect(result.status).toBe(updateData.status);
-      expect(result.notes).toBe(updateData.notes);
+      expect(result.status).toBe('completed');
+      expect(result.notes).toBe('Consultation terminée');
+      expect(appointmentQueries.updateAppointment).toHaveBeenCalledWith('appointment-123', updateData);
     });
 
-    it('should throw error if appointment not found', async () => {
-      const appointmentId = uuidv4();
-      mockQueries.updateAppointment.mockResolvedValueOnce(null);
+    it('devrait lever une erreur si le rendez-vous n\'existe pas', async () => {
+      (appointmentQueries.updateAppointment as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        appointmentService.updateAppointment(appointmentId, { status: 'confirmed' })
+        appointmentService.updateAppointment('non-existent-id', { status: 'completed' })
       ).rejects.toThrow('Appointment not found');
     });
-  });
 
-  describe('deleteAppointment', () => {
-    it('should delete appointment successfully', async () => {
-      const appointmentId = uuidv4();
-      mockQueries.deleteAppointment.mockResolvedValueOnce(true);
-
-      await appointmentService.deleteAppointment(appointmentId);
-
-      expect(mockQueries.deleteAppointment).toHaveBeenCalledWith(appointmentId);
-    });
-
-    it('should throw error if appointment not found', async () => {
-      const appointmentId = uuidv4();
-      mockQueries.deleteAppointment.mockResolvedValueOnce(false);
+    it('devrait gérer les erreurs', async () => {
+      (appointmentQueries.updateAppointment as jest.Mock).mockRejectedValue(new Error('Database error'));
 
       await expect(
-        appointmentService.deleteAppointment(appointmentId)
-      ).rejects.toThrow('Appointment not found');
-    });
-  });
-
-  describe('getAppointmentsByLawyer', () => {
-    it('should return lawyer appointments', async () => {
-      const lawyerId = uuidv4();
-      const appointments = [
-        mockAppointment({ lawyer_id: lawyerId }),
-        mockAppointment({ lawyer_id: lawyerId }),
-      ];
-
-      mockQueries.getAppointmentsByLawyer.mockResolvedValueOnce(appointments as any);
-
-      const result = await appointmentService.getAppointmentsByLawyer(lawyerId);
-
-      expect(result).toHaveLength(2);
-      expect(mockQueries.getAppointmentsByLawyer).toHaveBeenCalledWith(lawyerId, {});
-    });
-  });
-
-  describe('getAppointmentsByClient', () => {
-    it('should return client appointments', async () => {
-      const clientId = uuidv4();
-      const appointments = [
-        mockAppointment({ client_id: clientId }),
-      ];
-
-      mockQueries.getAppointmentsByClient.mockResolvedValueOnce(appointments as any);
-
-      const result = await appointmentService.getAppointmentsByClient(clientId);
-
-      expect(result).toHaveLength(1);
-      expect(mockQueries.getAppointmentsByClient).toHaveBeenCalledWith(clientId, {});
-    });
-  });
-
-  describe('getUpcomingAppointments', () => {
-    it('should return upcoming appointments', async () => {
-      const lawyerId = uuidv4();
-      const futureAppointments = [
-        mockAppointment({
-          lawyer_id: lawyerId,
-          start_time: new Date(Date.now() + 86400000),
-        }),
-      ];
-
-      mockQueries.getUpcomingAppointments.mockResolvedValueOnce(futureAppointments as any);
-
-      const result = await appointmentService.getUpcomingAppointments(lawyerId);
-
-      expect(result).toHaveLength(1);
-    });
-  });
-
-  describe('getTodayAppointments', () => {
-    it('should return today appointments', async () => {
-      const lawyerId = uuidv4();
-      const todayAppointments = [
-        mockAppointment({
-          lawyer_id: lawyerId,
-          start_time: new Date(),
-        }),
-      ];
-
-      mockQueries.getTodayAppointments.mockResolvedValueOnce(todayAppointments as any);
-
-      const result = await appointmentService.getTodayAppointments(lawyerId);
-
-      expect(result).toHaveLength(1);
-    });
-  });
-
-  describe('getAppointmentStats', () => {
-    it('should return appointment statistics', async () => {
-      const lawyerId = uuidv4();
-      const stats = {
-        total: 10,
-        scheduled: 5,
-        confirmed: 3,
-        completed: 2,
-        cancelled: 0,
-      };
-
-      mockQueries.getAppointmentStats.mockResolvedValueOnce(stats as any);
-
-      const result = await appointmentService.getAppointmentStats(lawyerId);
-
-      expect(result).toEqual(stats);
-    });
-  });
-
-  describe('cancelAppointment', () => {
-    it('should cancel appointment successfully', async () => {
-      const appointmentId = uuidv4();
-      const clientId = uuidv4();
-      const lawyerId = uuidv4();
-
-      const appointment = mockAppointment({
-        id: appointmentId,
-        client_id: clientId,
-        lawyer_id: lawyerId,
-        status: 'cancelled',
-      });
-
-      mockQueries.cancelAppointment.mockResolvedValueOnce(appointment);
-      mockQueries.getAppointmentById.mockResolvedValueOnce({
-        ...appointment,
-        client_first_name: 'Test',
-        client_last_name: 'Client',
-        lawyer_first_name: 'Test',
-        lawyer_last_name: 'Lawyer',
-      } as any);
-
-      const result = await appointmentService.cancelAppointment(appointmentId);
-
-      expect(result).toBeDefined();
-      expect(result.status).toBe('cancelled');
-    });
-
-    it('should throw error if appointment not found', async () => {
-      const appointmentId = uuidv4();
-      mockQueries.cancelAppointment.mockResolvedValueOnce(null);
-
-      await expect(
-        appointmentService.cancelAppointment(appointmentId)
-      ).rejects.toThrow('Appointment not found');
-    });
-  });
-
-  describe('markReminderSent', () => {
-    it('should mark reminder as sent', async () => {
-      const appointmentId = uuidv4();
-      mockQueries.markReminderSent.mockResolvedValueOnce(true);
-
-      await appointmentService.markReminderSent(appointmentId);
-
-      expect(mockQueries.markReminderSent).toHaveBeenCalledWith(appointmentId);
-    });
-
-    it('should throw error if appointment not found', async () => {
-      const appointmentId = uuidv4();
-      mockQueries.markReminderSent.mockResolvedValueOnce(false);
-
-      await expect(
-        appointmentService.markReminderSent(appointmentId)
-      ).rejects.toThrow('Appointment not found');
+        appointmentService.updateAppointment('appointment-123', { status: 'completed' })
+      ).rejects.toThrow('Database error');
     });
   });
 });

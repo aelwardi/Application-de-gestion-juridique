@@ -508,7 +508,7 @@ onMounted(() => {
                 <button
                   v-for="page in visiblePages"
                   :key="page"
-                  @click="changePage(page)"
+                  @click="changePage(Number(page))"
                   :class="[
                     'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     page === pagination.page

@@ -236,7 +236,7 @@ export const forgotPassword = async (email: string): Promise<void> => {
 
   const resetToken = await createPasswordResetToken(user.id, 1);
 
-  sendPasswordResetEmail(user.email, resetToken.token, user.first_name).catch(err => {
+  sendPasswordResetEmail(user.email, user.first_name, resetToken.token).catch(err => {
     console.error('Failed to send password reset email:', err);
   });
 };

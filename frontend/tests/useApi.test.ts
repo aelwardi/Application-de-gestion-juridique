@@ -47,12 +47,12 @@ describe('useApi Composable', () => {
 
     it('should not include authorization header when token is missing', async () => {
       const { apiFetch } = useApi();
-      mockAuthStore.accessToken = null;
+      mockAuthStore.accessToken = '';
       mockFetchSuccess({ data: 'test' });
 
       await apiFetch('/test-endpoint');
 
-      const callArgs = vi.mocked($fetch).mock.calls[0][1];
+      const callArgs = (vi.mocked($fetch) as any).mock.calls[0]?.[1];
       expect(callArgs?.headers).not.toHaveProperty('Authorization');
     });
 
@@ -179,7 +179,7 @@ describe('useApi Composable', () => {
       error.status = 401;
       error.data = { code: 'TOKEN_EXPIRED' };
 
-      vi.mocked($fetch)
+      (vi.mocked($fetch) as any)
         .mockRejectedValueOnce(error)
         .mockResolvedValueOnce({ data: 'success' });
 
@@ -198,7 +198,7 @@ describe('useApi Composable', () => {
       error.status = 401;
       error.data = { code: 'TOKEN_EXPIRED' };
 
-      vi.mocked($fetch).mockRejectedValueOnce(error);
+      (vi.mocked($fetch) as any).mockRejectedValueOnce(error);
       const navigateTo = vi.fn();
       (globalThis as any).navigateTo = navigateTo;
 
@@ -213,7 +213,7 @@ describe('useApi Composable', () => {
       error.status = 401;
       error.data = { code: 'UNAUTHORIZED' };
 
-      vi.mocked($fetch).mockRejectedValueOnce(error);
+      (vi.mocked($fetch) as any).mockRejectedValueOnce(error);
       const navigateTo = vi.fn();
       (globalThis as any).navigateTo = navigateTo;
 
@@ -246,7 +246,7 @@ describe('useApi Composable', () => {
     it('should handle network errors', async () => {
       const { apiFetch } = useApi();
       const networkError = new Error('Network error');
-      vi.mocked($fetch).mockRejectedValueOnce(networkError);
+      (vi.mocked($fetch) as any).mockRejectedValueOnce(networkError);
 
       await expect(apiFetch('/endpoint')).rejects.toThrow('Network error');
     });
@@ -310,7 +310,7 @@ describe('useApi Composable', () => {
   describe('Edge Cases', () => {
     it('should handle empty response', async () => {
       const { apiFetch } = useApi();
-      vi.mocked($fetch).mockResolvedValueOnce(null);
+      (vi.mocked($fetch) as any).mockResolvedValueOnce(null);
 
       const result = await apiFetch('/endpoint');
 
@@ -339,7 +339,7 @@ describe('useApi Composable', () => {
       error.status = 401;
       error.data = { code: 'TOKEN_EXPIRED' };
 
-      vi.mocked($fetch)
+      (vi.mocked($fetch) as any)
         .mockRejectedValueOnce(error)
         .mockRejectedValueOnce(error);
 

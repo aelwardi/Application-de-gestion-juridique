@@ -1,4 +1,3 @@
-import type { ApiResponse } from '~/types/api';
 
 export const useApi = () => {
   const config = useRuntimeConfig();
@@ -17,17 +16,45 @@ export const useApi = () => {
 
   const apiFetch = async <T = any>(
     endpoint: string,
-    options?: RequestInit & { method?: string; body?: any }
+    options?: any
   ): Promise<T> => {
     const url = endpoint.startsWith('http') ? endpoint : `${baseURL}${endpoint}`;
 
-    return await $fetch<T>(url, {
-      ...options,
-      headers: {
-        ...getHeaders(),
-        ...options?.headers
+    try {
+      return await $fetch<T>(url, {
+        ...options,
+        headers: {
+          ...getHeaders(),
+          ...options?.headers
+        }
+      } as any);
+    } catch (error: any) {
+      if (error.status === 401 || error.statusCode === 401) {
+        const errorData = error.data || error.response?.data;
+
+        if (errorData?.code === 'TOKEN_EXPIRED' && authStore.refreshAccessToken) {
+          const refreshed = await authStore.refreshAccessToken();
+
+          if (refreshed) {
+            return await $fetch<T>(url, {
+              ...options,
+              headers: {
+                ...getHeaders(),
+                ...options?.headers
+              }
+            } as any);
+          }
+        }
+
+        authStore.clearAuth();
+        if (typeof navigateTo !== 'undefined') {
+          await navigateTo('/auth/login');
+        }
+        throw error;
       }
-    });
+
+      throw error;
+    }
   };
 
   return {

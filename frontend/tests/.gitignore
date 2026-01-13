@@ -1,0 +1,20 @@
+# Fichiers et dossiers de test à ignorer
+
+# Rapports de couverture
+coverage/
+.nyc_output/
+
+# Résultats de tests
+test-results/
+*.log
+
+# Snapshots temporaires
+__snapshots__/
+
+# Cache Vitest
+.vitest/
+
+# Fichiers temporaires de test
+*.tmp
+*.temp
+

@@ -14,11 +14,11 @@ jest.setTimeout(30000);
 
 global.console = {
   ...console,
-  log: jest.fn(),
+  log: console.log,
   warn: jest.fn(),
   info: jest.fn(),
   debug: jest.fn(),
-  error: jest.fn(),
+  error: console.error,
 };
 
 jest.mock('../src/config/database.config', () => ({
@@ -38,8 +38,4 @@ beforeAll(() => {
 afterAll(() => {
   jest.clearAllMocks();
   jest.restoreAllMocks();
-});
-
-beforeEach(() => {
-  jest.clearAllMocks();
 });

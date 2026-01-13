@@ -1,5 +1,21 @@
-import { vi, beforeEach } from 'vitest';
+import { vi, beforeEach, beforeAll, afterEach, afterAll } from 'vitest';
 import { config } from '@vue/test-utils';
+import { server } from './mocks/msw-server';
+import { setupThirdPartyMocks, cleanupThirdPartyMocks } from './mocks/third-party.mock';
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'warn' });
+  setupThirdPartyMocks();
+});
+
+afterEach(() => {
+  server.resetHandlers();
+  cleanupThirdPartyMocks();
+});
+
+afterAll(() => {
+  server.close();
+});
 
 config.global.mocks = {
   $fetch: vi.fn(),
@@ -24,6 +40,25 @@ config.global.mocks = {
   clearAuth: vi.fn(),
   setAuth: vi.fn(),
   getAuthHeaders: vi.fn(() => ({})),
+}));
+
+(globalThis as any).useApi = vi.fn(() => ({
+  apiFetch: vi.fn(),
+}));
+
+(globalThis as any).useRouter = vi.fn(() => ({
+  push: vi.fn(),
+  replace: vi.fn(),
+  go: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  currentRoute: { value: { path: '/', query: {}, params: {} } },
+}));
+
+(globalThis as any).useRoute = vi.fn(() => ({
+  path: '/',
+  query: {},
+  params: {},
 }));
 
 if (typeof global.process === 'undefined') {

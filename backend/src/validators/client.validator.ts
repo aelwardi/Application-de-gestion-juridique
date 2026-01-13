@@ -82,7 +82,7 @@ export const validateClientId = (
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        message: "ID client invalide",
+        message: "Données de validation invalides",
         errors: error.errors,
       });
       return;
