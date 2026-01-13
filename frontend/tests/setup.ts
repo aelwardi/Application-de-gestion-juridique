@@ -15,6 +15,10 @@ config.global.mocks = {
 
 (globalThis as any).$fetch = vi.fn();
 
+(globalThis as any).useApi = vi.fn(() => ({
+  apiFetch: vi.fn((url: string, options?: any) => (globalThis as any).$fetch(url, options))
+}));
+
 (globalThis as any).useAuthStore = vi.fn(() => ({
   accessToken: null,
   refreshToken: null,

@@ -78,15 +78,21 @@ jobs:
         SESSION_SECRET=test_session_secret_for_ci
         EOF
 
-    - name: Run database migrations
+    - name: Run unit tests
       working-directory: ./backend
-      run: npm run migrate
+      run: npm run test:unit
       env:
         NODE_ENV: test
 
-    - name: Run tests
+    - name: Run integration tests
       working-directory: ./backend
-      run: npm test -- --coverage --maxWorkers=2
+      run: npm run test:integration
+      env:
+        NODE_ENV: test
+
+    - name: Run all tests with coverage
+      working-directory: ./backend
+      run: npm run test:ci
       env:
         NODE_ENV: test
 

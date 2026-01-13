@@ -47,9 +47,17 @@ jobs:
         EMAIL_ENABLED=false
         EOF
 
-    - name: Run tests with coverage
+    - name: Run unit tests
       working-directory: ./backend
-      run: npm test
+      run: npm run test:unit
+
+    - name: Run integration tests
+      working-directory: ./backend
+      run: npm run test:integration
+
+    - name: Generate coverage report
+      working-directory: ./backend
+      run: npm run test:ci
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3

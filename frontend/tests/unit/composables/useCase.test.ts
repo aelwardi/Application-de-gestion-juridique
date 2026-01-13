@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useCase } from '~/composables/useCase';
-import { createMockAuthStore, mockFetchSuccess, mockFetchError } from './helpers/test-utils';
+import { createMockAuthStore, mockFetchError } from '~/tests/helpers/test-utils';
 
 describe('useCase Composable', () => {
   let mockAuthStore: ReturnType<typeof createMockAuthStore>;
@@ -11,7 +11,7 @@ describe('useCase Composable', () => {
     (globalThis as any).useAuthStore = vi.fn(() => mockAuthStore);
   });
 
-  const mockCase = (overrides = {}) => ({
+  const mockCase = (overrides: any = {}) => ({
     id: 'case-1',
     title: 'Nouveau Dossier',
     description: 'Description du dossier',
@@ -34,12 +34,17 @@ describe('useCase Composable', () => {
         lawyer_id: '456',
       };
 
-      mockFetchSuccess(mockCase(caseData));
+      vi.mocked($fetch).mockResolvedValueOnce({
+        success: true,
+        message: 'Case created',
+        data: mockCase(caseData)
+      });
 
       const result = await createCase(caseData);
 
       expect(result.success).toBe(true);
-      expect(result.data.title).toBe('Nouveau Dossier');
+      expect(result.data).toBeDefined();
+      expect(result.data!.title).toBe('Nouveau Dossier');
     });
 
     it('should handle validation errors', async () => {
@@ -56,24 +61,25 @@ describe('useCase Composable', () => {
     it('should fetch all cases', async () => {
       const { getCases } = useCase();
       const cases = [mockCase({ id: '1' }), mockCase({ id: '2' })];
-      mockFetchSuccess({ data: cases, total: 2 });
+      vi.mocked($fetch).mockResolvedValueOnce({ success: true, data: cases, message: 'Success' });
 
       const result = await getCases();
 
-      expect(result.data).toHaveLength(2);
-      expect(result.total).toBe(2);
+      expect(result.success).toBe(true);
+      expect(Array.isArray(result.data)).toBe(true);
+      expect(result.data!).toHaveLength(2);
     });
 
     it('should filter by status', async () => {
       const cases = [
-        mockCase({ id: '1', status: 'active' }),
+        mockCase({ id: '1', status: 'in_progress' }),
         mockCase({ id: '2', status: 'pending' }),
-        mockCase({ id: '3', status: 'active' }),
+        mockCase({ id: '3', status: 'in_progress' }),
       ];
 
-      const activeCases = cases.filter(c => c.status === 'active');
+      const inProgressCases = cases.filter(c => c.status === 'in_progress');
 
-      expect(activeCases).toHaveLength(2);
+      expect(inProgressCases).toHaveLength(2);
     });
 
     it('should filter by case type', async () => {
@@ -92,20 +98,24 @@ describe('useCase Composable', () => {
   describe('Update Case', () => {
     it('should update case successfully', async () => {
       const { updateCase } = useCase();
-      const updatedCase = mockCase({ status: 'active' });
-      mockFetchSuccess(updatedCase);
+      const updatedCase = mockCase({ status: 'in_progress' });
+      vi.mocked($fetch).mockResolvedValueOnce({
+        success: true,
+        message: 'Case updated',
+        data: updatedCase
+      });
 
-      const result = await updateCase('case-1', { status: 'active' });
+      const result = await updateCase('case-1', { status: 'in_progress' });
 
       expect(result.success).toBe(true);
-      expect(result.data.status).toBe('active');
+      expect(result.data!.status).toBe('in_progress');
     });
   });
 
   describe('Delete Case', () => {
     it('should delete case successfully', async () => {
       const { deleteCase } = useCase();
-      mockFetchSuccess({ success: true });
+      vi.mocked($fetch).mockResolvedValueOnce({ success: true });
 
       const result = await deleteCase('case-1');
 
@@ -116,12 +126,12 @@ describe('useCase Composable', () => {
   describe('Edge Cases', () => {
     it('should handle empty cases list', async () => {
       const { getCases } = useCase();
-      mockFetchSuccess({ data: [], total: 0 });
+      vi.mocked($fetch).mockResolvedValueOnce({ success: true, data: [], message: 'Success' });
 
       const result = await getCases();
 
+      expect(result.success).toBe(true);
       expect(result.data).toEqual([]);
-      expect(result.total).toBe(0);
     });
 
     it('should handle unauthorized access', async () => {

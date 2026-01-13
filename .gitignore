@@ -4,12 +4,39 @@
 # uploads
 backend/uploads/
 
-# env
+# env - IMPORTANT: Ne jamais commit ces fichiers !
 .env
 .env.*
+.env-*
+*.env
+.env.local
+.env.development
+.env.production
+.env.test
 
 # build
 dist
 .nuxt
 .output
 .idea
+
+# local github documentation and scripts
+.github/GITHUB_ACTIONS.md
+.github/test-local.ps1# Test coverage
+coverage/
+*.lcov
+test-results/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database
+*.sqlite
+*.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "rootDir": null,
+    "baseUrl": "."
+  },
+  "include": [
+    "./**/*.ts",
+    "./unit/**/*.test.ts",
+    "./integration/**/*.test.ts",
+    "../src/**/*.ts"
+  ],
+  "exclude": []
+}
