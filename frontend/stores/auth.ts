@@ -212,7 +212,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
 
-    async getProfile() {
+    async getProfile(): Promise<void> {
       this.isLoading = true;
       try {
         const config = useRuntimeConfig();

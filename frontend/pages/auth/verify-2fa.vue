@@ -30,13 +30,13 @@ const handleSubmit = async () => {
   error.value = '';
 
   try {
-    const response = await apiFetch('/auth/login/2fa/complete', {
+    const response: any = await apiFetch('/auth/login/2fa/complete', {
       method: 'POST',
-      body: {
+      body: JSON.stringify({
         tempToken: tempToken.value,
         code: code.value.replace(/[-\s]/g, ''), // Remove dashes and spaces
-      },
-    });
+      })
+    } as any);
 
     if (response.success && response.data) {
       authStore.setAuth(response.data.user, response.data.accessToken, response.data.refreshToken);

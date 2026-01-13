@@ -76,8 +76,9 @@ const resetFilters = () => {
   fetchUsers();
 };
 
-const changePage = (page: number) => {
-  pagination.value.page = page;
+const changePage = (page: string | number) => {
+  const pageNum = typeof page === 'string' ? parseInt(page) : page;
+  pagination.value.page = pageNum;
   fetchUsers();
 };
 

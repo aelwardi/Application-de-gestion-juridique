@@ -146,7 +146,6 @@ export interface AppointmentStatsResponse {
 
 export const AppointmentStatusLabels: Record<AppointmentStatus, string> = {
   scheduled: 'Planifié',
-  confirmed: 'Confirmé',
   cancelled: 'Annulé',
   completed: 'Terminé',
   no_show: 'Absent'
@@ -154,7 +153,6 @@ export const AppointmentStatusLabels: Record<AppointmentStatus, string> = {
 
 export const AppointmentStatusColors: Record<AppointmentStatus, string> = {
   scheduled: '#FCD34D',
-  confirmed: '#60A5FA',
   cancelled: '#F87171',
   completed: '#34D399',
   no_show: '#F59E0B'
@@ -162,7 +160,6 @@ export const AppointmentStatusColors: Record<AppointmentStatus, string> = {
 
 export const AppointmentTypeLabels: Record<AppointmentType, string> = {
   consultation: 'Consultation',
-  tribunal: 'Tribunal',
   rencontre_client: 'Rencontre client',
   expertise: 'Expertise',
   mediation: 'Médiation',
@@ -172,7 +169,6 @@ export const AppointmentTypeLabels: Record<AppointmentType, string> = {
 
 export const AppointmentLocationTypeLabels: Record<AppointmentLocationType, string> = {
   office: 'Cabinet',
-  court: 'Tribunal',
   client_location: 'Chez le client',
   online: 'En ligne',
   other: 'Autre'

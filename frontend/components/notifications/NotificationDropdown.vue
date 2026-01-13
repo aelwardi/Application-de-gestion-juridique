@@ -1,10 +1,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import type { Notification } from '~/composables/useNotifications'
+import type { ApiNotification } from '~/composables/useNotifications'
 
 const isOpen = ref(false)
-const notifications = ref<Notification[]>([])
+const notifications = ref<ApiNotification[]>([])
 const authStore = useAuthStore()
 const { getUnreadNotifications, markAsRead: markNotificationAsRead, markAllAsRead: markAllNotificationsAsRead } = useNotifications()
 
@@ -29,7 +29,7 @@ watch(() => authStore.user?.id, () => {
 })
 
 const unreadCount = computed(() => {
-  return notifications.value.filter(n => !n.is_read).length
+  return notifications.value.filter((n: ApiNotification) => !n.is_read).length
 })
 
 const getIconClass = (type: string) => {
@@ -65,12 +65,12 @@ const formatTimeAgo = (dateString: string) => {
 const markAsRead = async (id: string) => {
   try {
     await markNotificationAsRead(id)
-    const notification = notifications.value.find(n => n.id === id)
+    const notification = notifications.value.find((n: ApiNotification) => n.id === id)
     if (notification) {
       notification.is_read = true
     }
 
-    const notif = notifications.value.find(n => n.id === id)
+    const notif = notifications.value.find((n: ApiNotification) => n.id === id)
     if (notif?.data?.appointment_id) {
       navigateTo(`/appointments/${notif.data.appointment_id}`)
       isOpen.value = false
@@ -85,7 +85,7 @@ const markAllAsRead = async () => {
 
   try {
     await markAllNotificationsAsRead(authStore.user.id)
-    notifications.value.forEach(n => n.is_read = true)
+    notifications.value.forEach((n: ApiNotification) => n.is_read = true)
     isOpen.value = false
   } catch (error) {
     console.error('Erreur lors du marquage des notifications:', error)

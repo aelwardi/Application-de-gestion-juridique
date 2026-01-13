@@ -84,14 +84,14 @@ const verifyAndEnable = async () => {
   errorMessage.value = '';
 
   try {
-    const response = await apiFetch('/auth/2fa/enable', {
+    const response: any = await apiFetch('/auth/2fa/enable', {
       method: 'POST',
-      body: {
+      body: JSON.stringify({
         secret: secret.value,
         code: verificationCode.value,
         backupCodes: backupCodes.value,
-      },
-    });
+      })
+    } as any);
 
     if (response.success) {
       setupStep.value = 3;
@@ -130,10 +130,10 @@ const disableTwoFactor = async () => {
   errorMessage.value = '';
 
   try {
-    const response = await apiFetch('/auth/2fa/disable', {
+    const response: any = await apiFetch('/auth/2fa/disable', {
       method: 'POST',
-      body: { password: disablePassword.value },
-    });
+      body: JSON.stringify({ password: disablePassword.value })
+    } as any);
 
     if (response.success) {
       showDisableModal.value = false;

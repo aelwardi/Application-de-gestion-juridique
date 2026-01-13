@@ -17,7 +17,7 @@ export const useApi = () => {
 
   const apiFetch = async <T = any>(
     endpoint: string,
-    options?: RequestInit & { method?: string; body?: any }
+    options?: RequestInit & { method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'; body?: any }
   ): Promise<T> => {
     const url = endpoint.startsWith('http') ? endpoint : `${baseURL}${endpoint}`;
 
@@ -27,7 +27,7 @@ export const useApi = () => {
         ...getHeaders(),
         ...options?.headers
       }
-    });
+    } as any);
   };
 
   return {

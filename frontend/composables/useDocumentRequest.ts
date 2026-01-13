@@ -12,8 +12,8 @@ export default function useDocumentRequest() {
   }) => {
     return await apiFetch('/document-requests', {
       method: 'POST',
-      body: data
-    });
+      body: JSON.stringify(data)
+    } as any);
   };
 
 
@@ -25,8 +25,8 @@ export default function useDocumentRequest() {
   const updateDocumentRequestStatus = async (requestId: string, status: 'completed' | 'cancelled') => {
     return await apiFetch(`/document-requests/${requestId}/status`, {
       method: 'PATCH',
-      body: { status }
-    });
+      body: JSON.stringify({ status })
+    } as any);
   };
 
 

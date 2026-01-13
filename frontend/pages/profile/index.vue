@@ -606,14 +606,14 @@ const verifyAndEnableTwoFactor = async () => {
   securityError.value = '';
 
   try {
-    const response = await apiFetch('/auth/2fa/enable', {
+    const response: any = await apiFetch('/auth/2fa/enable', {
       method: 'POST',
-      body: {
+      body: JSON.stringify({
         secret: secret.value,
         code: verificationCode.value,
         backupCodes: backupCodes.value,
-      },
-    });
+      })
+    } as any);
 
     if (response.success) {
       setupStep.value = 3;
