@@ -65,21 +65,6 @@ export const mockFetchError = (status: number, message: string) => {
   vi.mocked($fetch).mockRejectedValueOnce(error);
 };
 
-export const createMockRouter = () => ({
-  push: vi.fn(() => Promise.resolve() as any),
-  replace: vi.fn(() => Promise.resolve() as any),
-  back: vi.fn(),
-  go: vi.fn(),
-  currentRoute: {
-    value: {
-      params: {},
-      query: {},
-      path: '/',
-      name: 'index',
-    },
-  },
-} as any);
-
 
 export const createMockAuthStore = (overrides: any = {}) => ({
   user: null,
