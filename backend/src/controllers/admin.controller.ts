@@ -164,6 +164,14 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
       message: result.message,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'User not found') {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to update user status',

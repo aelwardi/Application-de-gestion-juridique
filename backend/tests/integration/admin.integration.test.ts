@@ -19,6 +19,10 @@ jest.mock('../../src/middleware/admin.middleware', () => ({
   },
 }));
 
+jest.mock('../../src/utils/email.util', () => ({
+  sendEmail: jest.fn().mockResolvedValue({}),
+}));
+
 describe('Admin Routes Integration Tests', () => {
   let app: Express;
 
@@ -171,7 +175,7 @@ describe('Admin Routes Integration Tests', () => {
     });
 
     it('should return 404 if user not found', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rows: [] });
+      (pool.query as jest.Mock).mockResolvedValue({ rowCount: 0 });
 
       const response = await request(app)
         .patch('/api/admin/users/nonexistent/status')
@@ -204,7 +208,10 @@ describe('Admin Routes Integration Tests', () => {
 
   describe('DELETE /api/admin/users/:id', () => {
     it('should delete user', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rowCount: 1 });
+      (pool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ id: 'user-123', email: 'test@test.com', first_name: 'Test' }] })
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 });
 
       const response = await request(app)
         .delete('/api/admin/users/user-123')
@@ -215,7 +222,7 @@ describe('Admin Routes Integration Tests', () => {
     });
 
     it('should return 404 if user not found', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rowCount: 0 });
+      (pool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
       const response = await request(app)
         .delete('/api/admin/users/nonexistent')
@@ -359,4 +366,3 @@ describe('Admin Routes Integration Tests', () => {
     });
   });
 });
-
