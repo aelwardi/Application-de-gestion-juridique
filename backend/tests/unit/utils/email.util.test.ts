@@ -122,7 +122,7 @@ describe('Email Utility', () => {
       expect(callArgs.to).toBe('user@example.com');
       expect(callArgs.subject).toBe('Bienvenue sur Gestion Juridique');
       expect(callArgs.html).toContain('John Doe');
-      expect(callArgs.html).toContain('http://localhost:3000/auth/login');
+      expect(callArgs.html).toContain('http://localhost:3001/auth/login');
       expect(result).toBe(true);
     });
 
@@ -153,7 +153,7 @@ describe('Email Utility', () => {
       expect(callArgs.subject).toContain('Réinitialisation');
       expect(callArgs.html).toContain('John');
       expect(callArgs.html).toContain('reset-token-123');
-      expect(callArgs.html).toContain('http://localhost:3000/auth/reset-password');
+      expect(callArgs.html).toContain('http://localhost:3001/auth/reset-password');
       expect(result).toBe(true);
     });
 
