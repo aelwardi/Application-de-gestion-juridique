@@ -139,7 +139,7 @@ describe('Date Utils', () => {
     });
 
     it('devrait retourner false pour maintenant', () => {
-      const now = new Date().toISOString();
+      const now = new Date(Date.now() + 1000).toISOString();
       const result = isPast(now);
 
       expect(result).toBe(false);
