@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useApi } from '~/composables/useApi';
 import { createMockAuthStore } from '~/tests/helpers/test-utils';
 
-const mockFetch = vi.fn();
+const mockFetch = vi.fn() as any;
+mockFetch.raw = vi.fn();
+mockFetch.create = vi.fn(() => mockFetch);
 global.$fetch = mockFetch;
 
 vi.mock('#app', () => ({

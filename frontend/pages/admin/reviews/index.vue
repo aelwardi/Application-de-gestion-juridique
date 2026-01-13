@@ -1,5 +1,8 @@
 
 <script setup lang="ts">
+import { StarIcon as StarIconSolid } from '@heroicons/vue/24/solid';
+import { StarIcon as StarIconOutline } from '@heroicons/vue/24/outline';
+
 definePageMeta({
   middleware: ['auth', 'admin'],
   layout: 'admin',

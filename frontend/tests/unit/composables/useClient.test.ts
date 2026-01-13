@@ -26,8 +26,8 @@ describe('useClient - Tests Unitaires', () => {
     city: 'Paris',
     postalCode: '75001',
     isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: new Date() as any,
+    updatedAt: new Date() as any,
   };
 
   describe('getClientCases', () => {

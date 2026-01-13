@@ -44,7 +44,7 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     it('devrait afficher l\'image par défaut si pas de photo', () => {
       const requestWithoutPhoto = {
         ...mockRequest,
-        lawyer_profile_picture: null,
+        lawyer_profile_picture: undefined,
       };
 
       const wrapper = mount(ClientRequestCard, {
@@ -64,27 +64,27 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     });
 
     it('devrait afficher le statut "Acceptée"', () => {
-      const acceptedRequest = { ...mockRequest, status: 'accepted' };
+      const acceptedRequest = { ...mockRequest, status: 'accepted' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: acceptedRequest },
+        props: { request: acceptedRequest as any },
       });
 
       expect(wrapper.text()).toContain('Acceptée');
     });
 
     it('devrait afficher le statut "Rejetée"', () => {
-      const rejectedRequest = { ...mockRequest, status: 'rejected' };
+      const rejectedRequest = { ...mockRequest, status: 'rejected' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: rejectedRequest },
+        props: { request: rejectedRequest as any },
       });
 
       expect(wrapper.text()).toContain('Rejetée');
     });
 
     it('devrait afficher le statut "Annulée"', () => {
-      const cancelledRequest = { ...mockRequest, status: 'cancelled' };
+      const cancelledRequest = { ...mockRequest, status: 'cancelled' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: cancelledRequest },
+        props: { request: cancelledRequest as any },
       });
 
       expect(wrapper.text()).toContain('Annulée');
@@ -137,9 +137,9 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
 
   describe('Affichage de l\'urgence', () => {
     it('devrait afficher l\'urgence "Faible"', () => {
-      const lowUrgencyRequest = { ...mockRequest, urgency: 'low' };
+      const lowUrgencyRequest = { ...mockRequest, urgency: 'low' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: lowUrgencyRequest },
+        props: { request: lowUrgencyRequest as any },
       });
 
       expect(wrapper.text()).toContain('Faible');
@@ -154,18 +154,18 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     });
 
     it('devrait afficher l\'urgence "Élevé"', () => {
-      const highUrgencyRequest = { ...mockRequest, urgency: 'high' };
+      const highUrgencyRequest = { ...mockRequest, urgency: 'high' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: highUrgencyRequest },
+        props: { request: highUrgencyRequest as any },
       });
 
       expect(wrapper.text()).toContain('Élevé');
     });
 
     it('devrait afficher l\'urgence "Urgent"', () => {
-      const urgentRequest = { ...mockRequest, urgency: 'urgent' };
+      const urgentRequest = { ...mockRequest, urgency: 'urgent' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: urgentRequest },
+        props: { request: urgentRequest as any },
       });
 
       expect(wrapper.text()).toContain('Urgent');
@@ -174,9 +174,9 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
 
   describe('Classes CSS selon l\'urgence', () => {
     it('devrait appliquer les classes bleues pour urgence low', () => {
-      const lowUrgencyRequest = { ...mockRequest, urgency: 'low' };
+      const lowUrgencyRequest = { ...mockRequest, urgency: 'low' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: lowUrgencyRequest },
+        props: { request: lowUrgencyRequest as any },
       });
 
       const urgencyBadge = wrapper.find('.bg-blue-100');
@@ -193,9 +193,9 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     });
 
     it('devrait appliquer les classes orange pour urgence high', () => {
-      const highUrgencyRequest = { ...mockRequest, urgency: 'high' };
+      const highUrgencyRequest = { ...mockRequest, urgency: 'high' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: highUrgencyRequest },
+        props: { request: highUrgencyRequest as any },
       });
 
       const urgencyBadges = wrapper.findAll('.bg-orange-100');
@@ -203,9 +203,9 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     });
 
     it('devrait appliquer les classes rouges pour urgence urgent', () => {
-      const urgentRequest = { ...mockRequest, urgency: 'urgent' };
+      const urgentRequest = { ...mockRequest, urgency: 'urgent' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: urgentRequest },
+        props: { request: urgentRequest as any },
       });
 
       const urgencyBadge = wrapper.find('.bg-red-100');
@@ -333,7 +333,7 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
         status: 'pending',
         lawyer_first_name: 'John',
         lawyer_last_name: 'Doe',
-        lawyer_profile_picture: null,
+        lawyer_profile_picture: undefined,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

@@ -59,7 +59,7 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      expect(wrapper.vm.selectedUserType).toBe('client');
+      expect((wrapper.vm as any).selectedUserType).toBe('client');
     });
 
     it('devrait utiliser le userType passé en props', () => {
@@ -75,7 +75,7 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      expect(wrapper.vm.selectedUserType).toBe('avocat');
+      expect((wrapper.vm as any).selectedUserType).toBe('avocat');
     });
 
     it('devrait changer le formulaire en fonction du type sélectionné', async () => {
@@ -90,12 +90,12 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      expect(wrapper.vm.form.role).toBe('client');
+      expect((wrapper.vm as any).form.role).toBe('client');
 
-      wrapper.vm.selectedUserType = 'avocat';
+      (wrapper.vm as any).selectedUserType = 'avocat';
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.vm.form.role).toBe('avocat');
+      expect((wrapper.vm as any).form.role).toBe('avocat');
     });
   });
 
@@ -112,17 +112,17 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.password = 'abc';
+      (wrapper.vm as any).form.password = 'abc';
       await wrapper.vm.$nextTick();
-      expect(wrapper.vm.passwordStrength).toBeLessThan(25);
+      expect((wrapper.vm as any).passwordStrength).toBeLessThan(25);
 
-      wrapper.vm.form.password = 'Abcd1234';
+      (wrapper.vm as any).form.password = 'Abcd1234';
       await wrapper.vm.$nextTick();
-      expect(wrapper.vm.passwordStrength).toBeGreaterThanOrEqual(50);
+      expect((wrapper.vm as any).passwordStrength).toBeGreaterThanOrEqual(50);
 
-      wrapper.vm.form.password = 'Abcd1234!@#$';
+      (wrapper.vm as any).form.password = 'Abcd1234!@#$';
       await wrapper.vm.$nextTick();
-      expect(wrapper.vm.passwordStrength).toBeGreaterThanOrEqual(75);
+      expect((wrapper.vm as any).passwordStrength).toBeGreaterThanOrEqual(75);
     });
 
     it('devrait afficher le texte de force du mot de passe', async () => {
@@ -137,17 +137,17 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.password = 'ab';
+      (wrapper.vm as any).form.password = 'ab';
       await wrapper.vm.$nextTick();
-      expect(wrapper.vm.passwordStrengthText).toBe('Très faible');
+      expect((wrapper.vm as any).passwordStrengthText).toBe('Très faible');
 
-      wrapper.vm.form.password = 'Abc123';
+      (wrapper.vm as any).form.password = 'Abc123';
       await wrapper.vm.$nextTick();
-      expect(['Faible', 'Moyen']).toContain(wrapper.vm.passwordStrengthText);
+      expect(['Faible', 'Moyen']).toContain((wrapper.vm as any).passwordStrengthText);
 
-      wrapper.vm.form.password = 'Abcd1234!@#$';
+      (wrapper.vm as any).form.password = 'Abcd1234!@#$';
       await wrapper.vm.$nextTick();
-      expect(['Fort', 'Très fort']).toContain(wrapper.vm.passwordStrengthText);
+      expect(['Fort', 'Très fort']).toContain((wrapper.vm as any).passwordStrengthText);
     });
 
     it('devrait valider que les mots de passe correspondent', async () => {
@@ -162,18 +162,18 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.email = 'test@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'DifferentPassword';
-      wrapper.vm.form.firstName = 'John';
-      wrapper.vm.form.lastName = 'Doe';
-      wrapper.vm.form.phone = '+1234567890';
-      wrapper.vm.acceptTerms = true;
+      (wrapper.vm as any).form.email = 'test@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'DifferentPassword';
+      (wrapper.vm as any).form.firstName = 'John';
+      (wrapper.vm as any).form.lastName = 'Doe';
+      (wrapper.vm as any).form.phone = '+1234567890';
+      (wrapper.vm as any).acceptTerms = true;
 
-      await wrapper.vm.handleRegister();
+      await (wrapper.vm as any).handleRegister();
       await flushPromises();
 
-      expect(wrapper.vm.errorMessage).toContain('ne correspondent pas');
+      expect((wrapper.vm as any).errorMessage).toContain('ne correspondent pas');
       expect(mockAuthStore.register).not.toHaveBeenCalled();
     });
   });
@@ -192,26 +192,26 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.email = 'lawyer@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'Password123!';
-      wrapper.vm.form.firstName = 'Jane';
-      wrapper.vm.form.lastName = 'Smith';
-      wrapper.vm.form.phone = '+1234567890';
-      wrapper.vm.form.lawyerData.barNumber = '';
-      wrapper.vm.acceptTerms = true;
+      (wrapper.vm as any).form.email = 'lawyer@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'Password123!';
+      (wrapper.vm as any).form.firstName = 'Jane';
+      (wrapper.vm as any).form.lastName = 'Smith';
+      (wrapper.vm as any).form.phone = '+1234567890';
+      (wrapper.vm as any).form.lawyerData.barNumber = '';
+      (wrapper.vm as any).acceptTerms = true;
 
-      await wrapper.vm.handleRegister();
+      await (wrapper.vm as any).handleRegister();
       await flushPromises();
 
-      expect(wrapper.vm.isLoading).toBe(false);
+      expect((wrapper.vm as any).isLoading).toBe(false);
     });
   });
 
   describe('Soumission du formulaire - État de chargement', () => {
     it('devrait afficher l\'état de chargement pendant l\'inscription', async () => {
       mockAuthStore.register.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
+          () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
       const wrapper = mount(RegisterModal, {
@@ -225,27 +225,27 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.email = 'test@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'Password123!';
-      wrapper.vm.form.firstName = 'John';
-      wrapper.vm.form.lastName = 'Doe';
-      wrapper.vm.form.phone = '+1234567890';
-      wrapper.vm.acceptTerms = true;
+      (wrapper.vm as any).form.email = 'test@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'Password123!';
+      (wrapper.vm as any).form.firstName = 'John';
+      (wrapper.vm as any).form.lastName = 'Doe';
+      (wrapper.vm as any).form.phone = '+1234567890';
+      (wrapper.vm as any).acceptTerms = true;
 
-      const registerPromise = wrapper.vm.handleRegister();
+      const registerPromise = (wrapper.vm as any).handleRegister();
 
-      expect(wrapper.vm.isLoading).toBe(true);
+      expect((wrapper.vm as any).isLoading).toBe(true);
 
       await registerPromise;
       await flushPromises();
 
-      expect(wrapper.vm.isLoading).toBe(false);
+      expect((wrapper.vm as any).isLoading).toBe(false);
     });
 
     it('devrait désactiver le bouton pendant le chargement', async () => {
       mockAuthStore.register.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
+          () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
       const wrapper = mount(RegisterModal, {
@@ -259,10 +259,10 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.isLoading = true;
+      (wrapper.vm as any).isLoading = true;
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.vm.isLoading).toBe(true);
+      expect((wrapper.vm as any).isLoading).toBe(true);
     });
   });
 
@@ -281,19 +281,19 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.email = 'test@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'Password123!';
-      wrapper.vm.form.firstName = 'John';
-      wrapper.vm.form.lastName = 'Doe';
-      wrapper.vm.form.phone = '+1234567890';
-      wrapper.vm.acceptTerms = true;
+      (wrapper.vm as any).form.email = 'test@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'Password123!';
+      (wrapper.vm as any).form.firstName = 'John';
+      (wrapper.vm as any).form.lastName = 'Doe';
+      (wrapper.vm as any).form.phone = '+1234567890';
+      (wrapper.vm as any).acceptTerms = true;
 
-      await wrapper.vm.handleRegister();
+      await (wrapper.vm as any).handleRegister();
       await flushPromises();
 
-      expect(wrapper.vm.errorMessage).toBeTruthy();
-      expect(wrapper.vm.isLoading).toBe(false);
+      expect((wrapper.vm as any).errorMessage).toBeTruthy();
+      expect((wrapper.vm as any).isLoading).toBe(false);
     });
 
     it('devrait réinitialiser les erreurs lors d\'une nouvelle tentative', async () => {
@@ -308,21 +308,21 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.errorMessage = 'Erreur précédente';
-      wrapper.vm.validationErrors = ['Erreur 1', 'Erreur 2'];
+      (wrapper.vm as any).errorMessage = 'Erreur précédente';
+      (wrapper.vm as any).validationErrors = ['Erreur 1', 'Erreur 2'];
 
-      wrapper.vm.form.email = 'test@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'Password123!';
-      wrapper.vm.form.firstName = 'John';
-      wrapper.vm.form.lastName = 'Doe';
-      wrapper.vm.form.phone = '+1234567890';
-      wrapper.vm.acceptTerms = true;
+      (wrapper.vm as any).form.email = 'test@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'Password123!';
+      (wrapper.vm as any).form.firstName = 'John';
+      (wrapper.vm as any).form.lastName = 'Doe';
+      (wrapper.vm as any).form.phone = '+1234567890';
+      (wrapper.vm as any).acceptTerms = true;
 
-      const registerPromise = wrapper.vm.handleRegister();
+      const registerPromise = (wrapper.vm as any).handleRegister();
 
-      expect(wrapper.vm.errorMessage).toBe('');
-      expect(wrapper.vm.validationErrors).toEqual([]);
+      expect((wrapper.vm as any).errorMessage).toBe('');
+      expect((wrapper.vm as any).validationErrors).toEqual([]);
 
       await registerPromise;
       await flushPromises();
@@ -347,15 +347,15 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.email = 'test@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'Password123!';
-      wrapper.vm.form.firstName = 'John';
-      wrapper.vm.form.lastName = 'Doe';
-      wrapper.vm.form.phone = '+1234567890';
-      wrapper.vm.acceptTerms = true;
+      (wrapper.vm as any).form.email = 'test@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'Password123!';
+      (wrapper.vm as any).form.firstName = 'John';
+      (wrapper.vm as any).form.lastName = 'Doe';
+      (wrapper.vm as any).form.phone = '+1234567890';
+      (wrapper.vm as any).acceptTerms = true;
 
-      await wrapper.vm.handleRegister();
+      await (wrapper.vm as any).handleRegister();
       await flushPromises();
 
       expect(wrapper.emitted('success')).toBeTruthy();
@@ -378,15 +378,15 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.email = 'test@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'Password123!';
-      wrapper.vm.form.firstName = 'John';
-      wrapper.vm.form.lastName = 'Doe';
-      wrapper.vm.form.phone = '+1234567890';
-      wrapper.vm.acceptTerms = true;
+      (wrapper.vm as any).form.email = 'test@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'Password123!';
+      (wrapper.vm as any).form.firstName = 'John';
+      (wrapper.vm as any).form.lastName = 'Doe';
+      (wrapper.vm as any).form.phone = '+1234567890';
+      (wrapper.vm as any).acceptTerms = true;
 
-      await wrapper.vm.handleRegister();
+      await (wrapper.vm as any).handleRegister();
       await flushPromises();
 
       expect(wrapper.emitted('update:modelValue')).toBeTruthy();
@@ -407,7 +407,7 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.closeModal();
+      (wrapper.vm as any).closeModal();
 
       expect(wrapper.emitted('update:modelValue')).toBeTruthy();
       expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false]);
@@ -425,19 +425,19 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.form.email = 'test@example.com';
-      wrapper.vm.form.password = 'Password123!';
-      wrapper.vm.confirmPassword = 'Password123!';
-      wrapper.vm.form.firstName = 'John';
-      wrapper.vm.form.lastName = 'Doe';
+      (wrapper.vm as any).form.email = 'test@example.com';
+      (wrapper.vm as any).form.password = 'Password123!';
+      (wrapper.vm as any).confirmPassword = 'Password123!';
+      (wrapper.vm as any).form.firstName = 'John';
+      (wrapper.vm as any).form.lastName = 'Doe';
 
-      wrapper.vm.closeModal();
+      (wrapper.vm as any).closeModal();
 
       await new Promise((resolve) => setTimeout(resolve, 350));
 
-      expect(wrapper.vm.form.email).toBe('');
-      expect(wrapper.vm.form.password).toBe('');
-      expect(wrapper.vm.confirmPassword).toBe('');
+      expect((wrapper.vm as any).form.email).toBe('');
+      expect((wrapper.vm as any).form.password).toBe('');
+      expect((wrapper.vm as any).confirmPassword).toBe('');
     });
   });
 
@@ -455,10 +455,10 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.specialtiesInput = 'Droit civil, Droit pénal, Droit de la famille';
+      (wrapper.vm as any).specialtiesInput = 'Droit civil, Droit pénal, Droit de la famille';
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.vm.form.lawyerData.specialties).toEqual([
+      expect((wrapper.vm as any).form.lawyerData.specialties).toEqual([
         'Droit civil',
         'Droit pénal',
         'Droit de la famille',
@@ -478,10 +478,10 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      wrapper.vm.specialtiesInput = 'Droit civil,  , Droit pénal,  ';
+      (wrapper.vm as any).specialtiesInput = 'Droit civil,  , Droit pénal,  ';
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.vm.form.lawyerData.specialties).toEqual([
+      expect((wrapper.vm as any).form.lawyerData.specialties).toEqual([
         'Droit civil',
         'Droit pénal',
       ]);
@@ -501,7 +501,7 @@ describe('RegisterModal - Tests d\'intégration', () => {
         },
       });
 
-      expect(wrapper.vm.acceptTerms).toBe(false);
+      expect((wrapper.vm as any).acceptTerms).toBe(false);
     });
   });
 });

@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+
 export const mockFetch = vi.fn();
 
 export const mockRuntimeConfig = {
@@ -40,9 +42,9 @@ export const resetNuxtMocks = () => {
 };
 
 export const setupNuxtMocks = () => {
-  global.$fetch = mockFetch;
-  global.useRuntimeConfig = mockUseRuntimeConfig;
-  global.navigateTo = mockNavigateTo;
-  global.useRoute = mockUseRoute;
-  global.useRouter = mockUseRouter;
+  (globalThis as any).$fetch = mockFetch;
+  (globalThis as any).useRuntimeConfig = mockUseRuntimeConfig;
+  (globalThis as any).navigateTo = mockNavigateTo;
+  (globalThis as any).useRoute = mockUseRoute;
+  (globalThis as any).useRouter = mockUseRouter;
 };

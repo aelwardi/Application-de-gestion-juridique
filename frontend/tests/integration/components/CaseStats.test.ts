@@ -25,7 +25,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      expect(wrapper.vm.isExpanded).toBe(false);
+      expect((wrapper.vm as any).isExpanded).toBe(false);
     });
 
     it('devrait afficher l\'icône de dépliage', () => {
@@ -261,7 +261,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: [] },
       });
 
-      const statusStats = wrapper.vm.statusStats;
+      const statusStats = (wrapper.vm as any).statusStats;
       statusStats.forEach((stat: any) => {
         expect(stat.count).toBe(0);
       });
@@ -272,7 +272,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: [] },
       });
 
-      const statusStats = wrapper.vm.statusStats;
+      const statusStats = (wrapper.vm as any).statusStats;
       statusStats.forEach((stat: any) => {
         expect(stat.percentage).toBe(0);
       });
@@ -285,7 +285,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         },
       });
 
-      const statusStats = wrapper.vm.statusStats;
+      const statusStats = (wrapper.vm as any).statusStats;
       const pending = statusStats.find((s: any) => s.key === 'pending');
 
       expect(pending?.percentage).toBe(100);
@@ -302,8 +302,8 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: manyCases },
       });
 
-      expect(wrapper.vm.statusStats).toBeDefined();
-      expect(wrapper.vm.completionRate).toBe(50);
+      expect((wrapper.vm as any).statusStats).toBeDefined();
+      expect((wrapper.vm as any).completionRate).toBe(50);
     });
 
     it('devrait gérer des statuts inconnus gracieusement', () => {
@@ -315,7 +315,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: unknownStatus },
       });
 
-      const statusStats = wrapper.vm.statusStats;
+      const statusStats = (wrapper.vm as any).statusStats;
       statusStats.forEach((stat: any) => {
         expect(stat.count).toBe(0);
       });
@@ -328,7 +328,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       expect(wrapper.html()).toContain('transition');
@@ -348,7 +348,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       const progressBars = wrapper.findAll('.transition-all');
@@ -371,7 +371,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       expect(wrapper.html()).toContain('text-gray-700');
@@ -385,7 +385,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: [{ id: '1', status: 'pending', priority: 'urgent' }] },
       });
 
-      expect(wrapper.vm.statusStats.find((s: any) => s.key === 'pending')?.count).toBe(1);
+      expect((wrapper.vm as any).statusStats.find((s: any) => s.key === 'pending')?.count).toBe(1);
 
       await wrapper.setProps({
         cases: [
@@ -394,7 +394,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         ],
       });
 
-      expect(wrapper.vm.statusStats.find((s: any) => s.key === 'pending')?.count).toBe(2);
+      expect((wrapper.vm as any).statusStats.find((s: any) => s.key === 'pending')?.count).toBe(2);
     });
   });
 });

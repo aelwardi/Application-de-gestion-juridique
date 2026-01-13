@@ -82,7 +82,7 @@ describe('DocumentRequestModal', () => {
       });
 
       await wrapper.find('input[name="title"]').setValue('Document requis');
-      expect(wrapper.vm.form.title).toBe('Document requis');
+      expect((wrapper.vm as any).form.title).toBe('Document requis');
     });
 
     it('devrait mettre à jour la description', async () => {
@@ -91,7 +91,7 @@ describe('DocumentRequestModal', () => {
       });
 
       await wrapper.find('textarea[name="description"]').setValue('Description détaillée');
-      expect(wrapper.vm.form.description).toBe('Description détaillée');
+      expect((wrapper.vm as any).form.description).toBe('Description détaillée');
     });
 
     it('devrait mettre à jour l\'urgence', async () => {
@@ -100,7 +100,7 @@ describe('DocumentRequestModal', () => {
       });
 
       await wrapper.find('select[name="urgency"]').setValue('high');
-      expect(wrapper.vm.form.urgency).toBe('high');
+      expect((wrapper.vm as any).form.urgency).toBe('high');
     });
   });
 
@@ -178,7 +178,7 @@ describe('DocumentRequestModal', () => {
         props: mockProps,
       });
 
-      expect(wrapper.vm.form.urgency).toBe('medium');
+      expect((wrapper.vm as any).form.urgency).toBe('medium');
     });
   });
 

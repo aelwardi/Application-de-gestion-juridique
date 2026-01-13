@@ -141,7 +141,12 @@ export const setupThirdPartyMocks = () => {
   if (!global.navigator) {
     (global as any).navigator = {};
   }
-  global.navigator.geolocation = mockGeolocation as any;
+
+  Object.defineProperty(global.navigator, 'geolocation', {
+    value: mockGeolocation,
+    writable: true,
+    configurable: true,
+  });
 
   global.File = MockFile as any;
   global.FileReader = MockFileReader as any;
@@ -170,7 +175,7 @@ export const setupThirdPartyMocks = () => {
     })),
   });
 
-  window.scrollTo = vi.fn();
+  window.scrollTo = vi.fn() as any;
 
   window.open = vi.fn();
 

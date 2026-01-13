@@ -105,7 +105,7 @@ const goToAppointment = (lawyerId: string) => {
                 
                 <button 
                   v-if="notification.type === 'offer_accepted'"
-                  @click.stop="goToAppointment(notification.data?.lawyerId)"
+                  @click.stop="goToAppointment((notification as any).data?.lawyerId || '')"
                   class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase rounded-lg transition shadow-md"
                 >
                   Choisir un créneau

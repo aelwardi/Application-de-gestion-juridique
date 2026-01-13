@@ -35,7 +35,7 @@ describe('useCase - Tests Unitaires', () => {
     title: 'Litige commercial',
     description: 'Conflit avec un fournisseur',
     case_type: 'Droit commercial',
-    status: 'open',
+    status: 'pending' as any,
     priority: 'medium',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

@@ -17,7 +17,7 @@ export const mockAuthStore = {
   register: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
-  refreshToken: vi.fn(),
+  refreshAccessToken: vi.fn(),
   fetchProfile: vi.fn(),
   updateProfile: vi.fn(),
   changePassword: vi.fn(),

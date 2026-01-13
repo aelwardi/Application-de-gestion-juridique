@@ -3,9 +3,12 @@ import { setActivePinia, createPinia } from 'pinia';
 import { useAuthStore } from '~/stores/auth';
 import { mockUser, mockAuthResponse, mockRegisterData, mockLoginData } from '../../fixtures/user.fixture';
 
-global.$fetch = vi.fn();
+const mockFetch = vi.fn() as any;
+mockFetch.raw = vi.fn();
+mockFetch.create = vi.fn(() => mockFetch);
+global.$fetch = mockFetch;
 
-global.useRuntimeConfig = vi.fn(() => ({
+(global as any).useRuntimeConfig = vi.fn(() => ({
   public: {
     apiBaseUrl: 'http://localhost:3000/api',
   },

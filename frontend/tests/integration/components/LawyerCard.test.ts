@@ -64,9 +64,9 @@ describe('LawyerCard - Tests d\'intégration', () => {
     });
 
     it('devrait afficher la photo par défaut si aucune photo', () => {
-      const lawyerWithoutPhoto = { ...mockLawyer, profilePictureUrl: null };
+      const lawyerWithoutPhoto = { ...mockLawyer, profilePictureUrl: undefined };
       const wrapper = mount(LawyerCard, {
-        props: { lawyer: lawyerWithoutPhoto },
+        props: { lawyer: lawyerWithoutPhoto as any },
       });
 
       const img = wrapper.find('img');
