@@ -96,7 +96,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      const statusStats = wrapper.vm.statusStats;
+      const statusStats = (wrapper.vm as any).statusStats;
 
       expect(statusStats.find((s: any) => s.key === 'pending')?.count).toBe(1);
       expect(statusStats.find((s: any) => s.key === 'in_progress')?.count).toBe(2);
@@ -109,7 +109,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      const statusStats = wrapper.vm.statusStats;
+      const statusStats = (wrapper.vm as any).statusStats;
       const pending = statusStats.find((s: any) => s.key === 'pending');
       const inProgress = statusStats.find((s: any) => s.key === 'in_progress');
 
@@ -136,7 +136,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       expect(wrapper.html()).toContain('1 (20%)');
@@ -148,7 +148,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       const progressBars = wrapper.findAll('.bg-yellow-500, .bg-indigo-500, .bg-gray-500, .bg-green-500');

@@ -66,8 +66,8 @@ export const mockFetchError = (status: number, message: string) => {
 };
 
 export const createMockRouter = () => ({
-  push: vi.fn(() => Promise.resolve()),
-  replace: vi.fn(() => Promise.resolve()),
+  push: vi.fn(() => Promise.resolve() as any),
+  replace: vi.fn(() => Promise.resolve() as any),
   back: vi.fn(),
   go: vi.fn(),
   currentRoute: {
@@ -78,7 +78,7 @@ export const createMockRouter = () => ({
       name: 'index',
     },
   },
-});
+} as any);
 
 
 export const createMockAuthStore = (overrides: any = {}) => ({
