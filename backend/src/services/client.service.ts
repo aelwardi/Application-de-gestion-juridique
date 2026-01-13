@@ -2,17 +2,11 @@ import { pool } from '../config/database.config';
 import { clientQueries } from '../database/queries/client.queries';
 import { Client, ClientSearchFilters, ClientStats } from '../types/client.types';
 
-/**
- * Get client by ID
- */
 export const getClientById = async (id: string): Promise<Client | null> => {
   const result = await pool.query(clientQueries.getById, [id]);
   return result.rows[0] || null;
 };
 
-/**
- * Get all clients with pagination
- */
 export const getAllClients = async (
   page: number = 1,
   limit: number = 50
@@ -27,9 +21,6 @@ export const getAllClients = async (
   };
 };
 
-/**
- * Search clients with filters
- */
 export const searchClients = async (
   filters: ClientSearchFilters
 ): Promise<{ clients: Client[]; total: number }> => {
@@ -83,9 +74,6 @@ export const searchClients = async (
   };
 };
 
-/**
- * Get clients by lawyer ID
- */
 export const getClientsByLawyer = async (
   lawyerId: string,
   limit: number = 50,
@@ -111,9 +99,6 @@ export const getClientsByLawyer = async (
   };
 };
 
-/**
- * Update client profile
- */
 export const updateClient = async (
   id: string,
   data: Partial<Client>
@@ -133,17 +118,11 @@ export const updateClient = async (
   return result.rows[0] || null;
 };
 
-/**
- * Delete client
- */
 export const deleteClient = async (id: string): Promise<boolean> => {
   const result = await pool.query(clientQueries.delete, [id]);
   return result.rows.length > 0;
 };
 
-/**
- * Get client statistics
- */
 export const getClientStats = async (userId: string): Promise<ClientStats | null> => {
   const result = await pool.query(clientQueries.getStats, [userId]);
 
@@ -161,9 +140,6 @@ export const getClientStats = async (userId: string): Promise<ClientStats | null
   };
 };
 
-/**
- * Update client case statistics
- */
 export const updateClientCaseStats = async (
   clientId: string,
   totalCases: number,

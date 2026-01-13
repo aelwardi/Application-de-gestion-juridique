@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { NotificationService } from './notification.service';
 import { sendCustomEmail } from './email.service';
 
-const notificationService = new NotificationService();
 
 export interface AppointmentSuggestion {
   id: string;
@@ -72,6 +71,7 @@ export const createSuggestion = async (data: CreateSuggestionInput): Promise<App
       const lawyer = lawyerQuery.rows[0];
       const clientName = `${client.first_name} ${client.last_name}`;
 
+      const notificationService = new NotificationService();
       await notificationService.createNotification({
         user_id: data.suggested_to_user_id,
         notification_type: 'appointment_suggestion',
@@ -210,6 +210,7 @@ export const acceptSuggestion = async (suggestionId: string, lawyerId: string): 
     await client.query('COMMIT');
 
     try {
+      const notificationService = new NotificationService();
       await notificationService.createNotification({
         user_id: suggestion.suggested_by_user_id,
         notification_type: 'suggestion_accepted',
@@ -257,6 +258,7 @@ export const rejectSuggestion = async (suggestionId: string, lawyerId: string, r
   }
 
   try {
+    const notificationService = new NotificationService();
     await notificationService.createNotification({
       user_id: suggestion.suggested_by_user_id,
       notification_type: 'suggestion_rejected',
@@ -332,6 +334,7 @@ export const counterSuggestion = async (
     await client.query('COMMIT');
 
     try {
+      const notificationService = new NotificationService();
       await notificationService.createNotification({
         user_id: original.suggested_by_user_id,
         notification_type: 'suggestion_countered',

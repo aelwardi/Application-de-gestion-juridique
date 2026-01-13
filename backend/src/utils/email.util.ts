@@ -13,13 +13,16 @@ interface EmailOptions {
   text?: string;
 }
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_APP_USERNAME,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+// Create transporter function to allow for dynamic creation in tests
+export const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_APP_USERNAME,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+};
 
 /**
  * Envoyer un email
@@ -30,6 +33,7 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   }
 
   try {
+    const transporter = createTransporter();
     const mailOptions = {
       from: `"Gestion Juridique" <${process.env.GMAIL_APP_USERNAME}>`,
       to: options.to,
@@ -107,8 +111,8 @@ export const sendWelcomeEmail = async (
  */
 export const sendPasswordResetEmail = async (
   email: string,
-  resetToken: string,
-  firstName: string
+  firstName: string,
+  resetToken: string
 ): Promise<boolean> => {
   const resetUrl = `${FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
 
@@ -878,6 +882,7 @@ export const sendTwoFactorDisabledEmail = async (
 
 export const testEmailConfiguration = async (): Promise<boolean> => {
   try {
+    const transporter = createTransporter();
     await transporter.verify();
     console.log('Configuration email valide');
     return true;

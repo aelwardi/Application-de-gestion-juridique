@@ -107,9 +107,6 @@ export interface ClientData {
   emergencyContactPhone?: string;
 }
 
-/**
- * Create a new user (avec données spécifiques selon le rôle)
- */
 export const createUser = async (
   email: string,
   passwordHash: string,
@@ -192,35 +189,23 @@ export const createUser = async (
   return result.rows[0];
 };
 
-/**
- * Find user by email
- */
 export const findUserByEmail = async (email: string): Promise<User | null> => {
   const query = 'SELECT * FROM users WHERE email = $1';
   const result: QueryResult<User> = await pool.query(query, [email]);
   return result.rows[0] || null;
 };
 
-/**
- * Find user by ID
- */
 export const findUserById = async (id: string): Promise<User | null> => {
   const query = 'SELECT * FROM users WHERE id = $1';
   const result: QueryResult<User> = await pool.query(query, [id]);
   return result.rows[0] || null;
 };
 
-/**
- * Update user last login
- */
 export const updateLastLogin = async (id: string): Promise<void> => {
   const query = 'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = $1';
   await pool.query(query, [id]);
 };
 
-/**
- * Update user password
- */
 export const updateUserPassword = async (id: string, passwordHash: string): Promise<void> => {
   const query = `
     UPDATE users 
@@ -230,9 +215,6 @@ export const updateUserPassword = async (id: string, passwordHash: string): Prom
   await pool.query(query, [passwordHash, id]);
 };
 
-/**
- * Update user profile
- */
 export const updateUserProfile = async (
   id: string,
   updates: Partial<{
@@ -277,9 +259,6 @@ export const updateUserProfile = async (
   return result.rows[0];
 };
 
-/**
- * Delete user (soft delete - set is_active to false)
- */
 export const deactivateUser = async (id: string): Promise<void> => {
   const query = `
     UPDATE users 
@@ -289,9 +268,6 @@ export const deactivateUser = async (id: string): Promise<void> => {
   await pool.query(query, [id]);
 };
 
-/**
- * Convert database user to response format
- */
 export const userToResponse = (user: User): UserResponse => {
   const response: UserResponse = {
     id: user.id,

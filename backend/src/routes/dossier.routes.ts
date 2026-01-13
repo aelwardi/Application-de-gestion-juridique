@@ -18,6 +18,7 @@ router.delete('/:id', dossierController.deleteCase);
 router.patch('/:id/status', dossierController.updateCase);
 
 router.post('/:id/assign-lawyer', dossierController.assignLawyer);
+router.put('/:id/assign', dossierController.assignLawyer);
 router.post('/:id/close', dossierController.closeCase);
 router.post('/:id/archive', dossierController.archiveCase);
 

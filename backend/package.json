@@ -8,9 +8,12 @@
   },
   "scripts": {
     "test": "jest --coverage --maxWorkers=50%",
-    "test:unit": "jest --testPathPattern=unit",
+    "test:unit": "jest --selectProject=unit --coverage",
+    "test:integration": "jest --selectProject=integration --coverage --runInBand",
     "test:watch": "jest --watch",
     "test:ci": "jest --coverage --ci --maxWorkers=2",
+    "test:ci:unit": "jest --selectProject=unit --coverage --ci --maxWorkers=2",
+    "test:ci:integration": "jest --selectProject=integration --coverage --ci --runInBand",
     "build": "tsc",
     "start": "node ./dist/index.js",
     "dev": "npm run build && npm run start",

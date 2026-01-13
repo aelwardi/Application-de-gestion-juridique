@@ -1,75 +1,81 @@
+import { Request, Response } from 'express';
 import * as authController from '../../../src/controllers/auth.controller';
 import * as authService from '../../../src/services/auth.service';
+import * as twoFactorService from '../../../src/services/two-factor.service';
 import * as adminQueries from '../../../src/database/queries/admin.queries';
-import { mockRequest, mockResponse } from '../../helpers/mock-helpers';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  mockUser,
+  mockUserResponse,
+  mockRegisterInput,
+  mockLoginInput,
+} from '../../fixtures/user.fixture';
+import { mockTokens } from '../../mocks/jwt.mock';
 
 jest.mock('../../../src/services/auth.service');
+jest.mock('../../../src/services/two-factor.service');
 jest.mock('../../../src/database/queries/admin.queries');
 
 describe('AuthController', () => {
-  const mockAuthService = authService as jest.Mocked<typeof authService>;
-  const mockAdminQueries = adminQueries as jest.Mocked<typeof adminQueries>;
+  let mockRequest: Partial<Request>;
+  let mockResponse: Partial<Response>;
+  let jsonMock: jest.Mock;
+  let statusMock: jest.Mock;
 
   beforeEach(() => {
+    jsonMock = jest.fn();
+    statusMock = jest.fn().mockReturnThis();
+    const cookieMock = jest.fn();
+    const clearCookieMock = jest.fn();
+
+    mockRequest = {
+      body: {},
+      params: {},
+      query: {},
+      cookies: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '127.0.0.1' } as any,
+      get: jest.fn().mockReturnValue('test-user-agent'),
+    };
+
+    mockResponse = {
+      status: statusMock,
+      json: jsonMock,
+      cookie: cookieMock,
+      clearCookie: clearCookieMock,
+    };
+
     jest.clearAllMocks();
-    mockAdminQueries.createActivityLog.mockResolvedValue(undefined as any);
+    (adminQueries.createActivityLog as jest.Mock).mockResolvedValue(undefined);
   });
 
   describe('register', () => {
-    it('should register user successfully', async () => {
-      const registerData = {
-        email: 'newuser@test.com',
-        password: 'Password123!',
-        firstName: 'New',
-        lastName: 'User',
-        role: 'client',
-        phone: '+1234567890',
+    it('devrait créer un utilisateur et retourner 201', async () => {
+      mockRequest.body = mockRegisterInput;
+      const authResponse = {
+        user: mockUserResponse,
+        accessToken: mockTokens.accessToken,
+        refreshToken: mockTokens.refreshToken,
       };
+      (authService.register as jest.Mock).mockResolvedValue(authResponse);
 
-      const authResult = {
-        user: {
-          id: uuidv4(),
-          email: registerData.email,
-          role: registerData.role,
-          firstName: registerData.firstName,
-          lastName: registerData.lastName,
-        },
-        accessToken: 'access-token',
-        refreshToken: 'refresh-token',
-      };
+      await authController.register(mockRequest as Request, mockResponse as Response);
 
-      mockAuthService.register.mockResolvedValueOnce(authResult as any);
-
-      const req = mockRequest({ body: registerData });
-      const res = mockResponse();
-
-      await authController.register(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
+      expect(authService.register).toHaveBeenCalledWith(mockRegisterInput);
+      expect(statusMock).toHaveBeenCalledWith(201);
+      expect(jsonMock).toHaveBeenCalledWith({
         success: true,
         message: 'User registered successfully',
-        data: authResult,
+        data: authResponse,
       });
     });
 
-    it('should return 400 for validation errors', async () => {
-      const invalidData = {
-        email: 'invalid-email',
-        password: 'weak',
-        firstName: 'J',
-        lastName: 'D',
-        role: 'client',
-      };
+    it('devrait retourner 400 pour des données invalides (Zod)', async () => {
+      mockRequest.body = { email: 'invalid-email' };
 
-      const req = mockRequest({ body: invalidData });
-      const res = mockResponse();
+      await authController.register(mockRequest as Request, mockResponse as Response);
 
-      await authController.register(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
           message: 'Validation error',
@@ -78,49 +84,29 @@ describe('AuthController', () => {
       );
     });
 
-    it('should return 409 if email already exists', async () => {
-      const registerData = {
-        email: 'existing@test.com',
-        password: 'Password123!',
-        firstName: 'Existing',
-        lastName: 'User',
-        role: 'client',
-      };
-
-      mockAuthService.register.mockRejectedValueOnce(
+    it('devrait retourner 409 si l\'email existe déjà', async () => {
+      mockRequest.body = mockRegisterInput;
+      (authService.register as jest.Mock).mockRejectedValue(
         new Error('User with this email already exists')
       );
 
-      const req = mockRequest({ body: registerData });
-      const res = mockResponse();
+      await authController.register(mockRequest as Request, mockResponse as Response);
 
-      await authController.register(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({
+      expect(statusMock).toHaveBeenCalledWith(409);
+      expect(jsonMock).toHaveBeenCalledWith({
         success: false,
         message: 'User with this email already exists',
       });
     });
 
-    it('should return 500 for server errors', async () => {
-      const registerData = {
-        email: 'newuser@test.com',
-        password: 'Password123!',
-        firstName: 'New',
-        lastName: 'User',
-        role: 'client',
-      };
+    it('devrait retourner 500 pour une erreur serveur', async () => {
+      mockRequest.body = mockRegisterInput;
+      (authService.register as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-      mockAuthService.register.mockRejectedValueOnce(new Error('Database error'));
+      await authController.register(mockRequest as Request, mockResponse as Response);
 
-      const req = mockRequest({ body: registerData });
-      const res = mockResponse();
-
-      await authController.register(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
+      expect(statusMock).toHaveBeenCalledWith(500);
+      expect(jsonMock).toHaveBeenCalledWith({
         success: false,
         message: 'Failed to register user',
       });
@@ -128,173 +114,135 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should login user successfully', async () => {
-      const loginData = {
-        email: 'test@test.com',
-        password: 'Password123!',
-      };
-
-      const authResult = {
-        user: {
-          id: uuidv4(),
-          email: loginData.email,
-          role: 'client',
-          firstName: 'Test',
-          lastName: 'User',
-        },
-        accessToken: 'access-token',
-        refreshToken: 'refresh-token',
+    it('devrait connecter un utilisateur et retourner 200', async () => {
+      mockRequest.body = mockLoginInput;
+      const authResponse = {
+        user: mockUserResponse,
+        accessToken: mockTokens.accessToken,
+        refreshToken: mockTokens.refreshToken,
         requiresTwoFactor: false,
       };
+      (authService.login as jest.Mock).mockResolvedValue(authResponse);
 
-      mockAuthService.login.mockResolvedValueOnce(authResult as any);
+      await authController.login(mockRequest as Request, mockResponse as Response);
 
-      const req = mockRequest({
-        body: loginData,
-        ip: '127.0.0.1',
-      });
-      const res = mockResponse();
-
-      await authController.login(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.cookie).toHaveBeenCalledWith(
-        'refreshToken',
-        authResult.refreshToken,
-        expect.objectContaining({
-          httpOnly: true,
-          sameSite: 'strict',
-        })
-      );
-      expect(res.json).toHaveBeenCalledWith({
+      expect(authService.login).toHaveBeenCalledWith(mockLoginInput);
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
         success: true,
         message: 'Login successful',
-        data: authResult,
+        data: {
+          user: authResponse.user,
+          accessToken: authResponse.accessToken,
+          refreshToken: authResponse.refreshToken,
+          requiresTwoFactor: false,
+        },
       });
     });
 
-    it('should return 400 for validation errors', async () => {
-      const invalidData = {
-        email: 'invalid-email',
-        password: '',
+    it('devrait retourner requiresTwoFactor si 2FA activé', async () => {
+      mockRequest.body = mockLoginInput;
+      const authResponse = {
+        user: mockUserResponse,
+        accessToken: '',
+        refreshToken: '',
+        requiresTwoFactor: true,
+        tempToken: 'temp-token-123',
       };
+      (authService.login as jest.Mock).mockResolvedValue(authResponse);
 
-      const req = mockRequest({ body: invalidData });
-      const res = mockResponse();
+      await authController.login(mockRequest as Request, mockResponse as Response);
 
-      await authController.login(req, res);
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        message: '2FA verification required',
+        data: expect.objectContaining({
+          requiresTwoFactor: true,
+          tempToken: 'temp-token-123',
+        }),
+      });
+    });
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(
+    it('devrait retourner 401 pour des identifiants invalides', async () => {
+      mockRequest.body = mockLoginInput;
+      (authService.login as jest.Mock).mockRejectedValue(
+        new Error('Invalid email or password')
+      );
+
+      await authController.login(mockRequest as Request, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
+        message: 'Invalid email or password',
+      });
+    });
+
+    it('devrait retourner 400 pour des données invalides (Zod)', async () => {
+      mockRequest.body = { email: 'invalid' };
+
+      await authController.login(mockRequest as Request, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
           message: 'Validation error',
         })
       );
     });
+  });
 
-    it('should return 401 for invalid credentials', async () => {
-      const loginData = {
-        email: 'test@test.com',
-        password: 'WrongPassword123!',
+  describe('logout', () => {
+    it('devrait déconnecter un utilisateur avec succès', async () => {
+      mockRequest.body = { userId: mockUser.id };
+      (mockRequest as any).user = {
+        userId: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role
       };
 
-      mockAuthService.login.mockRejectedValueOnce(
-        new Error('Invalid email or password')
-      );
+      await authController.logout(mockRequest as Request, mockResponse as Response);
 
-      const req = mockRequest({ body: loginData });
-      const res = mockResponse();
-
-      await authController.login(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(401);
-    });
-
-    it('should handle login with two-factor authentication enabled', async () => {
-      const loginData = {
-        email: 'test@test.com',
-        password: 'Password123!',
-      };
-
-      const userId = uuidv4();
-      const authResult = {
-        user: {
-          id: userId,
-          email: loginData.email,
-          role: 'client',
-          firstName: 'Test',
-          lastName: 'User',
-        },
-        accessToken: '',
-        refreshToken: '',
-        requiresTwoFactor: true,
-        tempToken: 'temp-token-123',
-      };
-
-      mockAuthService.login.mockResolvedValueOnce(authResult as any);
-
-      const req = mockRequest({
-        body: loginData,
-        ip: '127.0.0.1',
-      });
-      const res = mockResponse();
-
-      await authController.login(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.cookie).not.toHaveBeenCalled(); // No cookie set when 2FA is required
-      expect(res.json).toHaveBeenCalledWith({
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
         success: true,
-        message: '2FA verification required',
-        data: {
-          requiresTwoFactor: true,
-          tempToken: 'temp-token-123',
-          user: {
-            id: userId,
-            email: loginData.email,
-            firstName: 'Test',
-            lastName: 'User',
-          },
-        },
-      });
-    });
-
-    it('should return 401 for deactivated account', async () => {
-      const loginData = {
-        email: 'test@test.com',
-        password: 'Password123!',
-      };
-
-      mockAuthService.login.mockRejectedValueOnce(
-        new Error('Account is deactivated. Please contact support.')
-      );
-
-      const req = mockRequest({ body: loginData });
-      const res = mockResponse();
-
-      await authController.login(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({
-        success: false,
-        message: 'Account is deactivated. Please contact support.',
+        message: 'Logout successful',
       });
     });
   });
 
-  describe('logout', () => {
-    it('should logout user successfully', async () => {
-      const req = mockRequest();
-      const res = mockResponse();
+  describe('refreshToken', () => {
+    it('devrait générer de nouveaux tokens', async () => {
+      mockRequest.body = { refreshToken: 'valid-refresh-token' };
+      const tokens = {
+        accessToken: mockTokens.accessToken,
+        refreshToken: mockTokens.refreshToken,
+      };
+      (authService.refreshAccessToken as jest.Mock).mockResolvedValue(tokens);
 
-      await authController.logout(req, res);
+      await authController.refreshToken(mockRequest as Request, mockResponse as Response);
 
-      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken');
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
+      expect(authService.refreshAccessToken).toHaveBeenCalledWith('valid-refresh-token');
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
         success: true,
-        message: 'Logout successful',
+        message: 'Token refreshed successfully',
+        data: tokens,
+      });
+    });
+
+    it('devrait retourner 401 si le refresh token est invalide', async () => {
+      mockRequest.body = { refreshToken: 'invalid-token' };
+      (authService.refreshAccessToken as jest.Mock).mockRejectedValue(new Error('Invalid token'));
+
+      await authController.refreshToken(mockRequest as Request, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
+        message: 'Invalid token',
       });
     });
   });

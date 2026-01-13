@@ -39,4 +39,12 @@ router.get('/', authenticate, lawyersController.getLawyers);
 
 router.get('/:id', authenticate, lawyersController.getLawyerDetails);
 
+router.get('/:id/availability', lawyersController.getLawyerAvailability);
+
+router.post('/:id/availability', authenticate, lawyersController.createAvailability);
+
+router.get('/:id/reviews', lawyersController.getLawyerReviews);
+
+router.get('/:id/cases', authenticate, lawyersController.getLawyerCases);
+
 export default router;

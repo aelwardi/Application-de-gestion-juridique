@@ -14,9 +14,6 @@ export interface TokenPayload {
   role: string;
 }
 
-/**
- * Generate access token
- */
 export const generateAccessToken = (payload: TokenPayload): string => {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_ACCESS_TOKEN_EXPIRY as string,
@@ -24,9 +21,6 @@ export const generateAccessToken = (payload: TokenPayload): string => {
   } as jwt.SignOptions);
 };
 
-/**
- * Generate refresh token
- */
 export const generateRefreshToken = (payload: TokenPayload): string => {
   return jwt.sign(payload, JWT_REFRESH_SECRET, {
     expiresIn: JWT_REFRESH_TOKEN_EXPIRY as string,
@@ -34,9 +28,6 @@ export const generateRefreshToken = (payload: TokenPayload): string => {
   } as jwt.SignOptions);
 };
 
-/**
- * Verify access token
- */
 export const verifyAccessToken = (token: string): TokenPayload => {
   try {
     return jwt.verify(token, JWT_SECRET) as TokenPayload;
@@ -51,9 +42,6 @@ export const verifyAccessToken = (token: string): TokenPayload => {
   }
 };
 
-/**
- * Verify refresh token
- */
 export const verifyRefreshToken = (token: string): TokenPayload => {
   try {
     return jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
@@ -68,9 +56,6 @@ export const verifyRefreshToken = (token: string): TokenPayload => {
   }
 };
 
-/**
- * Generate both tokens
- */
 export const generateTokens = (payload: TokenPayload) => {
   return {
     accessToken: generateAccessToken(payload),
@@ -78,9 +63,6 @@ export const generateTokens = (payload: TokenPayload) => {
   };
 };
 
-/**
- * Decode token without verification (useful for debugging)
- */
 export const decodeToken = (token: string): TokenPayload | null => {
   try {
     return jwt.decode(token) as TokenPayload;

@@ -224,6 +224,77 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
 });
 
 /**
+ * GET /api/documents/:id
+ * Récupère un document par son ID
+ */
+router.get('/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.userId;
+
+    const result = await pool.query(
+      `SELECT d.* FROM documents d
+       WHERE d.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document non trouvé'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Erreur récupération document:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/documents/:id/download
+ * Télécharge un document
+ */
+router.get('/:id/download', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.userId;
+
+    const result = await pool.query(
+      `SELECT d.* FROM documents d
+       WHERE d.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document non trouvé'
+      });
+    }
+
+    const document = result.rows[0];
+    const filePath = path.join(process.cwd(), document.file_path);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Fichier non trouvé sur le serveur'
+      });
+    }
+
+    res.download(filePath, document.filename);
+  } catch (error: any) {
+    console.error('Erreur téléchargement document:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * GET /api/documents
  * Récupère les documents avec filtres (user_id, case_id, etc.)
  */
@@ -423,4 +494,141 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * PATCH /api/documents/:id
+ * Update document metadata
+ */
+router.patch('/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { title, description, document_type } = req.body;
+    const userId = (req as any).user?.userId;
+
+    const checkResult = await pool.query(
+      'SELECT * FROM documents WHERE id = $1',
+      [id]
+    );
+
+    if (checkResult.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document non trouvé'
+      });
+    }
+
+    const document = checkResult.rows[0];
+
+    if (document.uploaded_by !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Accès refusé'
+      });
+    }
+
+    const updateQuery = `
+      UPDATE documents
+      SET title = COALESCE($1, title),
+          description = COALESCE($2, description),
+          document_type = COALESCE($3, document_type),
+          updated_at = NOW()
+      WHERE id = $4
+      RETURNING *
+    `;
+
+    const result = await pool.query(updateQuery, [title, description, document_type, id]);
+
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Erreur mise à jour document:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /api/documents/:id/share
+ * Share document with another user
+ */
+router.post('/:id/share', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { userId: sharedWithUserId, permission } = req.body;
+    const userId = (req as any).user?.userId;
+
+    if (!sharedWithUserId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID requis'
+      });
+    }
+
+    const checkResult = await pool.query(
+      'SELECT * FROM documents WHERE id = $1',
+      [id]
+    );
+
+    if (checkResult.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document non trouvé'
+      });
+    }
+
+    const shareQuery = `
+      INSERT INTO document_shares (document_id, shared_with, shared_by, permission)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+
+    const result = await pool.query(shareQuery, [
+      id,
+      sharedWithUserId,
+      userId,
+      permission || 'view'
+    ]);
+
+    res.status(201).json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Erreur partage document:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/documents/shared
+ * Get documents shared with current user
+ */
+router.get('/shared', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+
+    const query = `
+      SELECT d.*, ds.permission, ds.shared_at,
+             u.first_name as shared_by_first_name,
+             u.last_name as shared_by_last_name
+      FROM documents d
+      JOIN document_shares ds ON d.id = ds.document_id
+      JOIN users u ON ds.shared_by = u.id
+      WHERE ds.shared_with = $1
+      ORDER BY ds.shared_at DESC
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error: any) {
+    console.error('Erreur récupération documents partagés:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
