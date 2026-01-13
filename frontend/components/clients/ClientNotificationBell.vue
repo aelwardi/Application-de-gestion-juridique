@@ -45,7 +45,8 @@ const markAllAsRead = () => {
   isOpen.value = false
 }
 
-const goToAppointment = (lawyerId: string) => {
+const goToAppointment = (lawyerId: string | undefined) => {
+  if (!lawyerId) return
   console.log("Redirection vers le calendrier de l'avocat:", lawyerId)
   isOpen.value = false
 }

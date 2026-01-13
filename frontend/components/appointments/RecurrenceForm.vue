@@ -34,10 +34,10 @@ watch(recurrence, (value) => {
   if (isRecurring.value) {
     const cleaned = { ...value }
     if (endType.value === 'never' || endType.value === 'after') {
-      cleaned.endDate = undefined
+      delete cleaned.endDate
     }
     if (endType.value === 'never' || endType.value === 'on') {
-      cleaned.occurrences = undefined
+      delete cleaned.occurrences
     }
     emit('update:modelValue', cleaned)
   }
