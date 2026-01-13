@@ -9,7 +9,7 @@ export const mockUser = (overrides: Partial<User> = {}): User => ({
   lastName: 'User',
   phone: '+1234567890',
   isActive: true,
-  emailVerified: false,
+  isVerified: false,
   profilePictureUrl: null,
   createdAt: new Date() as any,
   updatedAt: new Date() as any,
@@ -20,7 +20,7 @@ export const mockUser = (overrides: Partial<User> = {}): User => ({
 export const mockLawyer = (overrides: Partial<User> = {}): User => mockUser({
   role: 'avocat',
   specialties: ['Droit civil', 'Droit pénal'],
-  yearsOfExperience: 5,
+  experienceYears: 5,
   barNumber: 'BAR123456',
   officeAddress: '123 Test Street, Paris',
   bio: 'Avocat expérimenté en droit civil et pénal',

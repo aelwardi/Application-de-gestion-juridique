@@ -3,12 +3,11 @@ export const mockUser = {
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
-  role: 'client',
+  role: 'client' as const,
   isActive: true,
   isVerified: true,
-  emailVerified: true,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 export const mockAuthResponse = {
@@ -26,7 +25,7 @@ export const mockRegisterData = {
   password: 'Password123!',
   firstName: 'John',
   lastName: 'Doe',
-  role: 'client',
+  role: 'client' as const,
 };
 
 export const mockLoginData = {

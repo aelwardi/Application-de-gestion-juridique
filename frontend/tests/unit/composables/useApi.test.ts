@@ -49,7 +49,7 @@ describe('useApi - Tests Unitaires', () => {
 
   describe('Configuration et Headers', () => {
     it('devrait fonctionner sans token d\'authentification', async () => {
-      mockAuthStoreState.accessToken = null;
+      mockAuthStoreState.accessToken = '';
       mockFetch.mockResolvedValueOnce({ success: true, data: {} });
 
       const { apiFetch } = useApi();

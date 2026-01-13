@@ -71,8 +71,8 @@ const markAsRead = async (id: string) => {
     }
 
     const notif = notifications.value.find(n => n.id === id)
-    if (notif?.data?.appointment_id) {
-      navigateTo(`/appointments/${notif.data.appointment_id}`)
+    if (notif && notif.related_entity_type === 'appointment' && notif.related_entity_id) {
+      navigateTo(`/appointments/${notif.related_entity_id}`)
       isOpen.value = false
     }
   } catch (error) {

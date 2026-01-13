@@ -28,7 +28,7 @@ describe('useAppointment - Tests Unitaires', () => {
     mockFetch.mockReset();
   });
 
-  const mockAppointment: Appointment = {
+  const mockAppointment: Partial<Appointment> = {
     id: '1',
     case_id: 'case-1',
     lawyer_id: 'lawyer-1',
@@ -39,12 +39,12 @@ describe('useAppointment - Tests Unitaires', () => {
     status: 'scheduled',
     start_time: '2026-01-20T10:00:00Z',
     end_time: '2026-01-20T11:00:00Z',
-    duration_minutes: 60,
     location_type: 'office',
     location: '10 Rue de la Paix, Paris',
+    location_address: '10 Rue de la Paix, Paris',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  } as Appointment;
+  };
 
   describe('createAppointment', () => {
     it('devrait créer un rendez-vous avec succès', async () => {
@@ -56,7 +56,6 @@ describe('useAppointment - Tests Unitaires', () => {
         appointment_type: 'consultation',
         start_time: '2026-01-20T10:00:00Z',
         end_time: '2026-01-20T11:00:00Z',
-        duration_minutes: 60,
         location_type: 'office',
       };
 

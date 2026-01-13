@@ -28,7 +28,7 @@ describe('useCase - Tests Unitaires', () => {
     mockFetch.mockReset();
   });
 
-  const mockCase: Case = {
+  const mockCase: Partial<Case> = {
     id: '1',
     client_id: 'client-1',
     lawyer_id: 'lawyer-1',
@@ -37,6 +37,8 @@ describe('useCase - Tests Unitaires', () => {
     case_type: 'Droit commercial',
     status: 'pending' as any,
     priority: 'medium',
+    case_number: 'CASE-2026-001',
+    opening_date: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

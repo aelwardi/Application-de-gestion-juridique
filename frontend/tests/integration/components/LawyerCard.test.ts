@@ -15,7 +15,6 @@ describe('LawyerCard - Tests d\'intégration', () => {
 
   const mockLawyer: Lawyer = {
     id: '1',
-    userId: 'user-1',
     firstName: 'Marie',
     lastName: 'Dupont',
     email: 'marie.dupont@example.com',

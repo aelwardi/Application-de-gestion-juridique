@@ -39,7 +39,7 @@ describe('useCase Composable', () => {
       const result = await createCase(caseData);
 
       expect(result.success).toBe(true);
-      expect(result.data.title).toBe('Nouveau Dossier');
+      expect(result.data?.title).toBe('Nouveau Dossier');
     });
 
     it('should handle validation errors', async () => {

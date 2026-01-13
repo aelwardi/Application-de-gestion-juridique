@@ -47,7 +47,7 @@ describe('useApi Composable', () => {
 
     it('should not include authorization header when token is missing', async () => {
       const { apiFetch } = useApi();
-      mockAuthStore.accessToken = null;
+      mockAuthStore.accessToken = '';
       mockFetchSuccess({ data: 'test' });
 
       await apiFetch('/test-endpoint');

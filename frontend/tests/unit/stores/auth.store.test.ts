@@ -90,7 +90,7 @@ describe('AuthStore', () => {
     it('devrait définir l\'authentification et stocker les tokens', () => {
       const authStore = useAuthStore();
 
-      authStore.setAuth(mockUser, 'access-token', 'refresh-token');
+      authStore.setAuth(mockUser as any, 'access-token', 'refresh-token');
 
       expect(authStore.user).toEqual(mockUser);
       expect(authStore.accessToken).toBe('access-token');
@@ -104,7 +104,7 @@ describe('AuthStore', () => {
   describe('clearAuth', () => {
     it('devrait effacer l\'authentification et les tokens', () => {
       const authStore = useAuthStore();
-      authStore.setAuth(mockUser, 'access-token', 'refresh-token');
+      authStore.setAuth(mockUser as any, 'access-token', 'refresh-token');
 
       authStore.clearAuth();
 
@@ -145,7 +145,7 @@ describe('AuthStore', () => {
       const authStore = useAuthStore();
       (global.$fetch as any).mockResolvedValue(mockAuthResponse);
 
-      const result = await authStore.register(mockRegisterData);
+      const result = await authStore.register(mockRegisterData as any);
 
       expect(result.success).toBe(true);
       expect(authStore.user).toEqual(mockUser);
@@ -162,7 +162,7 @@ describe('AuthStore', () => {
       };
       (global.$fetch as any).mockRejectedValue(errorResponse);
 
-      const result = await authStore.register(mockRegisterData);
+      const result = await authStore.register(mockRegisterData as any);
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Email already exists');
@@ -175,7 +175,7 @@ describe('AuthStore', () => {
         new Promise(resolve => setTimeout(() => resolve(mockAuthResponse), 100))
       );
 
-      const registerPromise = authStore.register(mockRegisterData);
+      const registerPromise = authStore.register(mockRegisterData as any);
       expect(authStore.isLoading).toBe(true);
 
       await registerPromise;
@@ -234,7 +234,7 @@ describe('AuthStore', () => {
   describe('logout', () => {
     it('devrait déconnecter l\'utilisateur', async () => {
       const authStore = useAuthStore();
-      authStore.setAuth(mockUser, 'access-token', 'refresh-token');
+      authStore.setAuth(mockUser as any, 'access-token', 'refresh-token');
       (global.$fetch as any).mockResolvedValue({ success: true });
 
       await authStore.logout();

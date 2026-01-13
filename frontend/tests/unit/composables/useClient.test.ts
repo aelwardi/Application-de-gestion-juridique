@@ -15,9 +15,8 @@ describe('useClient - Tests Unitaires', () => {
     mockApiFetch.mockReset();
   });
 
-  const mockClient: Client = {
+  const mockClient: Partial<Client> = {
     id: '1',
-    userId: 'user-1',
     firstName: 'John',
     lastName: 'Doe',
     email: 'john@example.com',
