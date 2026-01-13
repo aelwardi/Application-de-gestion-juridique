@@ -21,6 +21,6 @@ export const validateUpdateUser = (req: Request, res: Response, next: NextFuncti
 export const validateUserId = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!id || !uuidRegex.test(id)) return res.status(400).json({ status: "ERROR", message: "ID utilisateur invalide" });
+  if (!id || !uuidRegex.test(id)) return res.status(400).json({ success: false, message: "ID utilisateur invalide" });
   next();
 };

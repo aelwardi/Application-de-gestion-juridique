@@ -254,10 +254,18 @@ export const createAvailability = async (req: Request, res: Response): Promise<v
     const lawyerId = req.params.id;
     const { dayOfWeek, startTime, endTime } = req.body;
 
-    if (!dayOfWeek || !startTime || !endTime) {
+    if (!dayOfWeek && dayOfWeek !== 0 || !startTime || !endTime) {
       res.status(400).json({
         success: false,
         message: 'dayOfWeek, startTime, and endTime are required',
+      });
+      return;
+    }
+
+    if (typeof dayOfWeek !== 'number' || dayOfWeek < 0 || dayOfWeek > 6) {
+      res.status(400).json({
+        success: false,
+        message: 'dayOfWeek must be a number between 0 and 6',
       });
       return;
     }

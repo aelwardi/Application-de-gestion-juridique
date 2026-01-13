@@ -3,7 +3,6 @@ import { UserController } from '../../../src/controllers/user.controller';
 import { CreateUserInput, UpdateUserInput } from '../../../src/types/users.types';
 import * as adminQueries from '../../../src/database/queries/admin.queries';
 
-// Mock the UserService module
 jest.mock('../../../src/services/user.service', () => {
   const mockFunctions = {
     createUser: jest.fn(),
@@ -14,13 +13,12 @@ jest.mock('../../../src/services/user.service', () => {
   };
   return {
     UserService: jest.fn().mockImplementation(() => mockFunctions),
-    mockFunctions, // Export for test access
+    mockFunctions,
   };
 });
 
 jest.mock('../../../src/database/queries/admin.queries');
 
-// Get the mock functions after mocking
 const { mockFunctions } = jest.requireMock('../../../src/services/user.service');
 const mockCreateUser = mockFunctions.createUser;
 const mockGetUserById = mockFunctions.getUserById;
@@ -226,7 +224,7 @@ describe('UserController', () => {
 
       await userController.getAllUsers(mockRequest as Request, mockResponse as Response);
 
-      expect(mockGetAllUsers).toHaveBeenCalledWith(50, 0); // defaults
+      expect(mockGetAllUsers).toHaveBeenCalledWith(50, 0);
     });
   });
 
@@ -314,8 +312,8 @@ describe('UserController', () => {
 
       expect(mockDeleteUser).toHaveBeenCalledWith('user-123');
       expect(jsonMock).toHaveBeenCalledWith({
-        status: 'SUCCESS',
-        message: 'Utilisateur supprimé',
+        success: true,
+        message: 'Utilisateur supprimé avec succès',
       });
     });
 
@@ -327,7 +325,7 @@ describe('UserController', () => {
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
-        status: 'ERROR',
+        success: false,
         message: 'Utilisateur non trouvé',
       });
     });
@@ -340,11 +338,10 @@ describe('UserController', () => {
 
       expect(statusMock).toHaveBeenCalledWith(500);
       expect(jsonMock).toHaveBeenCalledWith({
-        status: 'ERROR',
+        success: false,
         message: 'Erreur suppression utilisateur',
         error: 'Database error',
       });
     });
   });
 });
-

@@ -358,6 +358,19 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       });
     }
 
+    // Check if conversation exists and user has access
+    const convCheck = await pool.query(
+      'SELECT * FROM conversations WHERE id = $1 AND (participant1_id = $2 OR participant2_id = $2)',
+      [conversationId, userId]
+    );
+
+    if (convCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Conversation non trouvée ou accès refusé'
+      });
+    }
+
     const insertQuery = `
       INSERT INTO messages (conversation_id, sender_id, content)
       VALUES ($1, $2, $3)

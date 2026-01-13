@@ -57,11 +57,11 @@ export class UserController {
     try {
       const { id } = req.params;
       const deleted = await userService.deleteUser(id);
-      if (!deleted) return res.status(404).json({ status: "ERROR", message: "Utilisateur non trouvé" });
-      res.json({ status: "SUCCESS", message: "Utilisateur supprimé" });
+      if (!deleted) return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+      res.json({ success: true, message: "Utilisateur supprimé avec succès" });
     } catch (error: any) {
       console.error(error);
-      res.status(500).json({ status: "ERROR", message: "Erreur suppression utilisateur", error: error.message });
+      res.status(500).json({ success: false, message: "Erreur suppression utilisateur", error: error.message });
     }
   }
 }

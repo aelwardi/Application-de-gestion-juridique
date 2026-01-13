@@ -17,12 +17,18 @@ describe('Message Routes Integration Tests', () => {
     app = express();
     app.use(express.json());
 
-    const messageRoutes = require('../../src/routes/message.routes').default;
-    app.use('/api/messages', messageRoutes);
+    try {
+      const messageRoutes = require('../../src/routes/message.routes').default;
+      app.use('/api/messages', messageRoutes);
+    } catch (error) {
+      console.error('Failed to load message routes:', error);
+      throw error;
+    }
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (pool.query as jest.Mock).mockReset();
   });
 
   describe('GET /api/messages/conversations', () => {
@@ -118,8 +124,8 @@ describe('Message Routes Integration Tests', () => {
       ];
 
       (pool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: 'conv-123', participant1_id: 'user-123' }] }) // conversation check
-        .mockResolvedValueOnce({ rows: mockMessages }); // messages query
+        .mockResolvedValueOnce({ rows: [{ id: 'conv-123', participant1_id: 'user-123' }] })
+        .mockResolvedValueOnce({ rows: mockMessages });
 
       const response = await request(app)
         .get('/api/messages/conversations/conv-123/messages')
@@ -132,8 +138,8 @@ describe('Message Routes Integration Tests', () => {
 
     it('should return empty array for conversation with no messages', async () => {
       (pool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: 'conv-empty', participant1_id: 'user-123' }] }) // conversation check
-        .mockResolvedValueOnce({ rows: [] }); // empty messages
+        .mockResolvedValueOnce({ rows: [{ id: 'conv-empty', participant1_id: 'user-123' }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       const response = await request(app)
         .get('/api/messages/conversations/conv-empty/messages')
@@ -155,14 +161,16 @@ describe('Message Routes Integration Tests', () => {
         created_at: new Date(),
       };
 
-      (pool.query as jest.Mock).mockResolvedValue({ rows: [mockConversation] });
+      (pool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [mockConversation] });
 
       const response = await request(app)
         .post('/api/messages/conversations')
         .set('Authorization', 'Bearer mock-token')
         .send({
-          participantId: 'user-456',
-          caseId: 'case-123',
+          recipient_id: 'user-456',
+          case_id: 'case-123',
         })
         .expect(201);
 
@@ -243,7 +251,7 @@ describe('Message Routes Integration Tests', () => {
         is_read: true,
       };
 
-      (pool.query as jest.Mock).mockResolvedValue({ rows: [mockMessage] });
+      (pool.query as jest.Mock).mockResolvedValueOnce({ rows: [mockMessage] });
 
       const response = await request(app)
         .patch('/api/messages/msg-123/read')
@@ -255,7 +263,7 @@ describe('Message Routes Integration Tests', () => {
     });
 
     it('should handle non-existent message', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rows: [] });
+      (pool.query as jest.Mock).mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
       const response = await request(app)
         .patch('/api/messages/nonexistent/read')
@@ -268,7 +276,7 @@ describe('Message Routes Integration Tests', () => {
 
   describe('PATCH /api/messages/conversations/:id/read-all', () => {
     it('should mark all messages in conversation as read', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rowCount: 5 });
+      (pool.query as jest.Mock).mockResolvedValueOnce({ rowCount: 5 });
 
       const response = await request(app)
         .patch('/api/messages/conversations/conv-123/read-all')
@@ -280,7 +288,7 @@ describe('Message Routes Integration Tests', () => {
     });
 
     it('should handle conversation with no unread messages', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rowCount: 0 });
+      (pool.query as jest.Mock).mockResolvedValueOnce({ rowCount: 0 });
 
       const response = await request(app)
         .patch('/api/messages/conversations/conv-123/read-all')
@@ -293,7 +301,7 @@ describe('Message Routes Integration Tests', () => {
 
   describe('DELETE /api/messages/:id', () => {
     it('should delete message successfully', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rowCount: 1 });
+      (pool.query as jest.Mock).mockResolvedValueOnce({ rowCount: 1 });
 
       const response = await request(app)
         .delete('/api/messages/msg-123')
@@ -304,7 +312,7 @@ describe('Message Routes Integration Tests', () => {
     });
 
     it('should return 404 if message not found', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({ rowCount: 0 });
+      (pool.query as jest.Mock).mockResolvedValueOnce({ rowCount: 0 });
 
       const response = await request(app)
         .delete('/api/messages/nonexistent')
@@ -317,7 +325,7 @@ describe('Message Routes Integration Tests', () => {
 
   describe('GET /api/messages/unread-count', () => {
     it('should get unread message count', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({
+      (pool.query as jest.Mock).mockResolvedValueOnce({
         rows: [{ count: 7 }],
       });
 
@@ -331,7 +339,7 @@ describe('Message Routes Integration Tests', () => {
     });
 
     it('should return 0 if no unread messages', async () => {
-      (pool.query as jest.Mock).mockResolvedValue({
+      (pool.query as jest.Mock).mockResolvedValueOnce({
         rows: [{ count: 0 }],
       });
 

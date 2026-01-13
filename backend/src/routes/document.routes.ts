@@ -33,10 +33,6 @@ const upload = multer({
  * POST /api/documents
  * Upload un document et envoie des notifications
  */
-/**
- * POST /api/documents
- * Upload un document et envoie des notifications
- */
 router.post('/', authenticate, upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -52,9 +48,20 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
       description
     } = req.body;
 
+    const effectiveUploadedBy = uploaded_by || (req as any).user?.userId;
+
+    if (process.env.NODE_ENV === 'test') {
+      console.log('[documents.upload] effectiveUploadedBy:', effectiveUploadedBy);
+      console.log('[documents.upload] req.file:', req.file ? 'present' : 'missing');
+    }
+
+    if (!effectiveUploadedBy) {
+      return res.status(400).json({ success: false, message: 'uploaded_by requis' });
+    }
+
     const uploaderQuery = await pool.query(
       'SELECT role FROM users WHERE id = $1',
-      [uploaded_by]
+      [effectiveUploadedBy]
     );
     const uploaderRole = uploaderQuery.rows[0]?.role;
 
@@ -79,26 +86,42 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
       RETURNING *;
     `;
 
+    const fileUrl = req.file.filename || `${Date.now()}-${req.file.originalname}`;
+
     const values = [
-      case_id === 'null' ? null : case_id, 
-      uploaded_by, 
-      document_type, 
-      title, 
-      description || null, 
-      req.file.originalname, 
-      req.file.size, 
-      req.file.mimetype, 
-      req.file.filename,
+      case_id === 'null' ? null : case_id,
+      effectiveUploadedBy,
+      document_type,
+      title,
+      description || null,
+      req.file.originalname,
+      req.file.size,
+      req.file.mimetype,
+      fileUrl,
       finalIsConfidential
     ];
 
-    const result = await pool.query(query, values);
-    const document = result.rows[0];
+    if (process.env.NODE_ENV === 'test') {
+      console.log('[documents.upload] query values=', values);
+    }
+
+    let result;
+    let document;
+    try {
+      result = await pool.query(query, values);
+      document = result.rows[0];
+      if (!document) {
+        throw new Error('INSERT returned no rows');
+      }
+    } catch (insertError: any) {
+      console.error('[documents.upload] INSERT failed:', insertError);
+      throw insertError;
+    }
 
 
     try {
       await adminQueries.createActivityLog(
-        uploaded_by,
+        effectiveUploadedBy,
         'DOCUMENT_UPLOADED',
         'document',
         document.id,
@@ -128,7 +151,7 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
 
           const uploaderNameQuery = await pool.query(
             'SELECT first_name, last_name FROM users WHERE id = $1',
-            [uploaded_by]
+            [effectiveUploadedBy]
           );
           const uploaderName = `${uploaderNameQuery.rows[0]?.first_name} ${uploaderNameQuery.rows[0]?.last_name}`;
 
@@ -218,78 +241,152 @@ router.post('/', authenticate, upload.single('file'), async (req: Request, res: 
     });
 
   } catch (error: any) {
-    console.error('Erreur Upload Backend:', error.message);
-    res.status(500).json({ success: false, message: error.message });
+    const message = error?.message || 'Erreur interne';
+    // Log complet côté serveur
+    console.error('Erreur Upload Backend:', error);
+    // Message côté client (tests)
+    res.status(500).json({ success: false, message });
   }
 });
 
 /**
- * GET /api/documents/:id
- * Récupère un document par son ID
+ * GET /api/documents/shared
+ * Get documents shared with current user
+ * IMPORTANT: must be declared before '/:id' routes.
  */
-router.get('/:id', authenticate, async (req: Request, res: Response) => {
+router.get('/shared', authenticate, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
     const userId = (req as any).user?.userId;
 
-    const result = await pool.query(
-      `SELECT d.* FROM documents d
-       WHERE d.id = $1`,
-      [id]
-    );
+    const query = `
+      SELECT d.*, ds.permission, ds.shared_at,
+             u.first_name as shared_by_first_name,
+             u.last_name as shared_by_last_name
+      FROM documents d
+      JOIN document_shares ds ON d.id = ds.document_id
+      JOIN users u ON ds.shared_by = u.id
+      WHERE ds.shared_with = $1
+      ORDER BY ds.shared_at DESC
+    `;
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Document non trouvé'
-      });
-    }
+    const result = await pool.query(query, [userId]);
 
     res.json({
       success: true,
-      data: result.rows[0]
+      data: result.rows
     });
   } catch (error: any) {
-    console.error('Erreur récupération document:', error);
+    console.error('Erreur récupération documents partagés:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 /**
- * GET /api/documents/:id/download
- * Télécharge un document
+ * GET /api/documents/lawyer/:lawyerId
+ * Récupère les documents récents d'un avocat (tous dossiers confondus)
+ * IMPORTANT: must be declared before '/:id' routes.
  */
-router.get('/:id/download', authenticate, async (req: Request, res: Response) => {
+router.get('/lawyer/:lawyerId', authenticate, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { lawyerId } = req.params;
+    const limit = 5;
+
+    const query = `
+      SELECT * FROM documents 
+      WHERE uploaded_by = $1 
+      ORDER BY created_at DESC 
+      LIMIT $2
+    `;
+    
+    const result = await pool.query(query, [lawyerId, limit]);
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/documents/client/:clientId
+ * Récupère les documents récents d'un client
+ * IMPORTANT: must be declared before '/:id' routes.
+ */
+router.get('/client/:clientId', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { clientId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 5;
+
+    const query = `
+      SELECT 
+        d.*,
+        c.title as case_title,
+        c.case_number,
+        u.first_name as uploader_first_name,
+        u.last_name as uploader_last_name
+      FROM documents d
+      LEFT JOIN cases c ON d.case_id = c.id
+      LEFT JOIN users u ON d.uploaded_by = u.id
+      WHERE c.client_id = $1 
+      AND (d.uploaded_by = $1 OR d.is_confidential = false)
+      ORDER BY d.created_at DESC 
+      LIMIT $2
+    `;
+
+    const result = await pool.query(query, [clientId, limit]);
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+
+/**
+ * GET /api/documents/case/:caseId
+ * Filtre les documents selon le rôle
+ * IMPORTANT: must be declared before '/:id' routes.
+ */
+router.get('/case/:caseId', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { caseId } = req.params;
     const userId = (req as any).user?.userId;
 
-    const result = await pool.query(
-      `SELECT d.* FROM documents d
-       WHERE d.id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Document non trouvé'
-      });
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Non autorisé' });
     }
 
-    const document = result.rows[0];
-    const filePath = path.join(process.cwd(), document.file_path);
+    const userQuery = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
+    const userRole = userQuery.rows[0]?.role;
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: 'Fichier non trouvé sur le serveur'
-      });
+    let query: string;
+    let params: any[];
+
+    if (userRole === 'avocat') {
+      query = `
+        SELECT 
+          d.*,
+          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
+        FROM documents d
+        LEFT JOIN users u ON d.uploaded_by = u.id
+        WHERE d.case_id = $1 
+        ORDER BY d.created_at DESC
+      `;
+      params = [caseId];
+    } else {
+      query = `
+        SELECT 
+          d.*,
+          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
+        FROM documents d
+        LEFT JOIN users u ON d.uploaded_by = u.id
+        WHERE d.case_id = $1 
+        AND (d.uploaded_by = $2 OR d.is_confidential = false)
+        ORDER BY d.created_at DESC
+      `;
+      params = [caseId, userId];
     }
 
-    res.download(filePath, document.filename);
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
   } catch (error: any) {
-    console.error('Erreur téléchargement document:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -351,117 +448,93 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/documents/lawyer/:lawyerId
- * Récupère les documents récents d'un avocat (tous dossiers confondus)
+ * GET /api/documents/:id/download
+ * Télécharge un document
  */
-router.get('/lawyer/:lawyerId', authenticate, async (req: Request, res: Response) => {
+router.get('/:id/download', authenticate, async (req: Request, res: Response) => {
   try {
-    const { lawyerId } = req.params;
-    const limit = 5;
-
-    const query = `
-      SELECT * FROM documents 
-      WHERE uploaded_by = $1 
-      ORDER BY created_at DESC 
-      LIMIT $2
-    `;
-    
-    const result = await pool.query(query, [lawyerId, limit]);
-    res.json({ success: true, data: result.rows });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * GET /api/documents/client/:clientId
- * Récupère les documents récents d'un client
- * Le client voit :
- */
-router.get('/client/:clientId', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { clientId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 5;
-
-    const query = `
-      SELECT 
-        d.*,
-        c.title as case_title,
-        c.case_number,
-        u.first_name as uploader_first_name,
-        u.last_name as uploader_last_name
-      FROM documents d
-      LEFT JOIN cases c ON d.case_id = c.id
-      LEFT JOIN users u ON d.uploaded_by = u.id
-      WHERE c.client_id = $1 
-      AND (d.uploaded_by = $1 OR d.is_confidential = false)
-      ORDER BY d.created_at DESC 
-      LIMIT $2
-    `;
-
-    const result = await pool.query(query, [clientId, limit]);
-    res.json({ success: true, data: result.rows });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-
-/**
- * GET /api/documents/case/:caseId
- * Filtre les documents selon le rôle
- */
-router.get('/case/:caseId', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { caseId } = req.params;
+    const { id } = req.params;
     const userId = (req as any).user?.userId;
 
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Non autorisé' });
+    // First check if document exists and user has access
+    const accessQuery = `
+      SELECT d.*, c.client_id, c.lawyer_id 
+      FROM documents d
+      LEFT JOIN cases c ON d.case_id = c.id
+      WHERE d.id = $1
+    `;
+
+    const result = await pool.query(accessQuery, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document non trouvé'
+      });
     }
 
-    const userQuery = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
-    const userRole = userQuery.rows[0]?.role;
+    const document = result.rows[0];
 
-    let query: string;
-    let params: any[];
+    const hasAccess =
+      document.uploaded_by === userId ||
+      document.client_id === userId ||
+      document.lawyer_id === userId;
 
-    if (userRole === 'avocat') {
-      query = `
-        SELECT 
-          d.*,
-          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
-        FROM documents d
-        LEFT JOIN users u ON d.uploaded_by = u.id
-        WHERE d.case_id = $1 
-        ORDER BY d.created_at DESC
-      `;
-      params = [caseId];
-    } else {
-      query = `
-        SELECT 
-          d.*,
-          CONCAT(u.first_name, ' ', u.last_name) as uploader_name
-        FROM documents d
-        LEFT JOIN users u ON d.uploaded_by = u.id
-        WHERE d.case_id = $1 
-        AND (d.uploaded_by = $2 OR d.is_confidential = false)
-        ORDER BY d.created_at DESC
-      `;
-      params = [caseId, userId];
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Accès refusé'
+      });
     }
 
-    const result = await pool.query(query, params);
-    res.json({ success: true, data: result.rows });
+    const filePath = path.join(process.cwd(), 'uploads/documents', document.file_url);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Fichier non trouvé sur le serveur'
+      });
+    }
+
+    res.download(filePath, document.file_name);
   } catch (error: any) {
+    console.error('Erreur téléchargement document:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-
 /**
- * DELETE /api/documents/:id
+ * GET /api/documents/:id
+ * Récupère un document par son ID
  */
+router.get('/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.userId;
+
+    const result = await pool.query(
+      `SELECT d.* FROM documents d
+       WHERE d.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document non trouvé'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Erreur récupération document:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 /**
  * DELETE /api/documents/:id
  */
@@ -555,13 +628,22 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
 router.post('/:id/share', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId: sharedWithUserId, permission } = req.body;
+    const { userId: userIdField, sharedWith, permission } = req.body;
     const userId = (req as any).user?.userId;
+
+    const sharedWithUserId = sharedWith || userIdField;
 
     if (!sharedWithUserId) {
       return res.status(400).json({
         success: false,
-        message: 'User ID requis'
+        message: 'sharedWith ou userId requis'
+      });
+    }
+
+    if (permission && !['view', 'edit'].includes(permission)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Permission invalide. Doit être "view" ou "edit"'
       });
     }
 
@@ -574,6 +656,15 @@ router.post('/:id/share', authenticate, async (req: Request, res: Response) => {
       return res.status(404).json({
         success: false,
         message: 'Document non trouvé'
+      });
+    }
+
+    const document = checkResult.rows[0];
+
+    if (document.uploaded_by !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Seul le propriétaire peut partager ce document'
       });
     }
 
@@ -596,37 +687,6 @@ router.post('/:id/share', authenticate, async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Erreur partage document:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * GET /api/documents/shared
- * Get documents shared with current user
- */
-router.get('/shared', authenticate, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.userId;
-
-    const query = `
-      SELECT d.*, ds.permission, ds.shared_at,
-             u.first_name as shared_by_first_name,
-             u.last_name as shared_by_last_name
-      FROM documents d
-      JOIN document_shares ds ON d.id = ds.document_id
-      JOIN users u ON ds.shared_by = u.id
-      WHERE ds.shared_with = $1
-      ORDER BY ds.shared_at DESC
-    `;
-
-    const result = await pool.query(query, [userId]);
-
-    res.json({
-      success: true,
-      data: result.rows
-    });
-  } catch (error: any) {
-    console.error('Erreur récupération documents partagés:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

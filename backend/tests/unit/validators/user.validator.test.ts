@@ -251,7 +251,7 @@ describe('User Validators', () => {
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
-        status: 'ERROR',
+        success: false,
         message: 'ID utilisateur invalide',
       });
       expect(nextFunction).not.toHaveBeenCalled();
@@ -264,7 +264,7 @@ describe('User Validators', () => {
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
-        status: 'ERROR',
+        success: false,
         message: 'ID utilisateur invalide',
       });
     });
