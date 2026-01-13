@@ -119,8 +119,11 @@ export const useAuthStore = defineStore('auth', {
             }
             return {
               success: true,
-              requiresTwoFactor: true,
-              tempToken: response.data.tempToken,
+              data: {
+                requiresTwoFactor: true,
+                tempToken: response.data.tempToken,
+                user: response.data.user,
+              },
             };
           }
 

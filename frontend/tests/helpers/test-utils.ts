@@ -1,10 +1,6 @@
 import { vi } from 'vitest';
 import type { User } from '~/types/auth';
 
-/**
- * Mock data generators for frontend tests
- */
-
 export const mockUser = (overrides: Partial<User> = {}): User => ({
   id: '123e4567-e89b-12d3-a456-426614174000',
   email: 'test@example.com',
@@ -39,10 +35,6 @@ export const mockAdmin = (overrides: Partial<User> = {}): User => mockUser({
   ...overrides,
 });
 
-/**
- * Mock API response helpers
- */
-
 export const mockSuccessResponse = <T>(data: T) => ({
   success: true,
   data,
@@ -55,12 +47,15 @@ export const mockErrorResponse = (message: string, errors?: any[]) => ({
   errors,
 });
 
-/**
- * Mock $fetch for specific scenarios
- */
-
 export const mockFetchSuccess = <T>(data: T) => {
-  vi.mocked($fetch).mockResolvedValueOnce(mockSuccessResponse(data));
+  if (typeof data === 'object' && data !== null) {
+    const obj = data as any;
+    if ('data' in obj) {
+      vi.mocked($fetch).mockResolvedValueOnce(data);
+      return;
+    }
+  }
+  vi.mocked($fetch).mockResolvedValueOnce({ data, success: true, message: 'Operation successful' });
 };
 
 export const mockFetchError = (status: number, message: string) => {
@@ -70,10 +65,6 @@ export const mockFetchError = (status: number, message: string) => {
   error.data = { message };
   vi.mocked($fetch).mockRejectedValueOnce(error);
 };
-
-/**
- * Mock useAuthStore with specific state
- */
 
 export const createMockAuthStore = (overrides: any = {}) => ({
   user: null,
@@ -97,34 +88,18 @@ export const createMockAuthStore = (overrides: any = {}) => ({
   ...overrides,
 });
 
-/**
- * Setup localStorage with initial data
- */
-
 export const setupLocalStorage = (data: Record<string, string>) => {
   Object.entries(data).forEach(([key, value]) => {
     localStorage.setItem(key, value);
   });
 };
 
-/**
- * Clear all storage
- */
-
 export const clearAllStorage = () => {
   localStorage.clear();
   sessionStorage.clear();
 };
 
-/**
- * Wait for promises to resolve
- */
-
 export const flushPromises = () => new Promise((resolve) => setImmediate(resolve));
-
-/**
- * Mock Date for consistent testing
- */
 
 export const mockDate = (isoString: string) => {
   const date = new Date(isoString);
@@ -132,10 +107,17 @@ export const mockDate = (isoString: string) => {
   return date;
 };
 
-/**
- * Reset mocked Date
- */
-
 export const resetDate = () => {
   vi.useRealTimers();
+};
+
+export const createMockUseApi = (overrides: any = {}) => {
+  const mockApiFetch = vi.fn();
+
+  (globalThis as any).useApi = vi.fn(() => ({
+    apiFetch: mockApiFetch,
+    ...overrides,
+  }));
+
+  return { mockApiFetch };
 };

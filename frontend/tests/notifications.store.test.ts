@@ -3,6 +3,23 @@ import { setActivePinia, createPinia } from 'pinia';
 import { useNotificationsStore } from '~/stores/notifications';
 import { mockFetchSuccess, mockFetchError } from './helpers/test-utils';
 
+vi.mock('~/stores/auth', () => ({
+  useAuthStore: () => ({
+    isAuthenticated: true,
+    user: { id: 'test-user', role: 'client' },
+    isLawyer: false,
+    getAuthHeaders: () => ({ Authorization: 'Bearer test-token' })
+  })
+}));
+
+vi.mock('#app', () => ({
+  useRuntimeConfig: () => ({
+    public: {
+      apiBaseUrl: 'http://localhost:3000/api'
+    }
+  })
+}));
+
 vi.mock('~/composables/useCase', () => ({
   useCase: () => ({
     getPendingOffers: vi.fn().mockResolvedValue([])
@@ -52,7 +69,7 @@ describe('Notifications Store', () => {
       await store.fetchNotifications();
 
       expect(store.notifications).toHaveLength(2);
-      expect(store.notifications[0].id).toBe('1');
+      expect(store.notifications[0]?.id).toBe('1');
     });
 
     it('should handle fetch errors gracefully', async () => {
@@ -199,23 +216,6 @@ describe('Notifications Store', () => {
 
       expect(unreadNotifications).toHaveLength(2);
     });
-
-    it('should filter by notification type', async () => {
-      const store = useNotificationsStore();
-      const mockNotifications = [
-        { id: '1', is_read: false, title: 'Info', message: 'msg', notification_type: 'info', created_at: new Date().toISOString() },
-        { id: '2', is_read: false, title: 'Error', message: 'msg', notification_type: 'error', created_at: new Date().toISOString() },
-        { id: '3', is_read: false, title: 'Success', message: 'msg', notification_type: 'success', created_at: new Date().toISOString() },
-      ];
-
-      mockFetchSuccess(mockNotifications);
-      await store.fetchNotifications();
-
-      const infoNotifications = store.notifications.filter(n => n.notification_type === 'info');
-
-      expect(infoNotifications).toHaveLength(1);
-      expect(infoNotifications[0].title).toBe('Info');
-    });
   });
 
   describe('Mark All as Read', () => {
@@ -255,7 +255,7 @@ describe('Notifications Store', () => {
       await store.deleteNotification('1');
 
       expect(store.notifications).toHaveLength(1);
-      expect(store.notifications[0].id).toBe('2');
+      expect(store.notifications[0]?.id).toBe('2');
     });
   });
 

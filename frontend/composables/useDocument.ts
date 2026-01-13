@@ -26,12 +26,13 @@ export const useDocument = () => {
       headers: { ...getHeaders() },
       body: formData
     });
-    return response;
+    return { success: true, data: response.data || response };
   } catch (error: any) {
-    console.error('Détails erreur 404:', error.response);
+    console.error('Détails erreur upload:', error);
     return {
       success: false,
-      message: error.data?.message || error.message || 'Failed to upload document'
+      message: error.data?.message || error.message || 'Upload failed',
+      error: error
     };
   }
 };

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { useAuthStore } from '~/stores/auth';
+import { useCase } from '~/composables/useCase';
 
 export interface Notification {
   id: string;
@@ -72,15 +73,27 @@ export const useNotificationStore = defineStore('notifications', {
             headers: authStore.getAuthHeaders(),
           });
 
-          if (apiResponse.success && apiResponse.data) {
-            allNotifs = apiResponse.data.map((notif: any) => ({
+          if (Array.isArray(apiResponse)) {
+            allNotifs = apiResponse.map((notif: any) => ({
               id: notif.id,
-              type: notif.type,
+              type: notif.type || notif.notification_type,
               category: notif.category,
               title: notif.title,
               message: notif.message,
               is_read: notif.is_read,
-              time: notif.time,
+              time: notif.time || this.formatRelativeTime(notif.created_at),
+              created_at: notif.created_at,
+              data: notif.data
+            }));
+          } else if (apiResponse.success && apiResponse.data) {
+            allNotifs = apiResponse.data.map((notif: any) => ({
+              id: notif.id,
+              type: notif.type || notif.notification_type,
+              category: notif.category,
+              title: notif.title,
+              message: notif.message,
+              is_read: notif.is_read,
+              time: notif.time || this.formatRelativeTime(notif.created_at),
               created_at: notif.created_at,
               data: notif.data
             }));
