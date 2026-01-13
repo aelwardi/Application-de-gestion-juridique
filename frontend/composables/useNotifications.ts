@@ -10,6 +10,8 @@ export interface ApiNotification {
   related_entity_id?: string;
   is_read: boolean;
   created_at: string;
+  data?: any;
+  notification_type?: string;
 }
 
 export const useNotifications = () => {

@@ -1,23 +1,22 @@
 export type AppointmentType = 
-   'consultation'
-   'tribunal'
-   'rencontre_client'
-   'expertise'
-   'mediation'
-   'signature'
-   'autre';
+  | 'consultation'
+  | 'rencontre_client'
+  | 'expertise'
+  | 'mediation'
+  | 'signature'
+  | 'autre';
 
 export type AppointmentLocationType = 
-   'office'
-   'court'
-   'client_location'
-   'online'
-   'other';
+  | 'office'
+  | 'client_location'
+  | 'online'
+  | 'other';
 
 export type AppointmentStatus = 
-   'scheduled'
-   'confirmed'
-   'cancelled'
+  | 'scheduled'
+  | 'cancelled'
+  | 'completed'
+  | 'no_show';
    'completed'
    'no_show';
 
