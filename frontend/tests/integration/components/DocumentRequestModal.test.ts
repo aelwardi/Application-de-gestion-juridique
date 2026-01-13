@@ -168,9 +168,9 @@ describe('DocumentRequestModal', () => {
 
       const options = wrapper.findAll('select[name="urgency"] option');
       expect(options).toHaveLength(3);
-      expect(options[0].text()).toBe('Faible');
-      expect(options[1].text()).toBe('Moyen');
-      expect(options[2].text()).toBe('Élevé');
+      expect(options[0]?.text()).toBe('Faible');
+      expect(options[1]?.text()).toBe('Moyen');
+      expect(options[2]?.text()).toBe('Élevé');
     });
 
     it('devrait avoir medium comme valeur par défaut', () => {

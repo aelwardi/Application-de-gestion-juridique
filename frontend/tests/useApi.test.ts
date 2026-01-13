@@ -52,7 +52,7 @@ describe('useApi Composable', () => {
 
       await apiFetch('/test-endpoint');
 
-      const callArgs = vi.mocked($fetch).mock.calls[0][1];
+      const callArgs = vi.mocked($fetch).mock.calls[0]?.[1];
       expect(callArgs?.headers).not.toHaveProperty('Authorization');
     });
 

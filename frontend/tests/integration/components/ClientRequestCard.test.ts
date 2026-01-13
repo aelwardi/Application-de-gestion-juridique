@@ -103,9 +103,9 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     });
 
     it('devrait appliquer les classes vertes pour statut accepted', () => {
-      const acceptedRequest = { ...mockRequest, status: 'accepted' };
+      const acceptedRequest = { ...mockRequest, status: 'accepted' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: acceptedRequest },
+        props: { request: acceptedRequest as any },
       });
 
       const statusBadge = wrapper.find('.bg-green-100');
@@ -114,9 +114,9 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     });
 
     it('devrait appliquer les classes rouges pour statut rejected', () => {
-      const rejectedRequest = { ...mockRequest, status: 'rejected' };
+      const rejectedRequest = { ...mockRequest, status: 'rejected' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: rejectedRequest },
+        props: { request: rejectedRequest as any },
       });
 
       const statusBadge = wrapper.find('.bg-red-100');
@@ -125,9 +125,9 @@ describe('ClientRequestCard - Tests d\'intégration', () => {
     });
 
     it('devrait appliquer les classes grises pour statut cancelled', () => {
-      const cancelledRequest = { ...mockRequest, status: 'cancelled' };
+      const cancelledRequest = { ...mockRequest, status: 'cancelled' as const };
       const wrapper = mount(ClientRequestCard, {
-        props: { request: cancelledRequest },
+        props: { request: cancelledRequest as any },
       });
 
       const statusBadges = wrapper.findAll('.bg-gray-100');

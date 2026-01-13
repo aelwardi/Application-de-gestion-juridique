@@ -202,7 +202,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      expect(wrapper.vm.completionRate).toBe(20);
+      expect((wrapper.vm as any).completionRate).toBe(20);
     });
 
     it('devrait gérer 100% de complétion', () => {
@@ -215,7 +215,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: allClosedCases },
       });
 
-      expect(wrapper.vm.completionRate).toBe(100);
+      expect((wrapper.vm as any).completionRate).toBe(100);
     });
 
     it('devrait gérer 0% de complétion', () => {
@@ -228,7 +228,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: noClosed },
       });
 
-      expect(wrapper.vm.completionRate).toBe(0);
+      expect((wrapper.vm as any).completionRate).toBe(0);
     });
   });
 
@@ -238,7 +238,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      expect(wrapper.vm.urgentCount).toBe(1);
+      expect((wrapper.vm as any).urgentCount).toBe(1);
     });
 
     it('devrait gérer l\'absence de cas urgents', () => {
@@ -251,7 +251,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: noUrgent },
       });
 
-      expect(wrapper.vm.urgentCount).toBe(0);
+      expect((wrapper.vm as any).urgentCount).toBe(0);
     });
   });
 
@@ -261,7 +261,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: [] },
       });
 
-      const statusStats = (wrapper.vm as any).statusStats;
+       const statusStats = (wrapper.vm as any).statusStats;
       statusStats.forEach((stat: any) => {
         expect(stat.count).toBe(0);
       });

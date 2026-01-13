@@ -40,7 +40,6 @@ describe('useAppointment - Tests Unitaires', () => {
     start_time: '2026-01-20T10:00:00Z',
     end_time: '2026-01-20T11:00:00Z',
     location_type: 'office',
-    location: '10 Rue de la Paix, Paris',
     location_address: '10 Rue de la Paix, Paris',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
