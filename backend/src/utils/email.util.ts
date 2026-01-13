@@ -3,8 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Frontend URL for email links
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3001';
+const getFrontendUrl = () => process.env.FRONTEND_URL || 'http://localhost:3001';
 
 interface EmailOptions {
   to: string;
@@ -63,6 +62,7 @@ export const sendWelcomeEmail = async (
   firstName: string,
   lastName: string
 ): Promise<boolean> => {
+  const frontendUrl = getFrontendUrl();
   const html = `
     <!DOCTYPE html>
     <html>
@@ -86,7 +86,7 @@ export const sendWelcomeEmail = async (
           <p>Nous sommes ravis de vous accueillir sur notre plateforme de gestion juridique.</p>
           <p>Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter et commencer à utiliser nos services.</p>
           <center>
-            <a href="${FRONTEND_URL}/auth/login" class="button">Se connecter</a>
+            <a href="${frontendUrl}/auth/login" class="button">Se connecter</a>
           </center>
           <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -114,7 +114,8 @@ export const sendPasswordResetEmail = async (
   firstName: string,
   resetToken: string
 ): Promise<boolean> => {
-  const resetUrl = `${FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
+  const frontendUrl = getFrontendUrl();
+  const resetUrl = `${frontendUrl}/auth/reset-password?token=${resetToken}`;
 
   const html = `
     <!DOCTYPE html>
@@ -291,6 +292,7 @@ export const sendNewRequestToLawyer = async (
   urgency: string,
   caseCategory: string
 ): Promise<boolean> => {
+  const frontendUrl = getFrontendUrl();
   const urgencyColors: Record<string, string> = {
     low: '#10b981',
     medium: '#f59e0b',
@@ -362,7 +364,7 @@ export const sendNewRequestToLawyer = async (
           <p>Veuillez vous connecter à votre espace avocat pour consulter les détails complets de la demande et y répondre.</p>
           
           <center>
-            <a href="${FRONTEND_URL}/dashboard" class="button">Voir la demande</a>
+            <a href="${frontendUrl}/dashboard" class="button">Voir la demande</a>
           </center>
 
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -392,7 +394,8 @@ export const sendRequestAcceptedToClient = async (
   requestTitle: string,
   caseId?: string
 ): Promise<boolean> => {
-  const caseUrl = caseId ? `${FRONTEND_URL}/cases/${caseId}` : `${FRONTEND_URL}/cases`;
+  const frontendUrl = getFrontendUrl();
+  const caseUrl = caseId ? `${frontendUrl}/cases/${caseId}` : `${frontendUrl}/cases`;
 
   const html = `
     <!DOCTYPE html>
@@ -458,6 +461,7 @@ export const sendRequestRejectedToClient = async (
   requestTitle: string,
   rejectionReason?: string
 ): Promise<boolean> => {
+  const frontendUrl = getFrontendUrl();
   const html = `
     <!DOCTYPE html>
     <html>
@@ -490,7 +494,7 @@ export const sendRequestRejectedToClient = async (
             <li>Nous contacter si vous avez des questions</li>
           </ul>
           <center>
-            <a href="${FRONTEND_URL}/lawyers" class="button">Trouver un autre avocat</a>
+            <a href="${frontendUrl}/lawyers" class="button">Trouver un autre avocat</a>
           </center>
           <p>Merci de votre compréhension.</p>
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -521,6 +525,7 @@ export const sendCaseStatusChangedEmail = async (
   newStatus: string,
   caseId: string
 ): Promise<boolean> => {
+  const frontendUrl = getFrontendUrl();
   const statusLabels: Record<string, string> = {
     pending: 'En attente',
     in_progress: 'En cours',
@@ -581,7 +586,7 @@ export const sendCaseStatusChangedEmail = async (
           <p>Connectez-vous pour consulter les détails et l'historique complet de votre dossier.</p>
           
           <center>
-            <a href="${FRONTEND_URL}/cases/${caseId}" class="button">Voir mon dossier</a>
+            <a href="${frontendUrl}/cases/${caseId}" class="button">Voir mon dossier</a>
           </center>
 
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>
@@ -613,6 +618,7 @@ export const sendDocumentUploadedEmail = async (
   caseId: string,
   isConfidential: boolean = false
 ): Promise<boolean> => {
+  const frontendUrl = getFrontendUrl();
   const html = `
     <!DOCTYPE html>
     <html>
@@ -648,7 +654,7 @@ export const sendDocumentUploadedEmail = async (
           <p>Vous pouvez consulter ce document dès maintenant dans votre espace client.</p>
           
           <center>
-            <a href="${FRONTEND_URL}/cases/${caseId}" class="button">Consulter le document</a>
+            <a href="${frontendUrl}/cases/${caseId}" class="button">Consulter le document</a>
           </center>
 
           <p>Cordialement,<br>L'équipe Gestion Juridique</p>

@@ -1,10 +1,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import type { Notification } from '~/composables/useNotifications'
+import type { ApiNotification } from '~/composables/useNotifications'
 
 const isOpen = ref(false)
-const notifications = ref<Notification[]>([])
+const notifications = ref<ApiNotification[]>([])
 const authStore = useAuthStore()
 const { getUnreadNotifications, markAsRead: markNotificationAsRead, markAllAsRead: markAllNotificationsAsRead } = useNotifications()
 
