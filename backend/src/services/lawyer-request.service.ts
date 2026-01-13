@@ -389,7 +389,15 @@ export const getLawyerRequestStats = async (lawyerId: string): Promise<LawyerReq
   `;
 
   const result = await pool.query(query, [lawyerId]);
-  return result.rows[0];
+  const stats = result.rows[0];
+
+  return {
+    total: parseInt(stats.total, 10),
+    pending: parseInt(stats.pending, 10),
+    accepted: parseInt(stats.accepted, 10),
+    rejected: parseInt(stats.rejected, 10),
+    cancelled: parseInt(stats.cancelled, 10),
+  };
 };
 
 /**

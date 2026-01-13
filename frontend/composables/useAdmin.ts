@@ -196,6 +196,80 @@ export const useAdmin = () => {
     window.location.href = url;
   };
 
+  const getAllUsers = async (params?: { role?: string; page?: number; limit?: number }) => {
+    return getUsers({
+      page: params?.page || 1,
+      limit: params?.limit || 50,
+      role: params?.role,
+    });
+  };
+
+  const verifyLawyer = async (lawyerId: string) => {
+    try {
+      const response = await apiFetch<{ success: boolean; message: string }>(`/admin/lawyers/${lawyerId}/verify`, {
+        method: 'POST',
+      });
+      return response;
+    } catch (error) {
+      console.error('Error verifying lawyer:', error);
+      throw error;
+    }
+  };
+
+  const suspendUser = async (userId: string, reason: string) => {
+    try {
+      const response = await apiFetch<{ success: boolean; message: string }>(`/admin/users/${userId}/suspend`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      });
+      return response;
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      throw error;
+    }
+  };
+
+  const reactivateUser = async (userId: string) => {
+    try {
+      const response = await apiFetch<{ success: boolean; message: string }>(`/admin/users/${userId}/reactivate`, {
+        method: 'POST',
+      });
+      return response;
+    } catch (error) {
+      console.error('Error reactivating user:', error);
+      throw error;
+    }
+  };
+
+  const getStatistics = async () => {
+    return getDashboardStats();
+  };
+
+  const updateUserRole = async (userId: string, role: string) => {
+    try {
+      const response = await apiFetch<{ success: boolean; data: User }>(`/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      });
+      return response;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      throw error;
+    }
+  };
+
+  const getPendingVerifications = async () => {
+    try {
+      const response = await apiFetch<{ success: boolean; data: any[] }>('/admin/verifications/pending', {
+        method: 'GET',
+      });
+      return response;
+    } catch (error) {
+      console.error('Error fetching pending verifications:', error);
+      throw error;
+    }
+  };
+
   return {
     getDashboardStats,
     getUsers,
@@ -207,5 +281,12 @@ export const useAdmin = () => {
     getActivityLogs,
     sendBulkEmail,
     exportUsers,
+    getAllUsers,
+    verifyLawyer,
+    suspendUser,
+    reactivateUser,
+    getStatistics,
+    updateUserRole,
+    getPendingVerifications,
   };
 };

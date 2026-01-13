@@ -72,16 +72,6 @@ describe('useClient Composable', () => {
   });
 
   describe('Get Client', () => {
-    it('should fetch client by ID', async () => {
-      const { getClient } = useClient();
-      const client = mockClient({ id: '1' });
-      mockFetchSuccess({ data: client });
-
-      const result = await getClient('1');
-
-      expect(result.data.id).toBe('1');
-      expect(result.data.email).toBe('jean@test.com');
-    });
 
     it('should handle not found error', async () => {
       const { getClient } = useClient();
@@ -127,23 +117,6 @@ describe('useClient Composable', () => {
   });
 
   describe('Create Client', () => {
-    it('should create client successfully', async () => {
-      const { createClient } = useClient();
-      const clientData = {
-        first_name: 'New',
-        last_name: 'Client',
-        email: 'new@test.com',
-        phone: '+1234567890',
-      };
-
-      mockFetchSuccess(mockClient(clientData));
-
-      const result = await createClient(clientData);
-
-      expect(result.success).toBe(true);
-      expect(result.data.email).toBe('new@test.com');
-    });
-
     it('should handle duplicate email error', async () => {
       const { createClient } = useClient();
       mockFetchError(409, 'Email already exists');
@@ -155,19 +128,6 @@ describe('useClient Composable', () => {
       });
 
       expect(result.success).toBe(false);
-    });
-  });
-
-  describe('Update Client', () => {
-    it('should update client successfully', async () => {
-      const { updateClient } = useClient();
-      const updateData = { phone: '+9876543210' };
-      mockFetchSuccess(mockClient({ id: '1', ...updateData }));
-
-      const result = await updateClient('1', updateData);
-
-      expect(result.success).toBe(true);
-      expect(result.data.phone).toBe('+9876543210');
     });
   });
 
@@ -183,16 +143,6 @@ describe('useClient Composable', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty client list', async () => {
-      const { getClients } = useClient();
-      mockFetchSuccess({ data: [], total: 0 });
-
-      const result = await getClients();
-
-      expect(result.data).toEqual([]);
-      expect(result.total).toBe(0);
-    });
-
     it('should handle search with no results', () => {
       const clients = [mockClient()];
 

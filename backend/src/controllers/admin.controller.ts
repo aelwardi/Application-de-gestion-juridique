@@ -164,6 +164,14 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
       message: result.message,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'User not found') {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to update user status',
@@ -337,6 +345,70 @@ export const exportUsers = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Failed to export users data',
+    });
+  }
+};
+
+/**
+ * GET /api/admin/lawyer-requests
+ * Get lawyer verification requests
+ */
+export const getLawyerRequests = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const status = req.query.status as string | undefined;
+
+    const result = await adminService.getLawyerRequests(page, limit, status);
+
+    res.json({
+      success: true,
+      data: result.requests,
+      pagination: {
+        page,
+        limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / limit),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch lawyer requests',
+    });
+  }
+};
+
+/**
+ * GET /api/admin/reports
+ * Generate admin reports
+ */
+export const getReports = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { type, month, year } = req.query;
+
+    if (!type || !['monthly', 'yearly', 'weekly'].includes(type as string)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid report type. Must be monthly, yearly, or weekly',
+      });
+      return;
+    }
+
+    const reportData = await adminService.generateReports(
+      type as string,
+      month ? parseInt(month as string) : undefined,
+      year ? parseInt(year as string) : undefined
+    );
+
+    res.json({
+      success: true,
+      data: reportData,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate reports',
     });
   }
 };

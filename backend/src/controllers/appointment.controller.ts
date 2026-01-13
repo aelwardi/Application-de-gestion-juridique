@@ -37,10 +37,6 @@ const upload = multer({
 
 export const uploadMiddleware = upload.single('file');
 
-/**
- * Créer un nouveau rendez-vous
- * POST /api/appointments
- */
 export const createAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const data: CreateAppointmentDTO = req.body;
@@ -81,10 +77,6 @@ export const createAppointment = async (req: Request, res: Response): Promise<vo
   }
 };
 
-/**
- * Récupérer tous les rendez-vous avec filtres
- * GET /api/appointments
- */
 export const getAllAppointments = async (req: Request, res: Response): Promise<void> => {
   try {
     const filters: AppointmentFilters = {
@@ -116,10 +108,6 @@ export const getAllAppointments = async (req: Request, res: Response): Promise<v
   }
 };
 
-/**
- * Récupérer un rendez-vous par ID
- * GET /api/appointments/:id
- */
 export const getAppointmentById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -146,10 +134,6 @@ export const getAppointmentById = async (req: Request, res: Response): Promise<v
   }
 };
 
-/**
- * Mettre à jour un rendez-vous
- * PUT /api/appointments/:id
- */
 export const updateAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -178,10 +162,6 @@ export const updateAppointment = async (req: Request, res: Response): Promise<vo
   }
 };
 
-/**
- * Supprimer un rendez-vous
- * DELETE /api/appointments/:id
- */
 export const deleteAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -208,10 +188,6 @@ export const deleteAppointment = async (req: Request, res: Response): Promise<vo
   }
 };
 
-/**
- * Récupérer les rendez-vous d'un avocat
- * GET /api/appointments/lawyer/:lawyerId
- */
 export const getAppointmentsByLawyer = async (req: Request, res: Response): Promise<void> => {
   try {
     const { lawyerId } = req.params;
@@ -239,10 +215,6 @@ export const getAppointmentsByLawyer = async (req: Request, res: Response): Prom
   }
 };
 
-/**
- * Récupérer les rendez-vous d'un client
- * GET /api/appointments/client/:clientId
- */
 export const getAppointmentsByClient = async (req: Request, res: Response): Promise<void> => {
   try {
     const { clientId } = req.params;
@@ -270,10 +242,6 @@ export const getAppointmentsByClient = async (req: Request, res: Response): Prom
   }
 };
 
-/**
- * Récupérer les rendez-vous d'un dossier
- * GET /api/appointments/case/:caseId
- */
 export const getAppointmentsByCase = async (req: Request, res: Response): Promise<void> => {
   try {
     const { caseId } = req.params;
@@ -292,10 +260,6 @@ export const getAppointmentsByCase = async (req: Request, res: Response): Promis
   }
 };
 
-/**
- * Récupérer les rendez-vous à venir
- * GET /api/appointments/upcoming
- */
 export const getUpcomingAppointments = async (req: Request, res: Response): Promise<void> => {
   try {
     const lawyerId = req.query.lawyer_id as string | undefined;
@@ -315,10 +279,6 @@ export const getUpcomingAppointments = async (req: Request, res: Response): Prom
   }
 };
 
-/**
- * Récupérer les rendez-vous du jour
- * GET /api/appointments/today
- */
 export const getTodayAppointments = async (req: Request, res: Response): Promise<void> => {
   try {
     const lawyerId = req.query.lawyer_id as string | undefined;
@@ -338,10 +298,6 @@ export const getTodayAppointments = async (req: Request, res: Response): Promise
   }
 };
 
-/**
- * Récupérer les statistiques des rendez-vous
- * GET /api/appointments/stats
- */
 export const getAppointmentStats = async (req: Request, res: Response): Promise<void> => {
   try {
     const lawyerId = req.query.lawyer_id as string | undefined;
@@ -361,10 +317,6 @@ export const getAppointmentStats = async (req: Request, res: Response): Promise<
   }
 };
 
-/**
- * Annuler un rendez-vous
- * POST /api/appointments/:id/cancel
- */
 export const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -394,10 +346,6 @@ export const cancelAppointment = async (req: Request, res: Response): Promise<vo
   }
 };
 
-/**
- * Confirmer un rendez-vous
- * POST /api/appointments/:id/confirm
- */
 export const confirmAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -426,10 +374,6 @@ export const confirmAppointment = async (req: Request, res: Response): Promise<v
   }
 };
 
-/**
- * Marquer un rendez-vous comme complété
- * POST /api/appointments/:id/complete
- */
 export const completeAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -457,10 +401,6 @@ export const completeAppointment = async (req: Request, res: Response): Promise<
   }
 };
 
-/**
- * Upload un document pour un rendez-vous
- * POST /api/appointments/:id/documents
- */
 export const uploadAppointmentDocument = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id: appointmentId } = req.params;
@@ -505,10 +445,6 @@ export const uploadAppointmentDocument = async (req: Request, res: Response): Pr
   }
 };
 
-/**
- * Récupérer les documents d'un rendez-vous
- * GET /api/appointments/:id/documents
- */
 export const getAppointmentDocuments = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id: appointmentId } = req.params;
@@ -533,10 +469,6 @@ export const getAppointmentDocuments = async (req: Request, res: Response): Prom
   }
 };
 
-/**
- * Supprimer un document
- * DELETE /api/appointments/:id/documents/:docId
- */
 export const deleteAppointmentDocument = async (req: Request, res: Response): Promise<void> => {
   try {
     const { docId } = req.params;
@@ -557,10 +489,6 @@ export const deleteAppointmentDocument = async (req: Request, res: Response): Pr
   }
 };
 
-/**
- * Mettre à jour les notes d'un rendez-vous
- * PUT /api/appointments/:id/notes
- */
 export const updateAppointmentNotes = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id: appointmentId } = req.params;
@@ -586,10 +514,6 @@ export const updateAppointmentNotes = async (req: Request, res: Response): Promi
   }
 };
 
-/**
- * Récupérer les notes d'un rendez-vous
- * GET /api/appointments/:id/notes
- */
 export const getAppointmentNotes = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id: appointmentId } = req.params;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Lawyer } from '~/types/lawyer';
+import { useAvatar } from '~/composables/useAvatar';
 
 defineProps<{
   lawyer: Lawyer;

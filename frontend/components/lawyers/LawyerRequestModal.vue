@@ -95,7 +95,7 @@ watch(
                 Envoyer une demande
               </h3>
               <p class="mt-1 text-sm text-gray-600">
-                Contactez {{ lawyer?.first_name }} {{ lawyer?.last_name }} pour votre dossier
+                Contactez {{ lawyer?.firstName }} {{ lawyer?.lastName }} pour votre dossier
               </p>
             </div>
             <button
@@ -111,13 +111,13 @@ watch(
           <div class="mb-6 p-4 bg-gray-50 rounded-lg">
             <div class="flex items-center gap-3">
               <img
-                :src="lawyer?.profile_picture_url || '/images/default-avatar.png'"
-                :alt="`${lawyer?.first_name} ${lawyer?.last_name}`"
+                :src="lawyer?.profilePictureUrl || '/images/default-avatar.png'"
+                :alt="`${lawyer?.firstName} ${lawyer?.lastName}`"
                 class="w-12 h-12 rounded-full object-cover"
               />
               <div>
                 <p class="font-semibold text-gray-900">
-                  {{ lawyer?.first_name }} {{ lawyer?.last_name }}
+                  {{ lawyer?.firstName }} {{ lawyer?.lastName }}
                 </p>
                 <p class="text-sm text-gray-600">
                   {{ lawyer?.specialties?.join(', ') }}

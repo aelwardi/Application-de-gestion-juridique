@@ -2,6 +2,7 @@ import * as adminQueries from '../database/queries/admin.queries';
 import { sendEmail } from '../utils/email.util';
 import { hashPassword } from '../utils/password.util';
 import { createUser, findUserByEmail } from '../database/queries/auth.queries';
+import { pool } from '../config/database.config';
 
 /**
  * Create a new admin user
@@ -336,4 +337,129 @@ export const exportUsersData = async (role?: string) => {
     headers,
     data: rows,
   };
+};
+
+/**
+ * Get lawyer verification requests
+ */
+export const getLawyerRequests = async (
+  page: number,
+  limit: number,
+  status?: string
+) => {
+  const offset = (page - 1) * limit;
+
+  let query = `
+    SELECT lr.*, u.email, u.first_name, u.last_name
+    FROM lawyer_requests lr
+    JOIN users u ON lr.user_id = u.id
+  `;
+
+  const params: any[] = [];
+
+  if (status) {
+    query += ` WHERE lr.status = $1`;
+    params.push(status);
+    query += ` ORDER BY lr.created_at DESC LIMIT $2 OFFSET $3`;
+    params.push(limit, offset);
+  } else {
+    query += ` ORDER BY lr.created_at DESC LIMIT $1 OFFSET $2`;
+    params.push(limit, offset);
+  }
+
+  const result = await pool.query(query, params);
+
+  let countQuery = 'SELECT COUNT(*) FROM lawyer_requests';
+  const countParams: any[] = [];
+
+  if (status) {
+    countQuery += ' WHERE status = $1';
+    countParams.push(status);
+  }
+
+  const countResult = await pool.query(countQuery, countParams);
+  const total = parseInt(countResult.rows[0].count);
+
+  return {
+    requests: result.rows,
+    total,
+  };
+};
+
+/**
+ * Generate admin reports
+ */
+export const generateReports = async (
+  type: string,
+  month?: number,
+  year?: number
+) => {
+  const currentDate = new Date();
+  const reportYear = year || currentDate.getFullYear();
+  const reportMonth = month || currentDate.getMonth() + 1;
+
+  let dateCondition = '';
+  const params: any[] = [];
+
+  if (type === 'monthly') {
+    dateCondition = `AND EXTRACT(YEAR FROM created_at) = $1 AND EXTRACT(MONTH FROM created_at) = $2`;
+    params.push(reportYear, reportMonth);
+  } else if (type === 'yearly') {
+    dateCondition = `AND EXTRACT(YEAR FROM created_at) = $1`;
+    params.push(reportYear);
+  } else if (type === 'weekly') {
+    dateCondition = `AND created_at >= CURRENT_DATE - INTERVAL '7 days'`;
+  }
+
+  const revenueQuery = `
+    SELECT COALESCE(SUM(amount), 0) as total_revenue
+    FROM payments
+    WHERE status = 'completed' ${dateCondition}
+  `;
+
+  const usersQuery = `
+    SELECT 
+      COUNT(*) as total_users,
+      COUNT(*) FILTER (WHERE role = 'client') as total_clients,
+      COUNT(*) FILTER (WHERE role = 'lawyer') as total_lawyers,
+      COUNT(*) FILTER (WHERE is_active = true) as active_users
+    FROM users
+    WHERE 1=1 ${dateCondition}
+  `;
+
+  const appointmentsQuery = `
+    SELECT 
+      COUNT(*) as total_appointments,
+      COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed_appointments,
+      COUNT(*) FILTER (WHERE status = 'completed') as completed_appointments,
+      COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_appointments
+    FROM appointments
+    WHERE 1=1 ${dateCondition}
+  `;
+
+  try {
+    const revenueResult = await pool.query(revenueQuery, params);
+    const usersResult = await pool.query(usersQuery, params);
+    const appointmentsResult = await pool.query(appointmentsQuery, params);
+
+    return {
+      totalRevenue: parseFloat(revenueResult.rows[0]?.total_revenue || 0),
+      totalUsers: parseInt(usersResult.rows[0]?.total_users || 0),
+      totalClients: parseInt(usersResult.rows[0]?.total_clients || 0),
+      totalLawyers: parseInt(usersResult.rows[0]?.total_lawyers || 0),
+      activeUsers: parseInt(usersResult.rows[0]?.active_users || 0),
+      totalAppointments: parseInt(appointmentsResult.rows[0]?.total_appointments || 0),
+      confirmedAppointments: parseInt(appointmentsResult.rows[0]?.confirmed_appointments || 0),
+      completedAppointments: parseInt(appointmentsResult.rows[0]?.completed_appointments || 0),
+      cancelledAppointments: parseInt(appointmentsResult.rows[0]?.cancelled_appointments || 0),
+      period: {
+        type,
+        month: reportMonth,
+        year: reportYear,
+      },
+    };
+  } catch (error) {
+    console.error('Error generating reports:', error);
+    throw error;
+  }
 };

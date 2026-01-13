@@ -128,4 +128,66 @@ router.patch('/mark-all-read', authenticate, async (req, res) => {
     }
 });
 
+router.patch('/read-all', authenticate, async (req, res) => {
+    try {
+        const userId = (req as any).user?.userId;
+
+        const result = await pool.query(
+            'UPDATE notifications SET is_read = true, read_at = NOW() WHERE user_id = $1 AND is_read = false',
+            [userId]
+        );
+
+        res.json({
+            success: true,
+            message: `${result.rowCount} notifications marked as read`
+        });
+    } catch (error) {
+        console.error('Erreur marquage tous lus:', error);
+        res.status(500).json({ success: false, error: "Erreur" });
+    }
+});
+
+router.delete('/:id', authenticate, async (req, res) => {
+    try {
+        const userId = (req as any).user?.userId;
+        const { id } = req.params;
+
+        const result = await pool.query(
+            'DELETE FROM notifications WHERE id = $1 AND user_id = $2 RETURNING id',
+            [id, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Notification non trouvée"
+            });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erreur suppression notification:', error);
+        res.status(500).json({ success: false, error: "Erreur" });
+    }
+});
+
+router.get('/unread/count', authenticate, async (req, res) => {
+    try {
+        const userId = (req as any).user?.userId;
+
+        const result = await pool.query(
+            'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND is_read = false',
+            [userId]
+        );
+
+        res.json({
+            success: true,
+            count: parseInt(result.rows[0]?.count || 0)
+        });
+    } catch (error) {
+        console.error('Erreur comptage notifications:', error);
+        res.status(500).json({ success: false, error: "Erreur" });
+    }
+});
+
 export default router;

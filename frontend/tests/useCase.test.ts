@@ -39,7 +39,7 @@ describe('useCase Composable', () => {
       const result = await createCase(caseData);
 
       expect(result.success).toBe(true);
-      expect(result.data.title).toBe('Nouveau Dossier');
+      expect(result.data?.title).toBe('Nouveau Dossier');
     });
 
     it('should handle validation errors', async () => {
@@ -66,12 +66,12 @@ describe('useCase Composable', () => {
 
     it('should filter by status', async () => {
       const cases = [
-        mockCase({ id: '1', status: 'active' }),
+        mockCase({ id: '1', status: 'in_progress' as any }),
         mockCase({ id: '2', status: 'pending' }),
-        mockCase({ id: '3', status: 'active' }),
+        mockCase({ id: '3', status: 'in_progress' as any }),
       ];
 
-      const activeCases = cases.filter(c => c.status === 'active');
+      const activeCases = cases.filter(c => c.status === 'in_progress');
 
       expect(activeCases).toHaveLength(2);
     });
@@ -92,13 +92,13 @@ describe('useCase Composable', () => {
   describe('Update Case', () => {
     it('should update case successfully', async () => {
       const { updateCase } = useCase();
-      const updatedCase = mockCase({ status: 'active' });
+      const updatedCase = mockCase({ status: 'in_progress' as any });
       mockFetchSuccess(updatedCase);
 
-      const result = await updateCase('case-1', { status: 'active' });
+      const result = await updateCase('case-1', { status: 'in_progress' as any });
 
       expect(result.success).toBe(true);
-      expect(result.data.status).toBe('active');
+      expect(result.data?.status).toBe('in_progress');
     });
   });
 

@@ -30,7 +30,7 @@ const handleLogin = async () => {
     const result = await authStore.login(form.value);
 
     if (result.success) {
-      if (result.requiresTwoFactor) {
+      if ((result as any).requiresTwoFactor) {
         return;
       }
 

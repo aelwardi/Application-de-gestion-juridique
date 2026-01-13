@@ -16,6 +16,11 @@ const transporter = nodemailer.createTransport({
  */
 export const sendAppointmentReminder = async (appointmentId: string, reminderType: '24h' | '2h') => {
   try {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.log('SMTP credentials not configured, skipping email reminder');
+      return false;
+    }
+
     const query = `
       SELECT 
         a.*,
@@ -156,7 +161,7 @@ export const sendAppointmentReminder = async (appointmentId: string, reminderTyp
     return true;
   } catch (error) {
     console.error('Erreur lors de l\'envoi du rappel:', error);
-    return false;
+    throw error;
   }
 };
 

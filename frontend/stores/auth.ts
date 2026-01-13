@@ -119,8 +119,11 @@ export const useAuthStore = defineStore('auth', {
             }
             return {
               success: true,
-              requiresTwoFactor: true,
-              tempToken: response.data.tempToken,
+              data: {
+                requiresTwoFactor: true,
+                tempToken: response.data.tempToken,
+                user: response.data.user,
+              },
             };
           }
 
@@ -212,7 +215,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
 
-    async getProfile() {
+    async getProfile(): Promise<{ success: boolean; data?: any; message?: string }> {
       this.isLoading = true;
       try {
         const config = useRuntimeConfig();

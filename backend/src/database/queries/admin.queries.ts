@@ -166,8 +166,13 @@ export const updateUserStatus = async (userId: string, isActive: boolean): Promi
     UPDATE users 
     SET is_active = $1, updated_at = CURRENT_TIMESTAMP 
     WHERE id = $2
+    RETURNING id
   `;
-  await pool.query(query, [isActive, userId]);
+  const result = await pool.query(query, [isActive, userId]);
+
+  if (result.rowCount === 0) {
+    throw new Error('User not found');
+  }
 };
 
 /**

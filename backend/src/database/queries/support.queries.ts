@@ -257,3 +257,30 @@ export const getTicketStats = async (): Promise<any> => {
   const result = await pool.query(query);
   return result.rows[0];
 };
+
+/**
+ * Delete a ticket
+ */
+export const deleteTicket = async (ticketId: string): Promise<void> => {
+  await pool.query('DELETE FROM support_messages WHERE ticket_id = $1', [ticketId]);
+
+  await pool.query('DELETE FROM support_tickets WHERE id = $1', [ticketId]);
+};
+
+/**
+ * Get FAQ items
+ */
+export const getFAQItems = async (category?: string): Promise<any[]> => {
+  let query = 'SELECT * FROM support_faq WHERE 1=1';
+  const params: any[] = [];
+
+  if (category) {
+    query += ' AND category = $1';
+    params.push(category);
+  }
+
+  query += ' ORDER BY display_order ASC, created_at DESC';
+
+  const result = await pool.query(query, params);
+  return result.rows;
+};

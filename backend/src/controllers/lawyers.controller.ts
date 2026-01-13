@@ -223,3 +223,110 @@ export const getSpecialties = async (req: Request, res: Response): Promise<void>
     });
   }
 };
+
+/**
+ * GET /api/lawyers/:id/availability
+ * Get lawyer availability slots
+ */
+export const getLawyerAvailability = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const lawyerId = req.params.id;
+    const availability = await lawyersService.getLawyerAvailability(lawyerId);
+
+    res.json({
+      success: true,
+      data: availability,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch lawyer availability',
+    });
+  }
+};
+
+/**
+ * POST /api/lawyers/:id/availability
+ * Create availability slot for lawyer
+ */
+export const createAvailability = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const lawyerId = req.params.id;
+    const { dayOfWeek, startTime, endTime } = req.body;
+
+    if (!dayOfWeek && dayOfWeek !== 0 || !startTime || !endTime) {
+      res.status(400).json({
+        success: false,
+        message: 'dayOfWeek, startTime, and endTime are required',
+      });
+      return;
+    }
+
+    if (typeof dayOfWeek !== 'number' || dayOfWeek < 0 || dayOfWeek > 6) {
+      res.status(400).json({
+        success: false,
+        message: 'dayOfWeek must be a number between 0 and 6',
+      });
+      return;
+    }
+
+    const availability = await lawyersService.createAvailability(lawyerId, dayOfWeek, startTime, endTime);
+
+    res.status(201).json({
+      success: true,
+      data: availability,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create availability slot',
+    });
+  }
+};
+
+/**
+ * GET /api/lawyers/:id/reviews
+ * Get lawyer reviews
+ */
+export const getLawyerReviews = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const lawyerId = req.params.id;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const reviews = await lawyersService.getLawyerReviews(lawyerId, page, limit);
+
+    res.json({
+      success: true,
+      data: reviews,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch lawyer reviews',
+    });
+  }
+};
+
+/**
+ * GET /api/lawyers/:id/cases
+ * Get lawyer cases
+ */
+export const getLawyerCases = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const lawyerId = req.params.id;
+    const status = req.query.status as string | undefined;
+
+    const cases = await lawyersService.getLawyerCases(lawyerId, status);
+
+    res.json({
+      success: true,
+      data: cases,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch lawyer cases',
+    });
+  }
+};

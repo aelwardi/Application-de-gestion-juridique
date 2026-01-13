@@ -1,9 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Request, Response, NextFunction } from 'express';
-
-/**
- * Mock helpers for backend tests - fully isolated from database and external services
- */
+import { NextFunction } from 'express';
 
 export const mockUser = (overrides: any = {}) => ({
   id: uuidv4(),
@@ -117,9 +113,6 @@ export const mockQueryResult = (rows: any[] = [], rowCount?: number) => ({
   fields: [],
 });
 
-/**
- * Mock for the PostgreSQL pool
- */
 export const createMockPool = () => {
   const mockQuery = jest.fn();
   const mockConnect = jest.fn().mockResolvedValue({
@@ -140,9 +133,6 @@ export const createMockPool = () => {
   };
 };
 
-/**
- * Create a mock Express Request object
- */
 export const mockRequest = (overrides: any = {}): any => {
   const req: any = {
     body: {},
@@ -163,11 +153,8 @@ export const mockRequest = (overrides: any = {}): any => {
   return req;
 };
 
-/**
- * Create a mock Express Response object
- */
 export const mockResponse = (): any => {
-  const res: any = {
+  return {
     status: jest.fn().mockReturnThis(),
     json: jest.fn().mockReturnThis(),
     send: jest.fn().mockReturnThis(),
@@ -176,84 +163,53 @@ export const mockResponse = (): any => {
     setHeader: jest.fn().mockReturnThis(),
     redirect: jest.fn().mockReturnThis(),
   };
-  return res;
 };
 
-/**
- * Create a mock Express NextFunction
- */
 export const mockNext = (): NextFunction => jest.fn();
 
-/**
- * Create a successful API response
- */
 export const mockSuccessResponse = <T>(data: T, message = 'Success') => ({
   success: true,
   message,
   data,
 });
 
-/**
- * Create an error API response
- */
 export const mockErrorResponse = (message: string, errors?: any[]) => ({
   success: false,
   message,
   errors,
 });
 
-/**
- * Generate multiple mock users
- */
 export const generateMockUsers = (count: number, overrides: any = {}) => {
   return Array.from({ length: count }, (_, i) =>
     mockUser({ email: `user${i}@test.com`, ...overrides })
   );
 };
 
-/**
- * Generate multiple mock appointments
- */
 export const generateMockAppointments = (count: number, overrides: any = {}) => {
   return Array.from({ length: count }, () => mockAppointment(overrides));
 };
 
-/**
- * Generate multiple mock cases
- */
 export const generateMockCases = (count: number, overrides: any = {}) => {
   return Array.from({ length: count }, () => mockCase(overrides));
 };
 
-/**
- * Create a date in the future
- */
 export const futureDate = (daysAhead: number = 1) => {
   const date = new Date();
   date.setDate(date.getDate() + daysAhead);
   return date;
 };
 
-/**
- * Create a date in the past
- */
 export const pastDate = (daysAgo: number = 1) => {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
   return date;
 };
 
-/**
- * Check if a value is a valid UUID
- */
 export const isValidUUID = (uuid: string): boolean => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 };
 
-/**
- * Check if a value is a valid email
- */
 export const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);

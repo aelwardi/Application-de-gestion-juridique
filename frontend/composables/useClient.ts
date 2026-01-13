@@ -72,19 +72,28 @@ export const useClient = () => {
     };
   };
 
-  const updateClient = async (id: string, data: UpdateClientInput): Promise<Client> => {
-    const response = await apiFetch<ApiResponse<Client>>(`/clients/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    return response.data!;
+  const updateClient = async (id: string, data: UpdateClientInput) => {
+    try {
+      const response = await apiFetch<ApiResponse<Client>>(`/clients/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      return { success: true, data: response.data! };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to update client' };
+    }
   };
 
 
-  const deleteClient = async (id: string): Promise<void> => {
-    await apiFetch<ApiResponse<void>>(`/clients/${id}`, {
-      method: 'DELETE',
-    });
+  const deleteClient = async (id: string) => {
+    try {
+      await apiFetch<ApiResponse<void>>(`/clients/${id}`, {
+        method: 'DELETE',
+      });
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to delete client' };
+    }
   };
 
   const getClientStats = async (userId: string): Promise<ClientStats> => {
@@ -122,10 +131,42 @@ export const useClient = () => {
     }
   };
 
+  const getClient = async (id: string) => {
+    try {
+      const data = await getClientById(id);
+      return { success: true, data };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const getClients = async (page = 1, limit = 50) => {
+    try {
+      return await getAllClients(page, limit);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const createClient = async (clientData: any) => {
+    try {
+      const response = await apiFetch<ApiResponse<Client>>('/clients', {
+        method: 'POST',
+        body: JSON.stringify(clientData),
+      });
+      return { success: true, data: response.data! };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to create client' };
+    }
+  };
+
   return {
     getClientById,
     getClientByUserId,
     getAllClients,
+    getClient,
+    getClients,
+    createClient,
     searchClients,
     getClientsByLawyer,
     updateClient,

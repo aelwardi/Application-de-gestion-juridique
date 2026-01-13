@@ -342,4 +342,161 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
   }
 });
 
+/**
+ * POST /api/messages
+ * Envoyer un message (alias simplifié)
+ */
+router.post('/', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+    const { conversationId, content } = req.body;
+
+    if (!conversationId || !content || content.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de conversation et contenu requis'
+      });
+    }
+
+    // Check if conversation exists and user has access
+    const convCheck = await pool.query(
+      'SELECT * FROM conversations WHERE id = $1 AND (participant1_id = $2 OR participant2_id = $2)',
+      [conversationId, userId]
+    );
+
+    if (convCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Conversation non trouvée ou accès refusé'
+      });
+    }
+
+    const insertQuery = `
+      INSERT INTO messages (conversation_id, sender_id, content)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `;
+
+    const result = await pool.query(insertQuery, [conversationId, userId, content.trim()]);
+
+    await pool.query(
+      'UPDATE conversations SET last_message_at = NOW() WHERE id = $1',
+      [conversationId]
+    );
+
+    res.status(201).json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Error sending message:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/messages/conversations/:id/read-all
+ * Marquer tous les messages d'une conversation comme lus
+ */
+router.patch('/conversations/:id/read-all', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id: conversationId } = req.params;
+    const userId = (req as any).user?.userId;
+
+    const result = await pool.query(
+      `UPDATE messages 
+       SET is_read = true, read_at = NOW() 
+       WHERE conversation_id = $1 
+       AND sender_id != $2 
+       AND is_read = false`,
+      [conversationId, userId]
+    );
+
+    res.json({
+      success: true,
+      message: `${result.rowCount} messages marked as read`
+    });
+  } catch (error: any) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/messages/:id/read
+ * Marquer un message comme lu
+ */
+router.patch('/:id/read', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.userId;
+
+    const result = await pool.query(
+      `UPDATE messages 
+       SET is_read = true, read_at = NOW() 
+       WHERE id = $1 
+       RETURNING id`,
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Message non trouvé'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Message marqué comme lu'
+    });
+  } catch (error: any) {
+    console.error('Error marking message as read:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/messages/:id
+ * Supprimer un message
+ */
+router.delete('/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.userId;
+
+    const result = await pool.query(
+      'DELETE FROM messages WHERE id = $1 AND sender_id = $2 RETURNING id',
+      [id, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Message non trouvé ou accès refusé'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Message supprimé'
+    });
+  } catch (error: any) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 export default router;

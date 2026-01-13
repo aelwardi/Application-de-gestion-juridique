@@ -47,9 +47,9 @@ const loadDocumentRequest = async () => {
 const onFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
-    selectedFile.value = target.files[0];
-    if (!uploadForm.value.title) {
-      uploadForm.value.title = target.files[0].name.split('.')[0];
+    selectedFile.value = target.files[0] || null;
+    if (!uploadForm.value.title && target.files[0]) {
+      uploadForm.value.title = target.files[0].name.split('.')[0] || '';
     }
   }
 };
