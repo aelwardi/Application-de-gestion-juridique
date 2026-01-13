@@ -47,7 +47,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
       const button = wrapper.find('button');
       await button.trigger('click');
 
-      expect(wrapper.vm.isExpanded).toBe(true);
+      expect((wrapper.vm as any).isExpanded).toBe(true);
     });
 
     it('devrait afficher les statistiques quand déplié', async () => {
@@ -55,7 +55,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       expect(wrapper.text()).toContain('Répartition par statut');
@@ -67,12 +67,12 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       await wrapper.find('button').trigger('click');
 
-      expect(wrapper.vm.isExpanded).toBe(false);
+      expect((wrapper.vm as any).isExpanded).toBe(false);
     });
 
     it('devrait faire pivoter l\'icône lors du dépliage', async () => {
@@ -122,7 +122,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       expect(wrapper.text()).toContain('En attente');
@@ -162,7 +162,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      const priorityStats = wrapper.vm.priorityStats;
+      const priorityStats = (wrapper.vm as any).priorityStats;
 
       expect(priorityStats.find((p: any) => p.key === 'urgent')?.count).toBe(1);
       expect(priorityStats.find((p: any) => p.key === 'high')?.count).toBe(1);
@@ -175,7 +175,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      const priorityStats = wrapper.vm.priorityStats;
+      const priorityStats = (wrapper.vm as any).priorityStats;
       const medium = priorityStats.find((p: any) => p.key === 'medium');
 
       expect(medium?.percentage).toBe(40); // 2/5 = 40%
@@ -186,7 +186,7 @@ describe('CaseStats - Tests d\'Intégration', () => {
         props: { cases: mockCases },
       });
 
-      wrapper.vm.isExpanded = true;
+      (wrapper.vm as any).isExpanded = true;
       await wrapper.vm.$nextTick();
 
       expect(wrapper.text()).toContain('Urgente');

@@ -92,8 +92,8 @@ describe('useAppointment Composable', () => {
 
       const result = await getAppointments();
 
-      expect(result.data?.appointments).toHaveLength(2);
-      expect(result.data?.total).toBe(2);
+      expect((result.data as any)?.appointments).toHaveLength(2);
+      expect((result.data as any)?.total).toBe(2);
     });
 
     it('should fetch appointments with filters', async () => {
@@ -266,8 +266,8 @@ describe('useAppointment Composable', () => {
 
       const result = await getAppointments();
 
-      expect(result.data?.appointments).toEqual([]);
-      expect(result.data?.total).toBe(0);
+      expect((result.data as any)?.appointments).toEqual([]);
+      expect((result.data as any)?.total).toBe(0);
     });
 
     it('should handle unauthorized access', async () => {

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { defineComponent } from 'vue';
 
-const DocumentRequestModal = {
+const DocumentRequestModal = defineComponent({
   name: 'DocumentRequestModal',
   template: `
     <div v-if="modelValue" class="modal">
@@ -39,7 +40,7 @@ const DocumentRequestModal = {
       }
     },
   },
-};
+});
 
 describe('DocumentRequestModal', () => {
   const mockProps = {
