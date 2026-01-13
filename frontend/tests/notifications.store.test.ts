@@ -52,7 +52,7 @@ describe('Notifications Store', () => {
           message: 'Test message',
           is_read: false,
           notification_type: 'info',
-          created_at: new Date().toISOString(),
+          created_at: new Date(Date.now() - 1000).toISOString(),
         },
         {
           id: '2',
@@ -69,7 +69,8 @@ describe('Notifications Store', () => {
       await store.fetchNotifications();
 
       expect(store.notifications).toHaveLength(2);
-      expect(store.notifications[0]?.id).toBe('1');
+      // L'id '2' devrait être en premier car plus récent (tri décroissant)
+      expect(store.notifications[0]?.id).toBe('2');
     });
 
     it('should handle fetch errors gracefully', async () => {
