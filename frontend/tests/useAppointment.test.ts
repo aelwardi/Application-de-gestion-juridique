@@ -284,7 +284,7 @@ describe('useAppointment Composable', () => {
       const { createAppointment } = useAppointment();
       const error: any = new Error('Network timeout');
       error.code = 'ETIMEDOUT';
-      vi.mocked($fetch).mockRejectedValueOnce(error);
+      (vi.mocked($fetch) as any).mockRejectedValueOnce(error);
 
       const result = await createAppointment(mockAppointment());
 

@@ -48,37 +48,23 @@ export const mockErrorResponse = (message: string, errors?: any[]) => ({
 });
 
 export const mockFetchSuccess = (data: any) => {
+  const mockFn = vi.mocked($fetch) as any;
   if (typeof data === 'object' && data !== null) {
     const obj = data as any;
     if ('data' in obj) {
-      vi.mocked($fetch).mockResolvedValueOnce(data);
+      mockFn.mockResolvedValueOnce(data);
       return;
     }
   }
-  vi.mocked($fetch).mockResolvedValueOnce({ data, success: true, message: 'Operation successful' });
+  mockFn.mockResolvedValueOnce({ data, success: true, message: 'Operation successful' });
 };
 
 export const mockFetchError = (status: number, message: string) => {
   const error: any = new Error(message);
   error.statusCode = status;
   error.data = { message, statusCode: status };
-  vi.mocked($fetch).mockRejectedValueOnce(error);
+  (vi.mocked($fetch) as any).mockRejectedValueOnce(error);
 };
-
-export const createMockRouter = () => ({
-  push: vi.fn(() => Promise.resolve() as any),
-  replace: vi.fn(() => Promise.resolve() as any),
-  back: vi.fn(),
-  go: vi.fn(),
-  currentRoute: {
-    value: {
-      params: {},
-      query: {},
-      path: '/',
-      name: 'index',
-    },
-  },
-} as any);
 
 
 export const createMockAuthStore = (overrides: any = {}) => ({

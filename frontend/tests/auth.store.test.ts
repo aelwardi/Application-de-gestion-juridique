@@ -224,17 +224,14 @@ describe('Auth Store', () => {
 
       mockFetchError(400, 'Validation error');
 
-      // Act
       const result = await store.register(invalidData);
 
-      // Assert
       expect(result.success).toBe(false);
       expect(result.message).toBeDefined();
       expect(store.isAuthenticated).toBe(false);
     });
 
     it('should handle duplicate email error', async () => {
-      // Arrange
       const store = useAuthStore();
       const registerData = {
         email: 'existing@test.com',
@@ -265,25 +262,21 @@ describe('Auth Store', () => {
         role: 'client' as const,
       };
 
-      // Mock a delayed response
-      vi.mocked($fetch).mockImplementation(
+      (vi.mocked($fetch) as any).mockImplementation(
         () => new Promise((resolve) => {
           expect(store.isLoading).toBe(true);
           setTimeout(() => resolve(mockSuccessResponse({ user: mockUser(), accessToken: 'token', refreshToken: 'refresh' })), 10);
         })
       );
 
-      // Act
       await store.register(registerData);
 
-      // Assert
       expect(store.isLoading).toBe(false);
     });
   });
 
   describe('Login', () => {
     it('should login user successfully', async () => {
-      // Arrange
       const store = useAuthStore();
       const loginData = {
         email: 'test@test.com',
@@ -298,17 +291,14 @@ describe('Auth Store', () => {
 
       mockFetchSuccess(authData);
 
-      // Act
       const result = await store.login(loginData);
 
-      // Assert
       expect(result.success).toBe(true);
       expect(store.user?.email).toBe(loginData.email);
       expect(store.isAuthenticated).toBe(true);
     });
 
     it('should handle invalid credentials', async () => {
-      // Arrange
       const store = useAuthStore();
       const loginData = {
         email: 'wrong@test.com',
@@ -327,7 +317,6 @@ describe('Auth Store', () => {
     });
 
     it('should handle deactivated account', async () => {
-      // Arrange
       const store = useAuthStore();
       const loginData = {
         email: 'deactivated@test.com',
@@ -336,10 +325,8 @@ describe('Auth Store', () => {
 
       mockFetchError(403, 'Account is deactivated');
 
-      // Act
       const result = await store.login(loginData);
 
-      // Assert
       expect(result.success).toBe(false);
       expect(result.message).toContain('deactivated');
     });
@@ -347,7 +334,6 @@ describe('Auth Store', () => {
 
   describe('Logout', () => {
     it('should logout user and clear state', async () => {
-      // Arrange
       const store = useAuthStore();
       const user = mockUser();
       store.setAuth(user, 'token', 'refresh');
@@ -370,22 +356,18 @@ describe('Auth Store', () => {
       const store = useAuthStore();
       const error: any = new Error('Network error');
       error.status = 0;
-      vi.mocked($fetch).mockRejectedValueOnce(error);
+      (vi.mocked($fetch) as any).mockRejectedValueOnce(error);
 
-      // Act
       const result = await store.login({ email: 'test@test.com', password: 'pass' });
 
-      // Assert
       expect(result.success).toBe(false);
       expect(result.message).toBeDefined();
     });
 
     it('should handle missing response data', async () => {
-      // Arrange
       const store = useAuthStore();
-      vi.mocked($fetch).mockResolvedValueOnce({ success: false });
+      (vi.mocked($fetch) as any).mockResolvedValueOnce({ success: false });
 
-      // Act
       const result = await store.register({
         email: 'test@test.com',
         password: 'Pass123!',
@@ -394,7 +376,6 @@ describe('Auth Store', () => {
         role: 'client',
       });
 
-      // Assert
       expect(result.success).toBe(false);
     });
   });

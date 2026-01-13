@@ -86,7 +86,7 @@ describe('Notifications Store', () => {
     it('should set loading state during fetch', async () => {
       const store = useNotificationsStore();
 
-      vi.mocked($fetch).mockImplementation(
+      (vi.mocked($fetch) as any).mockImplementation(
         () => new Promise((resolve) => {
           expect(store.isLoading).toBe(true);
           setTimeout(() => resolve({ success: true, data: [] }), 10);
